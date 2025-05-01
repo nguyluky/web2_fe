@@ -2,7 +2,7 @@ import { faEye, faEyeSlash, faLock, faUser } from '@fortawesome/free-solid-svg-i
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
-import { Link, redirect, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '~/contexts/AuthContext';
 
 type FormValues = {
@@ -19,7 +19,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const { login , error} = useAuth();
+  const { login , error, isAuthenticated} = useAuth();
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     try {
@@ -29,14 +29,16 @@ export default function Login() {
             password: data.password
         })
 
-        redirect('/');
+        navigate('/');
+
     } catch {
-        
+
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-base-200 px-4">
+        {/* {isAuthenticated && <Redirect></Redirect>} */}
       <div className="card w-full max-w-md bg-base-100 shadow-xl">
         <div className="card-body">
           <h2 className="text-center text-2xl font-bold mb-6">Đăng nhập</h2>

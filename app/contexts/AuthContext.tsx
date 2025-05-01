@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     };
     
     checkAuthentication();
-    })
+    }, [])
 
     const login = async (userData: LoginRequest) => {
         setLoading(true);

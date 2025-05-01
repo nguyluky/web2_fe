@@ -1,6 +1,9 @@
-import { Link, Outlet } from "react-router";
+import { Link, Outlet, useNavigation } from 'react-router';
+import { useAuth } from '~/contexts/AuthContext';
+import './loading.css';
 
 export function Header() {
+  const { isAuthenticated, user } = useAuth();
   return (
     <header className="navbar bg-base-100 shadow-sm sticky top-0 z-50 justify-center flex">
       <div className="navbar-center w-full max-w-[80rem]">
@@ -27,25 +30,27 @@ export function Header() {
               className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
             >
               <li>
-                <Link>Item 1</Link>
+                <Link to="/item1">Item 1</Link>
               </li>
               <li>
-                <Link>Parent</Link>
+                <Link to="/parent">Parent</Link>
                 <ul className="p-2">
                   <li>
-                    <Link>Submenu 1</Link>
+                    <Link to="/parent/submenu1">Submenu 1</Link>
                   </li>
                   <li>
-                    <Link>Submenu 2</Link>
+                    <Link to="/parent/submenu2">Submenu 2</Link>
                   </li>
                 </ul>
               </li>
               <li>
-                <Link>Item 3</Link>
+                <Link to="/item3">Item 3</Link>
               </li>
             </ul>
           </div>
-          <Link className="btn btn-ghost text-xl font-bold">Codelỏ</Link>
+          <Link to="/" className="btn btn-ghost text-xl font-bold">
+            Codelỏ
+          </Link>
         </div>
         <div className="navbar-center hidden lg:flex">
           <ul className="menu menu-horizontal">
@@ -92,7 +97,7 @@ export function Header() {
           <div className="indicator mr-3 sm:mr-0">
             <span className="indicator-item badge badge-secondary">0</span>
 
-            <Link className="btn p-2.5 " to={"/cart"}>
+            <Link className="btn p-2.5 " to={'/cart'}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -111,7 +116,13 @@ export function Header() {
               </svg>
             </Link>
           </div>
-          <Link className="btn btn-primary hidden sm:flex">Đăng nhập</Link>
+          {isAuthenticated ? (
+            <Link to="/tai-khoan" className='btn btn-outline btn-primary'>{user?.fullname || "undefind"}</Link>
+          ) : (
+            <Link to="/auth/login" className="btn btn-primary hidden sm:flex">
+              Đăng nhập
+            </Link>
+          )}
         </div>
       </div>
     </header>
@@ -140,33 +151,85 @@ export function Footer() {
       </aside>
       <nav>
         <h6 className="footer-title">Services</h6>
-        <Link className="link link-hover">Branding</Link>
-        <Link className="link link-hover">Design</Link>
-        <Link className="link link-hover">Marketing</Link>
-        <Link className="link link-hover">Advertisement</Link>
+        <Link to="/services/branding" className="link link-hover">
+          Branding
+        </Link>
+        <Link to="/services/design" className="link link-hover">
+          Design
+        </Link>
+        <Link to="/services/marketing" className="link link-hover">
+          Marketing
+        </Link>
+        <Link to="/services/advertisement" className="link link-hover">
+          Advertisement
+        </Link>
       </nav>
       <nav>
         <h6 className="footer-title">Company</h6>
-        <Link className="link link-hover">About us</Link>
-        <Link className="link link-hover">Contact</Link>
-        <Link className="link link-hover">Jobs</Link>
-        <Link className="link link-hover">Press kit</Link>
+        <Link to="/company/about" className="link link-hover">
+          About us
+        </Link>
+        <Link to="/company/contact" className="link link-hover">
+          Contact
+        </Link>
+        <Link to="/company/jobs" className="link link-hover">
+          Jobs
+        </Link>
+        <Link to="/company/press" className="link link-hover">
+          Press kit
+        </Link>
       </nav>
       <nav>
         <h6 className="footer-title">Legal</h6>
-        <Link className="link link-hover">Terms of use</Link>
-        <Link className="link link-hover">Privacy policy</Link>
-        <Link className="link link-hover">Cookie policy</Link>
+        <Link to="/legal/terms" className="link link-hover">
+          Terms of use
+        </Link>
+        <Link to="/legal/privacy" className="link link-hover">
+          Privacy policy
+        </Link>
+        <Link to="/legal/cookies" className="link link-hover">
+          Cookie policy
+        </Link>
       </nav>
     </footer>
   );
 }
 
+const Loader = () => {
+  return (
+    <div>
+      <div className="loader">
+        <svg viewBox="0 0 80 80">
+          <circle r={32} cy={40} cx={40} id="test" />
+        </svg>
+      </div>
+      <div className="loader triangle">
+        <svg viewBox="0 0 86 80">
+          <polygon points="43 8 79 72 7 72" />
+        </svg>
+      </div>
+      <div className="loader">
+        <svg viewBox="0 0 80 80">
+          <rect height={64} width={64} y={8} x={8} />
+        </svg>
+      </div>
+    </div>
+  );
+};
+
 export default function Layout() {
+  const navigation = useNavigation();
+  const isNavigating = Boolean(navigation.location);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow">
+        {isNavigating && (
+          <div className="fixed inset-0 bg-base-200 opacity-50 z-50 flex items-center justify-center">
+            <Loader />
+          </div>
+        )}
         <Outlet />
       </main>
       <Footer />

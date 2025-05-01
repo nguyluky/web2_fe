@@ -1,11 +1,10 @@
-import { useState } from 'react';
 import type { Route } from './+types/category';
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const id = params.id;
-  await new Promise((r,l) => {
-    setTimeout(r, 1000)
-  })
+  await new Promise((r, l) => {
+    setTimeout(r, 1000);
+  });
   return {
     id,
   };
@@ -37,7 +36,7 @@ export default function Category({ loaderData }: Route.ComponentProps) {
         <div className="hero">
           <div className="hero-content w-full">
             <div className="relative w-full rounded-lg overflow-hidden">
-              <img src="https://placehold.co/1000x400" alt="" className='w-full'/>
+              <img src="https://placehold.co/1000x400" alt="" className="w-full" />
               <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent p-6 flex flex-col justify-center">
                 <h1 className="text-2xl font-bold text-base-100 md:text-3xl lg:text-4xl">
                   Điện thoại

@@ -9,29 +9,18 @@ export interface Address {
     city: string
 }
 
-export interface UserAddress {
+export interface UserAddress extends Address {
   id: number
-  profile_id: number
-  phone_number: string
-  street: string
-  ward: string
-  district: string
-  city: string
 }
   
 export class AddressService extends ApiService {
     addNewAddress(address: Address) {
-        const formBody = new URLSearchParams(address as any).toString();
-
-        return this.post<{ data: Address }, any>(
-            `/users/addresses`,
-            formBody,
-            {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
-            }
-        );
+        const formData = new FormData();
+        Object.entries(address).forEach(([key, value]) => {
+            formData.append(key, String(value));
+        });
+       
+        return this.post<{ data: Address }, any>(`/users/addresses`, formData);
     }
 
     getUserAddress() {

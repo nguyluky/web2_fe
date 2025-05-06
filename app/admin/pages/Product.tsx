@@ -13,17 +13,27 @@ import {
 const ProductManagement = () => {
 
 const [products, setProducts] = useState([]);
+const [categories, setCategories] = useState([]);
 
     useEffect(() => {
         // Simulate fetching data from an API
-        const fetchProducts = async () => {
-            const response = await fetch('http://127.0.0.1:8000/api/products'); // Replace with your API endpoint
-            const data = await response.json();
-            setProducts(data);
+        const fetchData = async () => {
+            const productRes = await fetch('http://127.0.0.1:8000/api/admin/products'); // Replace with your API endpoint
+            const productData = await productRes.json();
+            setProducts(productData.data.data);
+
+            const categoryRes = await fetch('http://127.0.0.1:8000/api/admin/categories'); // Replace with your API endpoint
+            const categoryData = await categoryRes.json();
+            setCategories(categoryData.data.data);
+            console.log('Categories:', categoryData.data.data);
         };
-    
-        fetchProducts();
+        fetchData();
     }, [])
+
+    const getCategoryName = (categoryId) => {
+      const category = categories.find((cat) => cat.id === categoryId);
+      return category ? category.name : 'Không rõ';
+    };
 
   return (
     <div className="overflow-x-hidden min-h-screen bg-white p-4">
@@ -123,10 +133,10 @@ const [products, setProducts] = useState([]);
                     </div>
                   </div>
                 </td>
-                <td>{product.category}</td>
-                <td>{product.price}</td>
+                <td>{getCategoryName(product.category_id)}</td>
+                <td>{product.base_price}</td>
                 <td>{product.stock}</td>
-                <td>{product.creationDate}</td>
+                <td>{product.created_at}</td>
                 <td>
                   <span
                     className={`border border-gray-300 rounded-lg px-2 py-1 ${

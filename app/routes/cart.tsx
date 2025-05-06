@@ -1,4 +1,96 @@
-export default function Card() {
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { cartService, type CartItemWithProduct } from '~/service/cart.service';
+
+export async function clientLoader() {
+  try {
+    const response = await cartService.getCart();
+    if (response && response[0]) {
+      return { cartItems: response[0].carts, error: null };
+    }
+    return { cartItems: [], error: null };
+  } catch (error) {
+    console.error('Error loading cart:', error);
+    return { cartItems: [], error: 'Không thể tải giỏ hàng. Vui lòng thử lại sau.' };
+  }
+}
+
+export default function Cart() {
+  const navigate = useNavigate();
+  const [cartItems, setCartItems] = useState<CartItemWithProduct[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchCartItems();
+  }, []);
+
+  const fetchCartItems = async () => {
+    try {
+      setLoading(true);
+      const loaderData = await clientLoader();
+      setCartItems(loaderData.cartItems);
+      setError(loaderData.error);
+    } catch (err) {
+      console.error('Error fetching cart items:', err);
+      setError('Không thể tải giỏ hàng. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateQuantity = async (variantId: number, amount: number) => {
+    try {
+      setLoading(true);
+      await cartService.updateCartItem(variantId, { amount });
+      
+      // Update local state to reflect changes
+      setCartItems(prevItems => 
+        prevItems.map(item => 
+          item.product_variant_id === variantId 
+            ? { ...item, amount } 
+            : item
+        )
+      );
+    } catch (err) {
+      console.error('Error updating cart:', err);
+      setError('Không thể cập nhật giỏ hàng. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveItem = async (variantId: number) => {
+    try {
+      setLoading(true);
+      await cartService.removeFromCart(variantId);
+      
+      // Remove item from local state
+      setCartItems(prevItems => 
+        prevItems.filter(item => item.product_variant_id !== variantId)
+      );
+    } catch (err) {
+      console.error('Error removing item from cart:', err);
+      setError('Không thể xóa sản phẩm. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateSubtotal = () => {
+    return cartItems.reduce((total, item) => {
+      return total + (item.product_variant.price * item.amount);
+    }, 0);
+  };
+
+  const handleCheckout = () => {
+    navigate('/thanh-toan');
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  };
+
   return (
     <section>
       <div className="hero">
@@ -22,62 +114,97 @@ export default function Card() {
                       </tr>
                     </thead>
                     <tbody>
-                      {/* row 1 */}
-                      <tr>
-                        <td>
-                            <input type="checkbox" className="checkbox" />
-                        </td>
-                        <td>
-                          <div className="avatar">
-                            <div className="mask mask-squircle h-12 w-12">
-                              <img
-                                src="https://placehold.co/30"
-                                alt="Avatar Tailwind CSS Component"
-                              />
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          iPhone 15 Pro Max 256GB
-                          <br />
-                          <span className="badge badge-ghost badge-sm">
-                            Titan Tự Nhiên, 256GB
-                          </span>
-                        </td>
-                        <td>32.990.000 ₫</td>
-                        <td>
-                          <div className="join">
-                            <input
-                              className="input join-item w-12"
-                              type="number"
-                              defaultValue={1}
-                            />
-                          </div>
-                        </td>
-                        <td>32.990.000 ₫</td>
-                        <th>
-                          <button className="btn btn-ghost btn-xs">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              className="lucide lucide-trash2-icon lucide-trash-2"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                              <line x1="10" x2="10" y1="11" y2="17" />
-                              <line x1="14" x2="14" y1="11" y2="17" />
-                            </svg>
-                          </button>
-                        </th>
-                      </tr>
+                      {loading ? (
+                        <tr>
+                          <td colSpan={7} className="text-center py-4">
+                            Đang tải giỏ hàng...
+                          </td>
+                        </tr>
+                      ) : error ? (
+                        <tr>
+                          <td colSpan={7} className="text-center py-4 text-error">
+                            {error}
+                          </td>
+                        </tr>
+                      ) : cartItems.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="text-center py-4">
+                            Giỏ hàng của bạn đang trống
+                          </td>
+                        </tr>
+                      ) : (
+                        cartItems.map((item) => (
+                          <tr key={item.product_variant_id}>
+                            <td>
+                              <input type="checkbox" className="checkbox" />
+                            </td>
+                            <td>
+                              <div className="avatar">
+                                <div className="mask mask-squircle h-12 w-12">
+                                  {item.product_variant.product.product_images?.[0] ? (
+                                    <img
+                                      src={item.product_variant.product.product_images[0].image_url}
+                                      alt={item.product_variant.product.name}
+                                    />
+                                  ) : (
+                                    <img
+                                      src="https://placehold.co/30"
+                                      alt="Placeholder image"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              {item.product_variant.product.name}
+                              <br />
+                              <span className="badge badge-ghost badge-sm">
+                                {item.product_variant.attributes}
+                              </span>
+                            </td>
+                            <td>{formatCurrency(item.product_variant.price)}</td>
+                            <td>
+                              <div className="join">
+                                <input
+                                  className="input join-item w-12"
+                                  type="number"
+                                  value={item.amount}
+                                  min={1}
+                                  disabled={loading}
+                                  onChange={(e) => handleUpdateQuantity(item.product_variant_id, parseInt(e.target.value))}
+                                />
+                              </div>
+                            </td>
+                            <td>{formatCurrency(item.product_variant.price * item.amount)}</td>
+                            <th>
+                              <button 
+                                className="btn btn-ghost btn-xs"
+                                onClick={() => handleRemoveItem(item.product_variant_id)}
+                                disabled={loading}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="lucide lucide-trash2-icon lucide-trash-2"
+                                >
+                                  <path d="M3 6h18" />
+                                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                  <line x1="10" x2="10" y1="11" y2="17" />
+                                  <line x1="14" x2="14" y1="11" y2="17" />
+                                </svg>
+                              </button>
+                            </th>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -96,7 +223,7 @@ export default function Card() {
                 <div className="flex flex-col gap-2 w-full">
                     <div className="flex justify-between">
                         <p>Tạm tính</p>
-                        <span>32.990.000 ₫</span>
+                        <span>{formatCurrency(calculateSubtotal())}</span>
                     </div>
                     <div className="flex justify-between">
                         <p>Giảm giá</p>
@@ -109,11 +236,15 @@ export default function Card() {
                     <div className="divider"></div>
                     <div className="flex justify-between">
                         <p className="font-bold">Tổng cộng</p>
-                        <span className="text-xl font-bold">32.990.000 ₫</span>
+                        <span className="text-xl font-bold">{formatCurrency(calculateSubtotal())}</span>
                     </div>
                 </div>
-                <button className="btn btn-primary">
-                    Mua
+                <button 
+                  className="btn btn-primary"
+                  onClick={handleCheckout}
+                  disabled={cartItems.length === 0 || loading}
+                >
+                  Thanh toán
                 </button>
               </div>
             </div>

@@ -1,298 +1,341 @@
-export default function ThanhToan() {
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { cartService, type CartItemWithProduct } from '~/service/cart.service';
+import { orderService, type CreateOrderRequest, type OrderProduct } from '~/service/order.service';
+import { ProfileService } from '~/service/profile.service';
+
+const profileService = new ProfileService();
+
+export async function clientLoader() {
+  try {
+    const cartResponse = await cartService.getCart();
+    const profileResponse = await profileService.getProfile();
+    
+    return { 
+      cartItems: cartResponse?.[0]?.carts || [], 
+      profile: profileResponse?.[0]?.data,
+      error: null 
+    };
+  } catch (error) {
+    console.error('Error loading checkout data:', error);
+    return { 
+      cartItems: [], 
+      profile: null,
+      error: 'Không thể tải thông tin thanh toán. Vui lòng thử lại sau.' 
+    };
+  }
+}
+
+export default function Checkout() {
+  const navigate = useNavigate();
+  const [cartItems, setCartItems] = useState<CartItemWithProduct[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string>('cash');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState<boolean>(false);
+
+  useEffect(() => {
+    fetchCheckoutData();
+  }, []);
+
+  const fetchCheckoutData = async () => {
+    try {
+      setLoading(true);
+      const loaderData = await clientLoader();
+      
+      setCartItems(loaderData.cartItems);
+      setProfile(loaderData.profile);
+      setError(loaderData.error);
+      
+      // Redirect to cart if cart is empty
+      if (loaderData.cartItems.length === 0 && !loaderData.error) {
+        navigate('/cart');
+      }
+    } catch (err) {
+      console.error('Error fetching checkout data:', err);
+      setError('Không thể tải thông tin thanh toán. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateSubtotal = () => {
+    return cartItems.reduce((total, item) => {
+      return total + (item.product_variant.price * item.amount);
+    }, 0);
+  };
+
+  const calculateShipping = () => {
+    // Simple shipping calculation example - could be expanded with actual shipping options
+    return 0; // Free shipping for this example
+  };
+
+  const calculateTotal = () => {
+    return calculateSubtotal() + calculateShipping();
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!profile) {
+      setError('Vui lòng đăng nhập để thanh toán');
+      return;
+    }
+
+    // Prepare order products from cart items
+    const orderProducts: OrderProduct[] = cartItems.map(item => ({
+      product_variant_id: item.product_variant_id,
+      serial: item.amount
+    }));
+
+    const orderData: CreateOrderRequest = {
+      account_id: profile.account_id,
+      employee_id: 1, // Assume default employee ID - this would come from somewhere in a real app
+      payment_method: paymentMethod,
+      products: orderProducts
+    };
+
+    try {
+      setProcessing(true);
+      const response = await orderService.createOrder(orderData);
+      
+      if (response && response[0] && response[0].order) {
+        // Order created successfully
+        navigate(`/tai-khoan/don-hang/${response[0].order.id}`, { 
+          state: { success: true, message: 'Đặt hàng thành công!' } 
+        });
+      }
+    } catch (err) {
+      console.error('Error creating order:', err);
+      setError('Không thể tạo đơn hàng. Vui lòng thử lại sau.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[500px]">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    );
+  }
+
+  if (error && cartItems.length === 0) {
+    return (
+      <div className="flex justify-center items-center min-h-[500px]">
+        <div className="alert alert-error">
+          <span>{error}</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <section>
-        <div className="hero">
-          <div className="hero-content w-full">
-            <div className="breadcrumbs text-sm w-full">
-              <ul>
-                <li>
-                  <a>Home</a>
-                </li>
-                <li>
-                  <a>Giỏ hàng</a>
-                </li>
-                <li>Thanh toán</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section>
-        <div className="hero">
-          <div className="hero-content w-full">
-            <div className="grid grid-cols-[1fr_450px] w-full gap-5">
-              <div className="flex flex-col gap-5">
-                <div className="card border-1 border-base-300">
-                  <div className="card-body">
-                    <div className="card-title">
-                      <h2 className="text-2xl">Thông tin giao hàng</h2>
-                    </div>
-                    <div className="flex flex-col gap-4">
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
-                          <label
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            // for="first-name"
-                          >
-                            Họ
-                          </label>
-                          <input
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            id="first-name"
-                            placeholder="Nhập họ"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            // form="last-name"
-                          >
-                            Tên
-                          </label>
-                          <input
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            id="last-name"
-                            placeholder="Nhập tên"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          //   for="email"
-                        >
-                          Email
-                        </label>
-                        <input
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          id="email"
-                          placeholder="Nhập email"
-                          //   type="email"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          //   for="phone"
-                        >
-                          Số điện thoại
-                        </label>
-                        <input
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          id="phone"
-                          placeholder="Nhập số điện thoại"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          //   for="address"
-                        >
-                          Địa chỉ
-                        </label>
-                        <input
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          id="address"
-                          placeholder="Nhập địa chỉ"
-                        />
-                      </div>
-                      <div className="grid gap-4 sm:grid-cols-3">
-                        <div className="space-y-2">
-                          <label
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            // for="city"
-                          >
-                            Tỉnh/Thành phố
-                          </label>
-                          <input
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            id="city"
-                            placeholder="Nhập tỉnh/thành phố"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            // for="district"
-                          >
-                            Quận/Huyện
-                          </label>
-                          <input
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            id="district"
-                            placeholder="Nhập quận/huyện"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            // for="ward"
-                          >
-                            Phường/Xã
-                          </label>
-                          <input
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            id="ward"
-                            placeholder="Nhập phường/xã"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="card border-1 border-base-300">
-                  <div className="card-body h-full">
-                    <div className="card-title">
-                      <h2 className="text-2xl">Phương thức thanh toán</h2>
-                    </div>
-                    <div className="tabs tabs-box flex justify-center bg-transparent">
-                      <input
-                        type="radio"
-                        name="my_tabs_6"
-                        className="tab checked:bg-red-50"
-                        aria-label="Tiền mặt"
-                      />
-                      <div className="tab-content">Tiền mặt</div>
-
-                      <input
-                        type="radio"
-                        name="my_tabs_6"
-                        className="tab"
-                        aria-label="Thẻ tín dụng"
-                        defaultChecked
-                      />
-                      <div className="tab-content"></div>
-
-                      <input
-                        type="radio"
-                        name="my_tabs_6"
-                        className="tab"
-                        aria-label="Chuyển khoản"
-                      />
-                      <div className="tab-content">Tab content 3</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col gap-5">
-                <div className="card border-1 border-base-300 h-fit">
-                  <div className="card-body">
-                    <div className="card-title">
-                      <h2 className="text-2xl">Đơn hàng của bạn</h2>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="flex gap-4">
-                        <div className="relative h-16 w-16 overflow-hidden rounded-md">
-                          <img
-                            alt="iPhone 15 Pro Max 256GB"
-                            loading="lazy"
-                            decoding="async"
-                            data-nimg="fill"
-                            className="object-cover"
-                            src="https://placehold.co/100"
-                            style={{
-                              position: 'absolute',
-                              height: '100%',
-                              width: '100%',
-                              inset: 0,
-                              color: 'transparent',
-                            }}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium">iPhone 15 Pro Max 256GB</div>
-                          <div className="text-sm text-muted-foreground">Titan Tự Nhiên, 256GB</div>
-                          <div className="mt-1 text-sm">1 x 32.990.000&nbsp;₫</div>
-                        </div>
-                        <div className="font-medium">32.990.000&nbsp;₫</div>
-                      </div>
-                      <div className="flex gap-4">
-                        <div className="relative h-16 w-16 overflow-hidden rounded-md">
-                          <img
-                            alt="Tai nghe AirPods Pro 2"
-                            loading="lazy"
-                            decoding="async"
-                            data-nimg="fill"
-                            className="object-cover"
-                            src="https://placehold.co/100"
-                            style={{
-                              position: 'absolute',
-                              height: '100%',
-                              width: '100%',
-                              inset: 0,
-                              color: 'transparent',
-                            }}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium">Tai nghe AirPods Pro 2</div>
-                          <div className="text-sm text-muted-foreground">Trắng</div>
-                          <div className="mt-1 text-sm">1 x 5.990.000&nbsp;₫</div>
-                        </div>
-                        <div className="font-medium">5.990.000&nbsp;₫</div>
-                      </div>
-                    </div>
-                    <div className="divider"></div>
+    <div className="container mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold mb-8">Thanh toán</h1>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+        {/* Customer Information */}
+        <div className="space-y-6">
+          <div className="card bg-base-100 shadow-sm">
+            <div className="card-body">
+              <h2 className="card-title">Thông tin khách hàng</h2>
+              
+              {profile ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <div className="flex justify-between">
-                        <div className="text-medium text-primary/50">Tạm tính</div>
-                        <div className="font-medium">38.980.000&nbsp;₫</div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="text-medium text-primary/50">Phí vận chuyển</div>
-                        <div className="font-medium">0&nbsp;₫</div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="text-medium text-primary/50">Giảm giá</div>
-                        <div className="font-medium">0&nbsp;₫</div>
-                      </div>
+                      <label className="label">Họ tên</label>
+                      <input 
+                        type="text" 
+                        className="input input-bordered w-full" 
+                        value={profile.fullname || ''}
+                        readOnly
+                      />
                     </div>
-                    <div className="divider"></div>
-                    <div className="flex justify-between">
-                      <div className="text-lg font-medium">Tổng cộng</div>
-                      <div className="text-lg font-medium">38.980.000&nbsp;₫</div>
-                    </div>
-                    <button className="btn btn-primary btn-lg">Đặt hàng</button>
-                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        className="lucide lucide-shield-check h-4 w-4"
-                      >
-                        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path>
-                        <path d="m9 12 2 2 4-4"></path>
-                      </svg>
-                      <span>Thanh toán an toàn &amp; bảo mật</span>
+                    <div>
+                      <label className="label">Số điện thoại</label>
+                      <input 
+                        type="text" 
+                        className="input input-bordered w-full" 
+                        value={profile.phone_number || ''}
+                        readOnly
+                      />
                     </div>
                   </div>
+                  <div>
+                    <label className="label">Email</label>
+                    <input 
+                      type="email" 
+                      className="input input-bordered w-full" 
+                      value={profile.email || ''}
+                      readOnly
+                    />
+                  </div>
                 </div>
-                <div className="card border-1 border-base-300">
-                  <div className="card-body">
-                    <div className="card-title">
-                      <h2 className="text-2xl">Cần hỗ trợ?</h2>
-                    </div>
+              ) : (
+                <div className="alert alert-warning">
+                  <span>Vui lòng <a href="/auth/login" className="link">đăng nhập</a> để tiếp tục thanh toán</span>
+                </div>
+              )}
+            </div>
+          </div>
 
-                    <div className="space-y-2 text-sm">
-                      <p>Nếu bạn có câu hỏi hoặc cần hỗ trợ, vui lòng liên hệ:</p>
-                      <p>Hotline: 1900 1234</p>
-                      <p>Email: hotro@techstore.vn</p>
-                      <p>Thời gian hỗ trợ: 8:00 - 22:00 (Thứ 2 - Chủ nhật)</p>
-                    </div>
+          <div className="card bg-base-100 shadow-sm">
+            <div className="card-body">
+              <h2 className="card-title">Địa chỉ giao hàng</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="label">Địa chỉ</label>
+                  <textarea 
+                    className="textarea textarea-bordered w-full" 
+                    rows={3}
+                    placeholder="Nhập địa chỉ giao hàng"
+                  ></textarea>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="label">Tỉnh/Thành phố</label>
+                    <select className="select select-bordered w-full">
+                      <option disabled selected>Chọn tỉnh/thành phố</option>
+                      <option>Hà Nội</option>
+                      <option>TP. Hồ Chí Minh</option>
+                      <option>Đà Nẵng</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Quận/Huyện</label>
+                    <select className="select select-bordered w-full">
+                      <option disabled selected>Chọn quận/huyện</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Phường/Xã</label>
+                    <select className="select select-bordered w-full">
+                      <option disabled selected>Chọn phường/xã</option>
+                    </select>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <div className="card bg-base-100 shadow-sm">
+            <div className="card-body">
+              <h2 className="card-title">Phương thức thanh toán</h2>
+              <div className="space-y-4">
+                <div className="form-control">
+                  <label className="label cursor-pointer justify-start gap-4">
+                    <input 
+                      type="radio" 
+                      name="payment-method" 
+                      className="radio radio-primary" 
+                      checked={paymentMethod === 'cash'}
+                      onChange={() => setPaymentMethod('cash')}
+                    />
+                    <span className="label-text">Thanh toán khi nhận hàng (COD)</span>
+                  </label>
+                </div>
+                <div className="form-control">
+                  <label className="label cursor-pointer justify-start gap-4">
+                    <input 
+                      type="radio" 
+                      name="payment-method" 
+                      className="radio radio-primary"
+                      checked={paymentMethod === 'bank_transfer'}
+                      onChange={() => setPaymentMethod('bank_transfer')}
+                    />
+                    <span className="label-text">Chuyển khoản ngân hàng</span>
+                  </label>
+                </div>
+                <div className="form-control">
+                  <label className="label cursor-pointer justify-start gap-4">
+                    <input 
+                      type="radio" 
+                      name="payment-method" 
+                      className="radio radio-primary"
+                      checked={paymentMethod === 'momo'}
+                      onChange={() => setPaymentMethod('momo')}
+                    />
+                    <span className="label-text">Ví điện tử MoMo</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
-    </>
+
+        {/* Order Summary */}
+        <div className="space-y-6">
+          <div className="card bg-base-100 shadow-sm">
+            <div className="card-body">
+              <h2 className="card-title">Đơn hàng của bạn</h2>
+              <div className="overflow-x-auto">
+                <table className="table table-xs">
+                  <thead>
+                    <tr>
+                      <th>Sản phẩm</th>
+                      <th className="text-right">Giá</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cartItems.map((item) => (
+                      <tr key={item.product_variant_id}>
+                        <td>
+                          {item.product_variant.product.name} ({item.product_variant.attributes}) x {item.amount}
+                        </td>
+                        <td className="text-right">
+                          {formatCurrency(item.product_variant.price * item.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="divider"></div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Tạm tính</span>
+                  <span>{formatCurrency(calculateSubtotal())}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Phí vận chuyển</span>
+                  <span>{formatCurrency(calculateShipping())}</span>
+                </div>
+                <div className="divider"></div>
+                <div className="flex justify-between font-bold">
+                  <span>Tổng cộng</span>
+                  <span className="text-xl">{formatCurrency(calculateTotal())}</span>
+                </div>
+              </div>
+
+              {error && (
+                <div className="alert alert-error mt-4">
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <button 
+                className="btn btn-primary w-full mt-4"
+                onClick={handlePlaceOrder}
+                disabled={processing || !profile || cartItems.length === 0}
+              >
+                {processing ? (
+                  <span className="loading loading-spinner"></span>
+                ) : (
+                  'Đặt hàng'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,10 +1,8 @@
 import { Link, useNavigate } from 'react-router';
 import May_tinh_ban from '~/asset/img/May_tinh_ban.png';
 import Phone from '~/asset/img/Phone.png';
-import { ProductsService } from '~/service/products.service';
+import { productsService } from '~/service/products.service';
 import type { Route } from './+types/home';
-
-const productService = new ProductsService();
 
 export function meta({}: Route.MetaArgs) {
     return [
@@ -14,24 +12,40 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function clientLoader({}) {
-    const [data, error] = await productService.getNewProducts();
-    const categories = [
-        { id: 1, name: 'Điện thoại', image: Phone },
-        { id: 5, name: 'Máy tính', image: May_tinh_ban },
-        { id: 2, name: 'Máy tính bảng', image: 'https://placehold.co/100x100' },
-        { id: 3, name: 'Laptop', image: 'https://placehold.co/100x100' },
-        { id: 4, name: 'Phụ kiện', image: 'https://placehold.co/100x100' },
-    ];
-    // load danh muc
-    return {
-        new_product: data,
-        categories,
-    };
+    try {
+        const response = await productsService.getNewProducts();
+        const categories = [
+            { id: 1, name: 'Điện thoại', image: Phone },
+            { id: 5, name: 'Máy tính', image: May_tinh_ban },
+            { id: 2, name: 'Máy tính bảng', image: 'https://placehold.co/100x100' },
+            { id: 3, name: 'Laptop', image: 'https://placehold.co/100x100' },
+            { id: 4, name: 'Phụ kiện', image: 'https://placehold.co/100x100' },
+        ];
+        
+        return {
+            new_product: response[0],
+            categories,
+            error: null
+        };
+    } catch (error) {
+        console.error("Error loading products:", error);
+        return {
+            new_product: { data: [] },
+            categories: [],
+            error: "Không thể tải sản phẩm mới. Vui lòng thử lại sau."
+        };
+    }
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-    const { new_product, categories } = loaderData;
+    const { new_product, categories, error } = loaderData;
     const nav = useNavigate();
+    
+    // Format currency function
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    };
+
     return (
         <>
             <section id="hero">
@@ -110,13 +124,14 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                                 </Link>
                             </div>
                         </div>
+                        {error && <p className="text-red-500">{error}</p>}
                         <div className="grid grid-cols-2 gap-4 w-full md:grid-cols-4 lg:grid-cols-5">
                             {(new_product?.data || []).map((value, index) => {
                                 return (
                                     <div
                                         key={index}
                                         className="card shadow-sm bg-base-300"
-                                        onClick={() => nav('san-pham/' + value.slug)}
+                                        onClick={() => nav('san-pham/' + value.id)}
                                     >
                                         <figure>
                                             <img src="https://placehold.co/600x400" alt="Shoes" />
@@ -151,10 +166,10 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                                             </div>
                                             <div className="flex gap-2 flex-col xl:flex-row">
                                                 <p className="text-lg font-bold">
-                                                    {value.base_price}đ
+                                                    {formatCurrency(value.base_price)}
                                                 </p>
                                                 <p className="text-sm text-gray-500 line-through">
-                                                    {value.base_original_price}đ
+                                                    {formatCurrency(value.base_original_price)}
                                                 </p>
                                             </div>
 
@@ -165,36 +180,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                                     </div>
                                 );
                             })}
-                            {/* {Array.from(Array(10).keys()).map((_, index) => (
-                <div key={index} className="card shadow-sm bg-base-300">
-                  <figure>
-                    <img src="https://placehold.co/600x400" alt="Shoes" />
-                  </figure>
-                  <div className="card-body p-4">
-                    <h2 className="card-title">Card Title</h2>
-                    <div className="flex">
-                      <div className="rating rating-xs">
-                        <div className="mask mask-star" aria-label="1 star"></div>
-                        <div className="mask mask-star" aria-label="2 star"></div>
-                        <div
-                          className="mask mask-star"
-                          aria-label="3 star"
-                          aria-current="true"
-                        ></div>
-                        <div className="mask mask-star" aria-label="4 star"></div>
-                        <div className="mask mask-star" aria-label="5 star"></div>
-                      </div>
-                      <p>{'(20)'}</p>
-                    </div>
-                    <div className="flex gap-2 flex-col xl:flex-row">
-                      <p className="text-lg font-bold">1.000.000đ</p>
-                      <p className="text-sm text-gray-500 line-through">2.000.000đ</p>
-                    </div>
-
-                    <button className="btn btn-primary">Buy Now</button>
-                  </div>
-                </div>
-              ))} */}
                         </div>
                     </div>
                 </div>

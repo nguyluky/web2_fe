@@ -7,6 +7,7 @@ import {
     ScrollRestoration,
 } from 'react-router';
 
+import { ToastContainer } from 'react-toastify';
 import type { Route } from './+types/root';
 import './app.css';
 import { AuthProvider } from './contexts/AuthContext';
@@ -50,6 +51,7 @@ export default function App() {
   return (
     <AuthProvider>
       <Outlet />
+       <ToastContainer />
     </AuthProvider>
   );
 }

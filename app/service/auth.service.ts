@@ -41,7 +41,5 @@ export class AuthService extends ApiService {
     async logout() {
         return this.post<void, any>('/auth/logout');
     }
-
-
     // TODO: Implement other auth-related methods as needed
 }

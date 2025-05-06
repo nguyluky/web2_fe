@@ -1,3 +1,4 @@
+//@ts-nocheck
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -9,17 +10,24 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 const CategoryManagement = () => {
-const [categories, setCategories] = useState([]);
-      useEffect(() => {
-        // Simulate fetching data from an API
-        const fetchCategories = async () => {
-            const response = await fetch('/api/categories'); // Replace with your API endpoint
-            const data = await response.json();
-            setCategories(data);
-        };
-
-        fetchCategories();
-      },[])
+  // const categories = [
+  //   { id: 1, name: 'Điện thoại', status: 'hd' },
+  //   { id: 2, name: 'Laptop', status: 'hd' },
+  //   { id: 3, name: 'Máy tính bảng', status: 'hd' },
+  //   { id: 4, name: 'Phụ kiện', status: 'hd' },
+  //   { id: 5, name: 'Tai nghe', status: 'an' },
+  // ];
+  const [categories, setCategories] = useState([]);
+  useEffect(() => {
+    // Simulate fetching data from an API
+    const fetchCategories = async () => {
+      const response = await fetch('http://127.0.0.1:8000/api/admin/categories'); // Replace with your API endpoint
+      const data = await response.json();
+      setCategories(data.data.data);
+      console.log('Categories:', data.data.data);
+    }
+    fetchCategories();
+  }, []);
   return (
     <div className="overflow-x-hidden min-h-screen bg-white p-4">
       {/* Header */}

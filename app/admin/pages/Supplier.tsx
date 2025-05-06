@@ -89,9 +89,9 @@ const [suppliers, setSuppliers] = useState([]);
               <tr key={supplier.id} className="border-b border-gray-300">
                 <td>{supplier.id}</td>
                 <td>{supplier.name}</td>
-                <td>{supplier.phone}</td>
+                <td>{supplier.phone_number}</td>
                 <td>{supplier.email}</td>
-                <td>{supplier.create_at}</td>
+                <td>{supplier.created_at}</td>
                 <td>
                   <span
                     className={`border border-gray-300 rounded-lg px-2 py-1 ${

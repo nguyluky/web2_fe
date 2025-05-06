@@ -1,5 +1,6 @@
-import React from 'react';
-import { useState } from 'react';
+//@ts-nocheck
+import React, { use } from 'react';
+import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faDeleteLeft,
@@ -9,10 +10,21 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 const RoleManagement = () => {
-  const roles = [
-    { id: 1, name: 'Admin', status: 'hd' },
-    { id: 3, name: 'Khách hàng', status: 'hd' },
-  ];
+  // const roles = [
+  //   { id: 1, name: 'Admin', status: 'hd' },
+  //   { id: 3, name: 'Khách hàng', status: 'hd' },
+  // ];
+  const [roles, setRoles] = useState([]);
+  useEffect(() => {
+    // Simulate fetching data from an API
+    const fetchRoles = async () => {
+      const response = await fetch('http://127.0.0.1:8000/api/admin/rules'); // Replace with your API endpoint
+      const data = await response.json();
+      setRoles(data.data.data);
+      console.log('aaaaaaa', data.data.data);
+    }
+    fetchRoles();
+  }, []);
   return (
     <div className="max-w-screen overflow-x-hidden px-4 py-6">
       {/* Header */}

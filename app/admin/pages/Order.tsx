@@ -17,13 +17,15 @@ const [users, setUsers] = useState([]);
       useEffect(() => {
         // Simulate fetching data from an API
         const fetchOrders = async () => {
-            const response = await fetch('http://127.0.0.1:8000/api/admin/oders'); // Replace with your API endpoint
+            const response = await fetch('http://127.0.0.1:8000/api/admin/orders'); // Replace with your API endpoint
             const data = await response.json();
             setOrders(data.data.data);
+            console.log("aaaaaaa",data.data.data);
 
             const userResponse = await fetch('http://127.0.0.1:8000/api/admin/users');
             const userData = await userResponse.json();
             setUsers(userData.data.data);
+            console.log("user",userData.data.data); 
         }
   
         fetchOrders();

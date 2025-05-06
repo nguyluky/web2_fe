@@ -8,31 +8,36 @@ import {
   faChevronLeft,
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
-import { data } from 'react-router';
+
 const WarrantyManagement = () => {
   const [warranties, setWarranties] = useState([]);
   const [users, setUsers] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
   
-  useffect(() => {
+  useEffect(() => {
     // Simulate fetching data from an API
     const fetchData = async () => {
       const warrantyRes = await fetch('http://127.0.0.1:8000/api/admin/warrantys'); // Replace with your API endpoint
       const warrantyData = await warrantyRes.json();
       setWarranties(warrantyData.data.data);
+      console.log("aaaaaaaa",warrantyData.data.data);
+      
 
       const userRes = await fetch('http://127.0.0.1:8000/api/admin/users'); // Replace with your API endpoint
       const userData = await userRes.json();
       setUsers(userData.data.data);
+      console.log("bbbbbb",userData.data.data);
 
       const supplierRes = await fetch('http://127.0.0.1:8000/api/admin/suppliers'); // Replace with your API endpoint
       const supplierData = await supplierRes.json();
       setSuppliers(supplierData.data.data);
+      console.log("cccccc",supplierData.data.data);
 
       const productRes = await fetch('http://127.0.0.1:8000/api/admin/products'); // Replace with your API endpoint
       const productData = await productRes.json();
       setProducts(productData.data.data);
+      console.log("dddddd",productData.data.data);
     };
     fetchData();
 
@@ -121,14 +126,14 @@ const WarrantyManagement = () => {
               <tr key={warranty.id} className="border-b border-gray-300">
                 <td>{warranty.id}</td>
                 <td>
-                  {users.find((user) => user.id === warranty.userid)?.name || 'Không tìm thấy'}
+                  {users.find((user) => user.id === warranty.id)?.fullname || 'Không tìm thấy'}
                 </td>
                 <td>
-                  {suppliers.find((supplier) => supplier.id === warranty.supplierid)?.name ||
+                  {suppliers.find((supplier) => supplier.id === warranty.supplier_id)?.name ||
                     'Không tìm thấy'}
                 </td>
                 <td>
-                  {products.find((product) => product.id === warranty.productid)?.name ||
+                  {products.find((product) => product.id === warranty.product_id)?.name ||
                     'Không tìm thấy'}
                 </td>
                 <td>{warranty.issue_date}</td>

@@ -14,6 +14,7 @@ const ProductManagement = () => {
 
 const [products, setProducts] = useState([]);
 const [categories, setCategories] = useState([]);
+const [productvariants, setProductVariants] = useState([]);
 
     useEffect(() => {
         // Simulate fetching data from an API
@@ -26,6 +27,11 @@ const [categories, setCategories] = useState([]);
             const categoryData = await categoryRes.json();
             setCategories(categoryData.data.data);
             console.log('Categories:', categoryData.data.data);
+
+            const ProductVariantsRes = await fetch('http://127.0.0.1:8000/api/admin/product-variants'); // Replace with your API endpoint
+            const ProductVariantsData = await ProductVariantsRes.json();
+            setProductVariants(ProductVariantsData.data.data);
+            console.log('ProductVariant:', ProductVariantsData.data.data);
         };
         fetchData();
     }, [])
@@ -33,6 +39,10 @@ const [categories, setCategories] = useState([]);
     const getCategoryName = (categoryId) => {
       const category = categories.find((cat) => cat.id === categoryId);
       return category ? category.name : 'Không rõ';
+    };
+    const getProductVariants = (ProductId) => {
+      const ProductVariant = productvariants.find((cat) => cat.product_id  === ProductId);
+      return ProductVariant ? ProductVariant.stock : 'Không rõ';
     };
 
   return (
@@ -135,7 +145,7 @@ const [categories, setCategories] = useState([]);
                 </td>
                 <td>{getCategoryName(product.category_id)}</td>
                 <td>{product.base_price}</td>
-                <td>{product.stock}</td>
+                <td>{getProductVariants(product.id)}</td>
                 <td>{product.created_at}</td>
                 <td>
                   <span

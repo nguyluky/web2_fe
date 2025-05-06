@@ -11,12 +11,21 @@ import {
 
 const OrderManagement = () => {
   const [imports, setImports] = useState([]);
+  const [users, setUsers] = useState([]);
+
   useEffect(() => {
     // Simulate fetching data from an API
     const fetchUsers = async () => {
-      const response = await fetch('/api/imports'); // Replace with your API endpoint
+      const response = await fetch('http://127.0.0.1:8000/api/admin/imports'); // Replace with your API endpoint
       const data = await response.json();
-      setImports(data);
+      setImports(data.data.data);
+      console.log("bbbbb",data.data.data);
+
+      const userResponse = await fetch('http://127.0.0.1:8000/api/admin/users');
+      const userData = await userResponse.json();
+      setUsers(userData.data.data);
+      console.log("aaaa", userData.data.data);
+
     };
 
     fetchUsers();
@@ -113,11 +122,11 @@ const OrderManagement = () => {
               <tr key={import_item.id} className="border-b border-gray-300">
                 <td>{import_item.id}</td>
                 <td>
-                  {users.find((user) => user.id === import_item.employee_id)?.name ||
+                  {users.find((user) => user.id === import_item.employee_id)?.fullname ||
                     'Không tìm thấy'}
                 </td>
                 <td>
-                  {users.find((user) => user.id === import_item.supplier_id)?.name ||
+                  {users.find((user) => user.id === import_item.supplier_id)?.fullname ||
                     'Không tìm thấy'}
                 </td>
                 <td>

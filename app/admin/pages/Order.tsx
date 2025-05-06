@@ -1,3 +1,4 @@
+//@ts-nocheck
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -10,17 +11,24 @@ import {
 
 const OrderManagement = () => {
 const [orders, setOrders] = useState([]);
+const [users, setUsers] = useState([]);
 
-    useEffect(() => {
-      // Simulate fetching data from an API
-      const fetchOrders = async () => {
-          const response = await fetch('`/api/admin/statistics/revenue-cost?year=${year}&type=${selected.toLowerCase()}`'); // Replace with your API endpoint
-          const data = await response.json();
-          setOrders(data);
-      };
+  
+      useEffect(() => {
+        // Simulate fetching data from an API
+        const fetchOrders = async () => {
+            const response = await fetch('http://127.0.0.1:8000/api/admin/oders'); // Replace with your API endpoint
+            const data = await response.json();
+            setOrders(data.data.data);
 
-      fetchOrders();
-    }, []);
+            const userResponse = await fetch('http://127.0.0.1:8000/api/admin/users');
+            const userData = await userResponse.json();
+            setUsers(userData.data.data);
+        }
+  
+        fetchOrders();
+      }, []);
+
   return (
     <div className="overflow-x-hidden min-h-screen bg-white p-4">
       {/* Header */}
@@ -103,10 +111,10 @@ const [orders, setOrders] = useState([]);
               <tr key={order.id} className="border-b border-gray-300">
                 <td>{order.id}</td>
                 <td>
-                  {users.find((user) => user.id === order.account_id)?.name || 'Không tìm thấy'}
+                  {users.find((user) => user.id === order.account_id)?.fullname || 'Không tìm thấy'}
                 </td>
                 <td>
-                  {users.find((user) => user.id === order.account_id)?.phone || 'Không tìm thấy'}
+                  {users.find((user) => user.id === order.account_id)?.phone_number || 'Không tìm thấy'}
                 </td>
                 <td>
                   {users.find((user) => user.id === order.account_id)?.email || 'Không tìm thấy'}

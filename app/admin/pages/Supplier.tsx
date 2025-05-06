@@ -1,5 +1,6 @@
+//@ts-nocheck
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faDeleteLeft,
@@ -9,53 +10,16 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 const SuppplierManagement = () => {
-  const suppliers = [
-    {
-      id: 1,
-      name: 'Công ty TNHH ABC',
-      tax: '0101234567',
-      phone: '0901234567',
-      email: 'contact@abc.com',
-      status: 'hd',
-      create_at: '2023-04-01',
-    },
-    {
-      id: 2,
-      name: 'Công ty CP XYZ',
-      tax: '0202345678',
-      phone: '0912345678',
-      email: 'info@xyz.com',
-      status: 'hd',
-      create_at: '2023-04-05',
-    },
-    {
-      id: 3,
-      name: 'Công ty TNHH DEF',
-      tax: '0303456789',
-      phone: '0923456789',
-      email: 'support@def.com',
-      status: 'an',
-      create_at: '2023-03-28',
-    },
-    {
-      id: 4,
-      name: 'Công ty CP LMN',
-      tax: '0404567890',
-      phone: '0934567890',
-      email: 'sales@lmn.com',
-      status: 'hd',
-      create_at: '2023-04-10',
-    },
-    {
-      id: 5,
-      name: 'Công ty TNHH PQR',
-      tax: '0505678901',
-      phone: '0945678901',
-      email: 'info@pqr.com',
-      status: 'an',
-      create_at: '2023-03-15',
-    },
-  ];
+const [suppliers, setSuppliers] = useState([]);
+  useEffect(() => {
+    // Simulate fetching data from an API
+    const fetchData = async () => {
+      const response = await fetch('http://127.0.0.1:8000/api/admin/suppliers'); // Replace with your API endpoint
+      const data = await response.json();
+      setSuppliers(data.data.data);
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="max-w-screen overflow-x-hidden px-4 py-6">

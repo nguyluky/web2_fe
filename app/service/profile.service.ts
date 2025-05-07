@@ -9,6 +9,7 @@ interface DataGet {
     fullname: string;
     phone_number: string;
     email: string;
+    avatar?: string;
 }
 
 interface UpdateProfileRequest {
@@ -18,26 +19,28 @@ interface UpdateProfileRequest {
     avatar?: File;
 }
 
-interface UpdateProfileRequest {
+interface UpdateProfileResponse {
     status: string;
-    data: DataPut;
+    data: DataGet;
 }
 
-interface DataPut {
-    id: number;
-    fullname: string;
-    phone_number: string;
-    email: string;
-    avatar: null;
-}
 
 export class ProfileService extends ApiService {
     async getProfile() {
         return this.get<getProfileResponse, any>('/users/profile');
     }
 
-    // TODO: chua handle file
     async updateProfile(data: UpdateProfileRequest) {
-        return this.post<UpdateProfileRequest, any>('/users/profile', data);
+        return this.put<UpdateProfileResponse, any>('/users/profile', data);
+    }
+    
+    async uploadAvatar(file: File) {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        return this.post<UpdateProfileResponse, FormData>('/users/profile/avatar', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
     }
 }

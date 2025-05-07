@@ -44,6 +44,7 @@ apiClient.interceptors.response.use(
 
 // Generic API service class
 export class ApiService {
+    baseUrl: string = API_URL;
   protected async get<T, E>(url: string, config?: AxiosRequestConfig): Promise<[(T | null), (E | null)]> {
     try {
         const response: AxiosResponse<T> = await apiClient.get(url, config);

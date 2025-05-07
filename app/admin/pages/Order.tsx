@@ -1,5 +1,6 @@
+//@ts-nocheck
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faDeleteLeft,
@@ -9,68 +10,26 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 const OrderManagement = () => {
-  const users = [
-    {
-      id: 1,
-      name: 'Nguyễn Văn A',
-      phone: '0901234567',
-      email: 'abc@gmail.com',
-      status: 'hd',
-      role: 'Admin',
-    },
-    {
-      id: 2,
-      name: 'Trần Thị B',
-      phone: '0912345678',
-      email: 'abc@gmail.com',
-      status: 'an',
-      role: 'User',
-    },
-    {
-      id: 3,
-      name: 'Lê Văn C',
-      phone: '0923456789',
-      email: 'abc@gmail.com',
-      status: 'hd',
-      role: 'User',
-    },
-  ];
+const [orders, setOrders] = useState([]);
+const [users, setUsers] = useState([]);
 
-  const orders = [
-    {
-      id: 1,
-      account_id: 1,
-      status: 'completed',
-      created_at: '2023-04-01',
-      employee_id: 201,
-      payment_method: 'Paypal',
-      details: [
-        { id: 1, product_id: 301, amount: 2 },
-        { id: 2, product_id: 302, amount: 1 },
-      ],
-    },
-    {
-      id: 2,
-      account_id: 2,
-      status: 'pending',
-      created_at: '2023-04-02',
-      employee_id: 202,
-      payment_method: 'Tiền mặt',
-      details: [
-        { id: 3, product_id: 303, amount: 5 },
-        { id: 4, product_id: 304, amount: 3 },
-      ],
-    },
-    {
-      id: 3,
-      account_id: 3,
-      status: 'canceled',
-      created_at: '2023-04-03',
-      employee_id: 203,
-      payment_method: 'Paypal',
-      details: [{ id: 5, product_id: 305, amount: 1 }],
-    },
-  ];
+  
+      useEffect(() => {
+        // Simulate fetching data from an API
+        const fetchOrders = async () => {
+            const response = await fetch('http://127.0.0.1:8000/api/admin/orders'); // Replace with your API endpoint
+            const data = await response.json();
+            setOrders(data.data.data);
+            console.log("aaaaaaa",data.data.data);
+
+            const userResponse = await fetch('http://127.0.0.1:8000/api/admin/users');
+            const userData = await userResponse.json();
+            setUsers(userData.data.data);
+            console.log("user",userData.data.data); 
+        }
+  
+        fetchOrders();
+      }, []);
 
   return (
     <div className="overflow-x-hidden min-h-screen bg-white p-4">
@@ -154,10 +113,10 @@ const OrderManagement = () => {
               <tr key={order.id} className="border-b border-gray-300">
                 <td>{order.id}</td>
                 <td>
-                  {users.find((user) => user.id === order.account_id)?.name || 'Không tìm thấy'}
+                  {users.find((user) => user.id === order.account_id)?.fullname || 'Không tìm thấy'}
                 </td>
                 <td>
-                  {users.find((user) => user.id === order.account_id)?.phone || 'Không tìm thấy'}
+                  {users.find((user) => user.id === order.account_id)?.phone_number || 'Không tìm thấy'}
                 </td>
                 <td>
                   {users.find((user) => user.id === order.account_id)?.email || 'Không tìm thấy'}

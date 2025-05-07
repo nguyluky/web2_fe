@@ -119,10 +119,10 @@ const ProductManagement = () => {
                     </div>
                   </div>
                 </td>
-                <td>{product.category}</td>
-                <td>{product.price}</td>
-                <td>{product.stock}</td>
-                <td>{product.creationDate}</td>
+                <td>{getCategoryName(product.category_id)}</td>
+                <td>{product.base_price}</td>
+                <td>{getProductVariants(product.id)}</td>
+                <td>{product.created_at}</td>
                 <td>
                   <span
                     className={`border border-gray-300 rounded-lg px-2 py-1 ${

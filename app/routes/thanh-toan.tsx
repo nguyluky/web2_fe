@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cartService, type CartItemWithProduct } from '~/service/cart.service';
 import { orderService, type CreateOrderRequest, type OrderProduct } from '~/service/order.service';
 import { ProfileService } from '~/service/profile.service';
+import type { Route } from './+types/thanh-toan';
 
 const profileService = new ProfileService();
 
@@ -13,7 +14,7 @@ export async function clientLoader() {
     
     return { 
       cartItems: cartResponse?.[0]?.carts || [], 
-      profile: profileResponse?.[0]?.data,
+      profile: profileResponse?.[0]?.data || null,
       error: null 
     };
   } catch (error) {
@@ -26,39 +27,13 @@ export async function clientLoader() {
   }
 }
 
-export default function Checkout() {
+export default function Checkout({loaderData}: Route.ComponentProps) {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState<CartItemWithProduct[]>([]);
-  const [profile, setProfile] = useState<any>(null);
+  const [cartItems, setCartItems] = useState<CartItemWithProduct[]>(loaderData.cartItems);
+  const [profile, setProfile] = useState(loaderData.profile);
   const [paymentMethod, setPaymentMethod] = useState<string>('cash');
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(loaderData.error);
   const [processing, setProcessing] = useState<boolean>(false);
-
-  useEffect(() => {
-    fetchCheckoutData();
-  }, []);
-
-  const fetchCheckoutData = async () => {
-    try {
-      setLoading(true);
-      const loaderData = await clientLoader();
-      
-      setCartItems(loaderData.cartItems);
-      setProfile(loaderData.profile);
-      setError(loaderData.error);
-      
-      // Redirect to cart if cart is empty
-      if (loaderData.cartItems.length === 0 && !loaderData.error) {
-        navigate('/cart');
-      }
-    } catch (err) {
-      console.error('Error fetching checkout data:', err);
-      setError('Không thể tải thông tin thanh toán. Vui lòng thử lại sau.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
@@ -88,7 +63,7 @@ export default function Checkout() {
     }));
 
     const orderData: CreateOrderRequest = {
-      account_id: profile.account_id,
+      account_id: profile.id,
       employee_id: 1, // Assume default employee ID - this would come from somewhere in a real app
       payment_method: paymentMethod,
       products: orderProducts
@@ -116,14 +91,6 @@ export default function Checkout() {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[500px]">
-        <div className="loading loading-spinner loading-lg"></div>
-      </div>
-    );
-  }
-
   if (error && cartItems.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[500px]">
@@ -145,7 +112,6 @@ export default function Checkout() {
             <div className="card-body">
               <h2 className="card-title">Thông tin khách hàng</h2>
               
-              {profile ? (
                 <div className="space-y-2">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -153,7 +119,7 @@ export default function Checkout() {
                       <input 
                         type="text" 
                         className="input input-bordered w-full" 
-                        value={profile.fullname || ''}
+                        value={profile?.fullname || ''}
                         readOnly
                       />
                     </div>
@@ -162,7 +128,7 @@ export default function Checkout() {
                       <input 
                         type="text" 
                         className="input input-bordered w-full" 
-                        value={profile.phone_number || ''}
+                        value={profile?.phone_number || ''}
                         readOnly
                       />
                     </div>
@@ -172,16 +138,11 @@ export default function Checkout() {
                     <input 
                       type="email" 
                       className="input input-bordered w-full" 
-                      value={profile.email || ''}
+                      value={profile?.email || ''}
                       readOnly
                     />
                   </div>
                 </div>
-              ) : (
-                <div className="alert alert-warning">
-                  <span>Vui lòng <a href="/auth/login" className="link">đăng nhập</a> để tiếp tục thanh toán</span>
-                </div>
-              )}
             </div>
           </div>
 
@@ -286,7 +247,8 @@ export default function Checkout() {
                     {cartItems.map((item) => (
                       <tr key={item.product_variant_id}>
                         <td>
-                          {item.product_variant.product.name} ({item.product_variant.attributes}) x {item.amount}
+                          {item.product_variant.product.name} ({
+                            Object.entries(JSON.parse(item.product_variant.attributes)).map(e => ( `${e[0]}: ${e[1]}`)).join(', ')}) x {item.amount}
                         </td>
                         <td className="text-right">
                           {formatCurrency(item.product_variant.price * item.amount)}

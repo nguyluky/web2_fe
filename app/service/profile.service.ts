@@ -1,6 +1,6 @@
 import { ApiService } from './api.service';
 
-interface getProfileResponse {
+export interface getProfileResponse {
     data: DataGet;
 }
 

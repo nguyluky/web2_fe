@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { cartService, type CartItemWithProduct } from '~/service/cart.service';
+import { cartService } from '~/service/cart.service';
+import type { Route } from './+types/cart';
 
 export async function clientLoader() {
   try {
@@ -15,29 +16,11 @@ export async function clientLoader() {
   }
 }
 
-export default function Cart() {
+export default function Cart({loaderData}: Route.ComponentProps) {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState<CartItemWithProduct[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchCartItems();
-  }, []);
-
-  const fetchCartItems = async () => {
-    try {
-      setLoading(true);
-      const loaderData = await clientLoader();
-      setCartItems(loaderData.cartItems);
-      setError(loaderData.error);
-    } catch (err) {
-      console.error('Error fetching cart items:', err);
-      setError('Không thể tải giỏ hàng. Vui lòng thử lại sau.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [cartItems, setCartItems] = useState(loaderData.cartItems);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(loaderData.error);
 
   const handleUpdateQuantity = async (variantId: number, amount: number) => {
     try {
@@ -114,13 +97,7 @@ export default function Cart() {
                       </tr>
                     </thead>
                     <tbody>
-                      {loading ? (
-                        <tr>
-                          <td colSpan={7} className="text-center py-4">
-                            Đang tải giỏ hàng...
-                          </td>
-                        </tr>
-                      ) : error ? (
+                      {error ? (
                         <tr>
                           <td colSpan={7} className="text-center py-4 text-error">
                             {error}
@@ -159,7 +136,14 @@ export default function Cart() {
                               {item.product_variant.product.name}
                               <br />
                               <span className="badge badge-ghost badge-sm">
-                                {item.product_variant.attributes}
+                                {'('}
+                                {Object.entries(JSON.parse(item.product_variant.attributes)).map(([key, value]) => (
+                                    <span key={key}>
+                                    {key}: {String(value)}
+                                    {Object.keys(JSON.parse(item.product_variant.attributes)).length > 1 ? ', ' : ''}
+                                  </span>
+                                ))}
+                                {')'}
                               </span>
                             </td>
                             <td>{formatCurrency(item.product_variant.price)}</td>

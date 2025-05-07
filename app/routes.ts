@@ -20,7 +20,7 @@ const userRoutes = [
   ]),
   layout('./component/cart-layout.tsx', [
     route('/cart', './routes/cart.tsx'),
-    route('/cart/thanh-toan', './routes/thanh-toan.tsx'),
+    route('/thanh-toan', './routes/thanh-toan.tsx'),
   ]),
   // Thêm định tuyến cho đăng nhập và đăng ký
   ...prefix('auth', [

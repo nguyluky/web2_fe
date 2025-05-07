@@ -48,17 +48,39 @@ export interface ProductImage {
   created_at: string
 }
 
-export interface ProductReview {
-  id: number
-  product_id: number
-  user_id: number
-  rating: number
-  comment: string
-  status: string
-  meta_data: any
-  created_at: string
-  updated_at: string
+
+interface ProductReview {
+  id: number;
+  product_id: number;
+  user_id: number;
+  rating: number;
+  comment: string;
+  status: string;
+  meta_data: null;
+  created_at: string;
+  updated_at: string;
+  account: Account;
 }
+
+interface Account {
+  id: number;
+  username: string;
+  rule: number;
+  status: string;
+  created: string;
+  updated: string;
+  deleted_at: null;
+  profile: Profile;
+}
+
+interface Profile {
+  id: number;
+  fullname: string;
+  phone_number: string;
+  email: string;
+  avatar: null;
+}
+
 
 export interface Category {
   id: number

@@ -64,21 +64,15 @@ const ProductManagement = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [editProduct, setEditProduct] = useState<any>(null);
     const handleAddClick = () => {
-        setIsEditMode(false);
-        setEditProduct(null);
-        setIsModalOpen(true);
-    };
-    const handleAddCloseModal = () => {
-        setIsModalOpen(false); // Đóng popup
+        setIsEditMode(false); //thêm mới
+        setEditProduct(null); // Đặt giá trị sản phẩm chỉnh sửa về null
+        setIsModalOpen(true); // Mở modal
     };
 
     const handleEditClick = (product: any) => {
-        setIsEditMode(true);
-        setEditProduct(product);
-        setIsModalOpen(true);
-    };
-    const handleEditCloseModal = () => {
-        setIsModalOpen(false); // Đóng popup
+        setIsEditMode(true); // Chỉnh sửa
+        setEditProduct(product); // Đặt giá trị sản phẩm chỉnh sửa
+        setIsModalOpen(true); // Mở modal
     };
 
     const handleSaveProduct = (data: any) => {

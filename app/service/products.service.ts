@@ -95,24 +95,35 @@ export interface Category {
 
 export interface NewProductsResponse {
   message: string
-  data: Daum[]
+  data: Datum[]
 }
 
-export interface Daum {
-  id: number
-  sku: string
-  name: string
-  slug: string
-  description: string
-  category_id: number
-  base_price: number
-  base_original_price: number
-  status: string
-  specifications: string
-  features: string
-  meta_data: any
-  created_at: string
-  updated_at: string
+interface Datum {
+  id: number;
+  sku: string;
+  name: string;
+  slug: string;
+  description: string;
+  category_id: number;
+  base_price: number;
+  base_original_price: number;
+  status: string;
+  specifications: string;
+  features: string;
+  meta_data: null;
+  created_at: string;
+  updated_at: string;
+  product_images: Productimage[];
+}
+
+interface Productimage {
+  id: number;
+  product_id: number;
+  variant_id: null | null | number;
+  image_url: string;
+  is_primary: boolean;
+  sort_order: number;
+  created_at: string;
 }
 
 export interface CategoryProductsResponse {

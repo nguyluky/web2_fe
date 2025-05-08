@@ -10,6 +10,7 @@ interface DataGet {
     phone_number: string;
     email: string;
     avatar?: string;
+    avatar_url?: string;
 }
 
 interface UpdateProfileRequest {

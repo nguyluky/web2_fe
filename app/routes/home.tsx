@@ -6,7 +6,7 @@ import type { Route } from './+types/home';
 
 export function meta({}: Route.MetaArgs) {
     return [
-        { title: 'New React Router App' },
+        { title: 'Codelỏ Shope' },
         { name: 'description', content: 'Welcome to React Router!' },
     ];
 }
@@ -134,7 +134,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                                         onClick={() => nav('san-pham/' + value.id)}
                                     >
                                         <figure>
-                                            <img src="https://placehold.co/600x400" alt="Shoes" />
+                                            <img src={value.product_images.find(e => e.is_primary)?.image_url || "https://placehold.co/600x400"} height={400} width={600} alt="Shoes" />
                                         </figure>
                                         <div className="card-body p-4">
                                             <h2 className="card-title">{value.name}</h2>

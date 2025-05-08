@@ -57,6 +57,37 @@ export default function Category({ loaderData }: Route.ComponentProps) {
               <div>
                 <h2 className="text-2xl font-bold">Bộ lọc</h2>
                 <div className="divider m-0"></div>
+                
+                {/* Thêm ô tìm kiếm */}
+                <div className="mb-4">
+                  <div className="form-control">
+                    <div className="join w-full">
+                      <input 
+                        type="text" 
+                        placeholder="Tìm kiếm..." 
+                        className="input input-bordered input-sm w-full" 
+                      />
+                      <button className="btn btn-square btn-sm btn-primary">
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          width="16" 
+                          height="16" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          strokeWidth="2" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          className="lucide lucide-search"
+                        >
+                          <circle cx="11" cy="11" r="8"/>
+                          <path d="m21 21-4.3-4.3"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="collapse collapse-arrow">
                   <input type="checkbox" className="peer p-0 m-0" />
                   <div className="collapse-title">Hãng</div>

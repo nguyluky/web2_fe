@@ -16,6 +16,7 @@ const userRoutes = [
       index('./routes/tai-khoan/index.tsx'),
       route('don-hang', './routes/tai-khoan/don-hang.tsx'),
       route('setting', './routes/tai-khoan/setting.tsx'),
+      route('address', './routes/tai-khoan/address.tsx'),
     ]),
   ]),
   layout('./component/cart-layout.tsx', [

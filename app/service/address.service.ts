@@ -35,7 +35,7 @@ export class AddressService extends ApiService {
     }
 
     getUserAddress() {
-        return this.get<{ data: UserAddress[] }, any>(`/users/addresses`);
+        return this.get<UserAddress[], any>(`/users/addresses`);
     }
 
     updateAddress(id: number, updatedData: Partial<UserAddress>) {

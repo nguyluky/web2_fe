@@ -1,25 +1,23 @@
 import React from 'react';
 import LineChartComponent from '../components/LineChartComponent';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 const RevenueStatisticsPage = () => {
-  const data = [
-    { name: 'Tháng 1', thu: 4000, chi: 2400 },
-    { name: 'Tháng 2', thu: 3000, chi: 1398 },
-    { name: 'Tháng 3', thu: 10000, chi: 4800, amt: 2290 },
-    { name: 'Tháng 4', thu: 2780, chi: 3908, amt: 1000 },
-    { name: 'Tháng 5', thu: 3890, chi: 4500, amt: 2181 },
-    { name: 'Tháng 6', thu: 2000, chi: 900, amt: 2290 },
-    { name: 'Tháng 7', thu: 2780, chi: 3908, amt: 2000 },
-    { name: 'Tháng 8', thu: 3000, chi: 1398, amt: 2210 },
-    { name: 'Tháng 9', thu: 5600, chi: 9800, amt: 2290 },
-    { name: 'Tháng 10', thu: 8500, chi: 3908, amt: 2000 },
-    { name: 'Tháng 11', thu: 2600, chi: 3908, amt: 2000 },
-    { name: 'Tháng 12', thu: 13000, chi: 9800, amt: 2290 },
-  ];
 
+
+const [data, setData] = useState([]);
+    useEffect(() => {
+      // Simulate fetching data from an API
+      const fetchData = async () => {
+        const response = await fetch(`/api/admin/statistics/revenue-cost?year=${year}&type=${selected.toLowerCase()}`); // Replace with your API endpoint
+        const data = await response.json();
+        setData(data);
+      };
+
+      fetchData();
+    }, []);
   const dataKeys = [
     { key: 'thu', color: '#8884d8' },
     { key: 'chi', color: '#82ca9d' },

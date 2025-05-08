@@ -1,5 +1,6 @@
+//@ts-nocheck
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faDeleteLeft,
@@ -9,75 +10,104 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 const OrderManagement = () => {
-  const users = [
-    {
-      id: 1,
-      name: 'Nguyễn Văn A',
-      phone: '0901234567',
-      email: 'abc@gmail.com',
-      status: 'hd',
-      role: 'Admin',
-    },
-    {
-      id: 2,
-      name: 'Trần Thị B',
-      phone: '0912345678',
-      email: 'abc@gmail.com',
-      status: 'an',
-      role: 'Imployee',
-    },
-    {
-      id: 3,
-      name: 'Lê Văn C',
-      phone: '0923456789',
-      email: 'abc@gmail.com',
-      status: 'hd',
-      role: 'Imployee',
-    },
-  ];
+  // const users = [
+  //   {
+  //     id: 1,
+  //     name: 'Nguyễn Văn A',
+  //     phone: '0901234567',
+  //     email: 'abc@gmail.com',
+  //     status: 'hd',
+  //     role: 'Admin',
+  //   },
+  //   {
+  //     id: 2,
+  //     name: 'Trần Thị B',
+  //     phone: '0912345678',
+  //     email: 'abc@gmail.com',
+  //     status: 'an',
+  //     role: 'Imployee',
+  //   },
+  //   {
+  //     id: 3,
+  //     name: 'Lê Văn C',
+  //     phone: '0923456789',
+  //     email: 'abc@gmail.com',
+  //     status: 'hd',
+  //     role: 'Imployee',
+  //   },
+  // ];
 
-  const imports = [
-    {
-      id: 1,
-      status: 'completed',
-      created_at: '2023-04-01',
-      employee_id: 2,
-      supplier_id: 2,
-      details: [
-        { id: 1, product_id: 1, import_price: 3450000, amount: 2 },
-        { id: 2, product_id: 3, import_price: 3600000, amount: 1 },
-      ],
-    },
-    {
-      id: 2,
-      status: 'pending',
-      created_at: '2023-04-02',
-      employee_id: 3,
-      supplier_id: 1,
-      details: [
-        { id: 3, product_id: 3, import_price: 3000000, amount: 5 },
-        { id: 4, product_id: 2, import_price: 4500000, amount: 3 },
-      ],
-    },
-    {
-      id: 3,
-      account_id: 3,
-      status: 'canceled',
-      created_at: '2023-04-03',
-      employee_id: 2,
-      supplier_id: 1,
-      details: [{ id: 1, product_id: 305, import_price: 4000000, amount: 1 }],
-    },
-  ];
+  // const imports = [
+  //   {
+  //     id: 1,
+  //     status: 'completed',
+  //     created_at: '2023-04-01',
+  //     employee_id: 2,
+  //     supplier_id: 2,
+  //     details: [
+  //       { id: 1, product_id: 1, import_price: 3450000, amount: 2 },
+  //       { id: 2, product_id: 3, import_price: 3600000, amount: 1 },
+  //     ],
+  //   },
+  //   {
+  //     id: 2,
+  //     status: 'pending',
+  //     created_at: '2023-04-02',
+  //     employee_id: 3,
+  //     supplier_id: 1,
+  //     details: [
+  //       { id: 3, product_id: 3, import_price: 3000000, amount: 5 },
+  //       { id: 4, product_id: 2, import_price: 4500000, amount: 3 },
+  //     ],
+  //   },
+  //   {
+  //     id: 3,
+  //     account_id: 3,
+  //     status: 'canceled',
+  //     created_at: '2023-04-03',
+  //     employee_id: 2,
+  //     supplier_id: 1,
+  //     details: [{ id: 1, product_id: 305, import_price: 4000000, amount: 1 }],
+  //   },
+  // 
+  const [users, setUsers] = useState([]);
+  const [imports, setImports] = useState([]);
+  const [importDetails, setImportDetails] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  useEffect(() => {
+    // Simulate fetching data from an API
+    const fetchData = async () => {
+      const response = await fetch('http://127.0.0.1:8000/api/admin/users');
+      const data = await response.json();
+      setUsers(data.data.data);
+      console.log("aaaaaaa",data.data.data);
 
+      const importRes = await fetch('http://127.0.0.1:8000/api/admin/imports'); // Replace with your API endpoint
+      const importData = await importRes.json();
+      setImports(importData.data.data);
+      console.log("bbbbbb",importData.data.data);
+
+      const importDetailsRes = await fetch('http://127.0.0.1:8000/api/admin/import-details'); // Replace with your API endpoint
+    const importDetailsData = await importDetailsRes.json();
+      setImportDetails(importDetailsData.data.data);
+      console.log("cccccc",importDetailsData.data.data);
+
+      const supplierRes = await fetch('http://127.0.0.1:8000/api/admin/suppliers'); // Replace with your API endpoint
+      const supplierData = await supplierRes.json();
+      setSuppliers(supplierData.data.data);
+      console.log("dddddd",supplierData.data.data);
+    };
+    fetchData();
+  }, []);
   const calculateTotalPerImport = (
     details: {
       import_price: number;
       amount: number;
-    }[]
+    }[] = []
   ) => {
     return details.reduce((sum, item) => sum + item.import_price * item.amount, 0);
   };
+  
 
   return (
     <div className="max-w-screen overflow-x-hidden px-4 py-6">
@@ -161,24 +191,27 @@ const OrderManagement = () => {
               <tr key={import_item.id} className="border-b border-gray-300">
                 <td>{import_item.id}</td>
                 <td>
-                  {users.find((user) => user.id === import_item.employee_id)?.name ||
+                  {users.find((user) => user.id === import_item.employee_id)?.fullname ||
                     'Không tìm thấy'}
                 </td>
                 <td>
-                  {users.find((user) => user.id === import_item.supplier_id)?.name ||
+                  {suppliers.find((supplier) => supplier.id === import_item.supplier_id)?.name ||
                     'Không tìm thấy'}
                 </td>
                 <td>
-                  {users.find((user) => user.id === import_item.supplier_id)?.email ||
+                  {users.find((user) => user.id === import_item.employee_id)?.email ||
                     'Không tìm thấy'}
                 </td>
                 <td>{import_item.created_at}</td>
                 <td>
-                  {calculateTotalPerImport(import_item.details).toLocaleString('vi-VN', {
-                    style: 'currency',
-                    currency: 'VND',
-                  })}
-                </td>
+                {calculateTotalPerImport(
+                  importDetails.filter((im) => im.import_id === import_item.id)
+                ).toLocaleString('vi-VN', {
+                  style: 'currency',
+                  currency: 'VND',
+                })}
+              </td>
+
 
                 <td>
                   <span

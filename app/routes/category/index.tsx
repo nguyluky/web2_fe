@@ -1,13 +1,13 @@
 // import type { Route } from "../+types/";
 
-import { Link } from "react-router";
+import { Link } from 'react-router';
 
-// export function meta({}: Route.MetaArgs) {
-//   return [
-//     { title: "New React Router App" },
-//     { name: "description", content: "Welcome to React Router!" },
-//   ];
-// }
+export function meta({}) {
+  return [
+    { title: 'New React Router App' },
+    { name: 'description', content: 'Welcome to React Router!' },
+  ];
+}
 
 export default function Category() {
   return (
@@ -31,8 +31,8 @@ export default function Category() {
           <div className="hero-content flex-col">
             <h1 className="text-5xl font-extrabold">Danh mục sản phẩm</h1>
             <p className="text-sm max-w-[700px] text-center text-base-content/70">
-              Khám phá đa dạng các sản phẩm công nghệ từ các thương hiệu hàng
-              đầu thế giới với chất lượng đảm bảo và giá cả cạnh tranh
+              Khám phá đa dạng các sản phẩm công nghệ từ các thương hiệu hàng đầu thế giới với chất
+              lượng đảm bảo và giá cả cạnh tranh
             </p>
           </div>
         </div>
@@ -45,19 +45,13 @@ export default function Category() {
               {Array.from(Array(6).keys()).map((_, index) => (
                 <div className="card w-fit overflow-hidden">
                   <figure>
-                    <img
-                      src="https://placehold.co/400x200"
-                      alt="Shoes"
-                      className="object-cover"
-                    />
+                    <img src="https://placehold.co/400x200" alt="Shoes" className="object-cover" />
                   </figure>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-6 flex flex-col justify-end">
-                    <h2 className="card-title text-primary-content text-xl">
-                      placeholder text
-                    </h2>
+                    <h2 className="card-title text-primary-content text-xl">placeholder text</h2>
                     <p className="font-light text-base-300">
-                      placeholder text placeholder text placeholder text
-                      placeholder text placeholder text placeholder text
+                      placeholder text placeholder text placeholder text placeholder text
+                      placeholder text placeholder text
                     </p>
                   </div>
                 </div>
@@ -76,9 +70,7 @@ export default function Category() {
                   <div className="rounded-full bg-muted mb-2 overflow-hidden w-fit">
                     <img src="https://placehold.co/100x100" alt="" />
                   </div>
-                  <span className="text-sm font-bold text-center">
-                    Điện thoại
-                  </span>
+                  <span className="text-sm font-bold text-center">Điện thoại</span>
                   <p className="text-sm text-base-content/50">100 sản phẩm</p>
                 </div>
               ))}

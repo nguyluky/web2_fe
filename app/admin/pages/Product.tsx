@@ -1,64 +1,28 @@
-import React from 'react';
-import { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// @ts-nocheck
 import {
-    faDeleteLeft,
-    faEdit,
     faChevronLeft,
     faChevronRight,
-    faTimes,
-    faImage,
+    faDeleteLeft,
+    faEdit,
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useState } from 'react';
 import ProductModal from '../components/ProductModal';
 
 const ProductManagement = () => {
-    const products = [
-        {
-            id: 1,
-            name: 'iPhone 15 Pro Max 256GB',
-            category: 'Điện thoại',
-            price: '32.990.000 ₫',
-            stock: 45,
-            status: 'hd',
-            creationDate: '15/09/2023',
-        },
-        {
-            id: 2,
-            name: 'Samsung Galaxy Z Fold 5',
-            category: 'Điện thoại',
-            price: '42.990.000 ₫',
-            stock: 20,
-            status: 'an',
-            creationDate: '10/08/2023',
-        },
-        {
-            id: 3,
-            name: 'MacBook Pro 14-inch M2',
-            category: 'Laptop',
-            price: '52.990.000 ₫',
-            stock: 10,
-            status: 'an',
-            creationDate: '01/11/2023',
-        },
-        {
-            id: 4,
-            name: 'Sony WH-1000XM5',
-            category: 'Tai nghe',
-            price: '7.990.000 ₫',
-            stock: 35,
-            status: 'hd',
-            creationDate: '20/09/2023',
-        },
-        {
-            id: 5,
-            name: 'iPad Air 2023 64GB',
-            category: 'Máy tính bảng',
-            price: '17.990.000 ₫',
-            stock: 25,
-            status: 'hd',
-            creationDate: '05/10/2023',
-        },
-    ];
+    const [products, setProducts] = useState([]);
+
+    useEffect(() => {
+        // Simulate fetching data from an API
+        const fetchProducts = async () => {
+            const response = await fetch('/api/products'); // Replace with your API endpoint
+            const data = await response.json();
+            setProducts(data);
+        };
+    
+        fetchProducts();
+    }, [])
+    
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -186,10 +150,10 @@ const ProductManagement = () => {
                                         </div>
                                     </div>
                                 </td>
-                                <td>{product.category}</td>
-                                <td>{product.price}</td>
-                                <td>{product.stock}</td>
-                                <td>{product.creationDate}</td>
+                                <td>{getCategoryName(product.category_id)}</td>
+                                <td>{product.base_price}</td>
+                                <td>{getProductVariants(product.id)}</td>
+                                <td>{product.created_at}</td>
                                 <td>
                                     <span
                                         className={`border border-gray-300 rounded-lg px-2 py-1 ${

@@ -1,5 +1,6 @@
+//@ts-nocheck
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faDeleteLeft,
@@ -7,35 +8,59 @@ import {
   faChevronLeft,
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
+import { data } from 'react-router';
 
 const UserManagement = () => {
-  const users = [
-    {
-      id: 1,
-      name: 'Nguyễn Văn A',
-      phone: '0901234567',
-      email: 'abc@gmail.com',
-      status: 'hd',
-      role: 'Admin',
-    },
-    {
-      id: 2,
-      name: 'Trần Thị B',
-      phone: '0912345678',
-      email: 'abc@gmail.com',
-      status: 'an',
-      role: 'User',
-    },
-    {
-      id: 3,
-      name: 'Lê Văn C',
-      phone: '0923456789',
-      email: 'abc@gmail.com',
-      status: 'hd',
-      role: 'User',
-    },
-  ];
+  // const users = [
+  //   {
+  //     id: 1,
+  //     name: 'Nguyễn Văn A',
+  //     phone: '0901234567',
+  //     email: 'abc@gmail.com',
+  //     status: 'hd',
+  //     role: 'Admin',
+  //   },
+  //   {
+  //     id: 2,
+  //     name: 'Trần Thị B',
+  //     phone: '0912345678',
+  //     email: 'abc@gmail.com',
+  //     status: 'an',
+  //     role: 'User',
+  //   },
+  //   {
+  //     id: 3,
+  //     name: 'Lê Văn C',
+  //     phone: '0923456789',
+  //     email: 'abc@gmail.com',
+  //     status: 'hd',
+  //     role: 'User',
+  //   },
+  // ];
+  const [users, setUsers] = useState([]);
+  const [rules, setRoles] = useState([]);
+  const [account , setAccount] = useState([]);
 
+  useEffect(() => {
+    // Simulate fetching data from an API
+    const fetchData = async () => {
+      const response = await fetch('http://127.0.0.1:8000/api/admin/users');
+      const data = await response.json();
+      setUsers(data.data.data);
+
+      const roleRes = await fetch('http://127.0.0.1:8000/api/admin/rules');
+      const roleData = await roleRes.json();
+      setRoles(roleData.data.data);
+
+      const accountRes = await fetch('http://127.0.0.1:8000/api/admin/accounts');
+      const accountData = await accountRes.json();
+      setAccount(accountData.data.data);
+      console.log('Accounts:', accountData.data.data);
+      console.log('Roles:', roleData.data.data);
+      console.log('Users:', data.data.data);
+    }
+    fetchData();
+  }, []);
   return (
     <div className="overflow-x-hidden min-h-screen bg-white p-4">
       {/* Header */}
@@ -114,12 +139,18 @@ const UserManagement = () => {
                         </div>
                       </div>
                       <div>
-                        <div className="">{user.name}</div>
+                        <div className="">{user.fullname}</div>
+                        
                       </div>
                     </div>
                   </td>
-                  <td>{user.phone}</td>
-                  <td>{user.role}</td>
+                  <td>{user.phone_number}</td>
+                  <td>
+          
+                    {rules.find((s) => s.id === (account.find((a) => a.id === user.id)?.rule))?.name || 'Không tìm thấy'}
+
+                  
+                </td>
                   <td>{user.email}</td>
                   <td>
                     <span

@@ -8,8 +8,26 @@ const userRoutes = [
       index('./routes/category/index.tsx'),
       route('/:id', './routes/category/category.tsx'),
     ]),
+    // ...prefix("tai-khoan", [
+    //     index("./routes/tai-khoan/index.tsx")
+    // ])
+
+    route('tai-khoan', './component/tai-khoan-layout.tsx', [
+      index('./routes/tai-khoan/index.tsx'),
+      route('don-hang', './routes/tai-khoan/don-hang.tsx'),
+      route('setting', './routes/tai-khoan/setting.tsx'),
+      route('address', './routes/tai-khoan/address.tsx'),
+    ]),
   ]),
-  layout('./component/cart-layout.tsx', [route('/cart', './routes/cart.tsx')]),
+  layout('./component/cart-layout.tsx', [
+    route('/cart', './routes/cart.tsx'),
+    route('/thanh-toan', './routes/thanh-toan.tsx'),
+  ]),
+  // Thêm định tuyến cho đăng nhập và đăng ký
+  ...prefix('auth', [
+    route('/login', './routes/auth/login.tsx'),
+    route('/register', './routes/auth/register.tsx'),
+  ]),
 ];
 
 const adminRoutes = [

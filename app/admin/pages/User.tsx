@@ -29,6 +29,17 @@ const UserManagement = () => {
     rule: '',
     status: 'active',
   });
+  const [updateUser, setUpdateUser] = useState({
+    id: null,
+    fullname: '',
+    phone_number: '',
+    email: '',
+    username: '',
+    password: '',
+    rule: '',
+    status: 'active',
+  });
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false); // Trạng thái tải
@@ -67,6 +78,16 @@ const UserManagement = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setNewUser({
+      fullname: '',
+      phone_number: '',
+      email: '',
+      username: '',
+      password: '',
+      rule: '',
+      status: 'active',
+    });
+    setUpdateUser({
+      id: null,
       fullname: '',
       phone_number: '',
       email: '',
@@ -267,6 +288,108 @@ const UserManagement = () => {
     }
   };
 
+  const openEditModal = (user) => {
+    const accountData = account.find((a) => a.id === user.id);
+    if (!accountData) return;
+  
+    setUpdateUser({
+      id: user.id,
+      fullname: user.fullname,
+      phone_number: user.phone_number,
+      email: user.email,
+      username: accountData.username,
+      password: '', // Không điền mật khẩu cũ, để trống để giữ nguyên nếu không thay đổi
+      rule: accountData.rule.toString(),
+      status: accountData.status,
+    });
+    setIsModalOpen(true);
+  };
+  
+  const handleUpdateInputChange = (e) => {
+    const { name, value } = e.target;
+    setUpdateUser((prev) => ({ ...prev, [name]: value }));
+  };
+  
+  const handleEditUser = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+  
+    try {
+      // Kiểm tra đầu vào
+      if (updateUser.phone_number.length !== 10 || !/^\d+$/.test(updateUser.phone_number)) {
+        throw new Error('Số điện thoại phải có đúng 10 chữ số');
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updateUser.email)) {
+        throw new Error('Email không hợp lệ');
+      }
+      if (!updateUser.rule) {
+        throw new Error('Vui lòng chọn vai trò');
+      }
+  
+      // Cập nhật tài khoản
+      const accountUpdateData = {
+        username: updateUser.username,
+        rule: parseInt(updateUser.rule),
+        status: updateUser.status,
+      };
+      if (updateUser.password) {
+        accountUpdateData.password = updateUser.password; // Chỉ gửi mật khẩu nếu người dùng nhập mật khẩu mới
+      }
+  
+      const accountResponse = await fetch(`http://127.0.0.1:8000/api/admin/accounts/${updateUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(accountUpdateData),
+      });
+  
+      if (!accountResponse.ok) {
+        const accountText = await accountResponse.text();
+        console.log('Phản hồi tài khoản:', accountText);
+        const accountData = JSON.parse(accountText);
+        const errorMessage = accountData.message?.username?.[0] || accountData.message || 'Không thể cập nhật tài khoản';
+        throw new Error(errorMessage);
+      }
+  
+      // Cập nhật hồ sơ người dùng
+      const profileResponse = await fetch(`http://127.0.0.1:8000/api/admin/users/${updateUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullname: updateUser.fullname,
+          phone_number: updateUser.phone_number,
+          email: updateUser.email,
+        }),
+      });
+  
+      if (!profileResponse.ok) {
+        const profileText = await profileResponse.text();
+        console.log('Phản hồi hồ sơ:', profileText);
+        const profileData = JSON.parse(profileText);
+        const errorMessage = profileData.message?.email?.[0] || profileData.message?.phone_number?.[0] || profileData.message || 'Không thể cập nhật hồ sơ người dùng';
+        throw new Error(errorMessage);
+      }
+  
+      // Làm mới danh sách
+      const updatedUsersResponse = await fetch(`http://127.0.0.1:8000/api/admin/users?page=${currentPage}`);
+      const updatedUsersData = await updatedUsersResponse.json();
+      setUsers(updatedUsersData.data.data || []);
+      setFilteredUsers(updatedUsersData.data.data || []);
+      setTotalPages(updatedUsersData.data.last_page || 1);
+  
+      const updatedAccountsResponse = await fetch(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
+      const updatedAccountData = await updatedAccountsResponse.json();
+      setAccount(updatedAccountData.data.data || []);
+  
+      closeModal();
+      toast.success('Cập nhật người dùng thành công!', { autoClose: 3000 });
+    } catch (error) {
+      console.error('Lỗi khi cập nhật người dùng:', error.message);
+      toast.error('Cập nhật người dùng thất bại: ' + error.message, { autoClose: 3000 });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="overflow-x-hidden min-h-screen bg-white p-4">
       <ToastContainer />
@@ -283,120 +406,121 @@ const UserManagement = () => {
       </header>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[30em] max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Thêm người dùng mới</h2>
-              <button onClick={closeModal}>
-                <FontAwesomeIcon icon={faTimes} className="text-xl" />
-              </button>
-            </div>
-            <form onSubmit={handleAddUser}>
-              <div className="mb-4">
-                <label className="block mb-2">Họ và tên</label>
-                <input
-                  type="text"
-                  name="fullname"
-                  value={newUser.fullname}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2">Số điện thoại</label>
-                <input
-                  type="text"
-                  name="phone_number"
-                  value={newUser.phone_number}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={newUser.email}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2">Tên đăng nhập</label>
-                <input
-                  type="text"
-                  name="username"
-                  value={newUser.username}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2">Mật khẩu</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={newUser.password}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2">Vai trò</label>
-                <select
-                  name="rule"
-                  value={newUser.rule}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                >
-                  <option value="">Chọn vai trò</option>
-                  {rules.map((rule) => (
-                    <option key={rule.id} value={rule.id}>
-                      {rule.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2">Trạng thái</label>
-                <select
-                  name="status"
-                  value={newUser.status}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="active">Hoạt động</option>
-                  <option value="hidden">Ẩn</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-4 py-2 bg-gray-300 rounded-md"
-                  disabled={isLoading}
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-700"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Đang thêm...' : 'Thêm'}
-                </button>
-              </div>
-            </form>
-          </div>
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-[30em] max-h-[90vh] overflow-y-auto">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">{updateUser.id ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}</h2>
+        <button onClick={closeModal}>
+          <FontAwesomeIcon icon={faTimes} className="text-xl" />
+        </button>
+      </div>
+      <form onSubmit={updateUser.id ? handleEditUser : handleAddUser}>
+        <div className="mb-4">
+          <label className="block mb-2">Họ và tên</label>
+          <input
+            type="text"
+            name="fullname"
+            value={updateUser.id ? updateUser.fullname : newUser.fullname}
+            onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
+          />
         </div>
-      )}
+        <div className="mb-4">
+          <label className="block mb-2">Số điện thoại</label>
+          <input
+            type="text"
+            name="phone_number"
+            value={updateUser.id ? updateUser.phone_number : newUser.phone_number}
+            onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Email</label>
+          <input
+            type="email"
+            name="email"
+            value={updateUser.id ? updateUser.email : newUser.email}
+            onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Tên đăng nhập</label>
+          <input
+            type="text"
+            name="username"
+            value={updateUser.id ? updateUser.username : newUser.username}
+            onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Mật khẩu</label>
+          <input
+            type="password"
+            name="password"
+            value={updateUser.id ? updateUser.password : newUser.password}
+            onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            placeholder={updateUser.id ? 'Để trống nếu không muốn thay đổi' : ''}
+            required={!updateUser.id} // Chỉ yêu cầu mật khẩu khi thêm mới
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Vai trò</label>
+          <select
+            name="rule"
+            value={updateUser.id ? updateUser.rule : newUser.rule}
+            onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
+          >
+            <option value="">Chọn vai trò</option>
+            {rules.map((rule) => (
+              <option key={rule.id} value={rule.id}>
+                {rule.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Trạng thái</label>
+          <select
+            name="status"
+            value={updateUser.id ? updateUser.status : newUser.status}
+            onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
+          >
+            <option value="active">Hoạt động</option>
+            <option value="hidden">Ẩn</option>
+          </select>
+        </div>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={closeModal}
+            className="px-4 py-2 bg-gray-300 rounded-md"
+            disabled={isLoading}
+          >
+            Hủy
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-700"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Đang xử lý...' : (updateUser.id ? 'Cập nhật' : 'Thêm')}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
 
       <main className="max-w-screen overflow-x-hidden px-4 py-6">
         <div className="flex flex-wrap justify-between mb-6">
@@ -488,7 +612,10 @@ const UserManagement = () => {
                     </td>
                     <td>
                       <div className="flex justify-start">
-                        <button className="flex w-12 h-12 px-4 py-2 text-base bg-white-500 text-gray-500 hover:text-black">
+                      <button
+                          className="flex w-12 h-12 px-4 py-2 text-base bg-white-500 text-gray-500 hover:text-black"
+                          onClick={() => openEditModal(user)}
+                        >
                           <FontAwesomeIcon icon={faEdit} className="text-xl" />
                         </button>
                         <button
@@ -530,4 +657,4 @@ const UserManagement = () => {
   );
 };
 
-export default UserManagement;
+export default UserManagement; 

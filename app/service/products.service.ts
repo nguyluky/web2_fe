@@ -1,6 +1,6 @@
 import { ApiService } from './api.service';
 
-interface Product {
+export interface Product {
   id: number;
   sku: string;
   name: string;
@@ -154,12 +154,6 @@ export interface CategoryProductsResponse {
   product: Product[]
 }
 
-export interface SearchProductsParams {
-  query?: string;
-  limit?: number;
-  sort?: 'created_at_desc' | 'created_at_asc' | 'price_asc' | 'price_desc';
-}
-
 export interface SearchProductsPagination {
   data: Product[];
   current_page: number;
@@ -208,14 +202,9 @@ export class ProductsService extends ApiService {
      * @param params Search parameters (query, limit, sort order)
      * @returns Paginated search results
      */
-    searchProducts(params: SearchProductsParams = {}) {
-        const queryParams = new URLSearchParams();
+    searchProducts(queryParams: URLSearchParams | null = null) {
         
-        if (params.query) queryParams.append('query', params.query);
-        if (params.limit) queryParams.append('limit', params.limit.toString());
-        if (params.sort) queryParams.append('sort', params.sort);
-        
-        const queryString = queryParams.toString();
+        const queryString = queryParams?.toString() || '';
         const url = `/products/search${queryString ? `?${queryString}` : ''}`;
         
         return this.get<SearchProductsPagination, any>(url);

@@ -20,6 +20,12 @@ export interface CategoryProductsResponse {
   product: Product[];
 }
 
+
+interface GetFilterResponse {
+  data: {[key: string]: string[]};
+}
+
+
 export class CategoryService extends ApiService {
   /**
    * Get all categories
@@ -38,13 +44,8 @@ export class CategoryService extends ApiService {
     return this.get<{ data: Category }, any>(`/categories/${id}`);
   }
 
-  /**
-   * Get all products in a specific category
-   * @param id Category ID
-   * @returns List of products in the category
-   */
-  async getCategoryProducts(id: number) {
-    return this.get<CategoryProductsResponse, any>(`/categories/${id}/products`);
+  async getFilterCategory(id: number) {
+    return this.get<GetFilterResponse, any>(`/categories/${id}/filter`);
   }
 }
 

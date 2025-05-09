@@ -1,18 +1,78 @@
+import { useState } from 'react';
+import { categoryService } from '~/service/category.service';
+import { productsService, SearchProductsPagination } from '~/service/products.service';
 import type { Route } from './+types/category';
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
-    const id = params.id;
-    await new Promise((r, l) => {
-        setTimeout(r, 1000);
-    });
+    const [filter, error] = await categoryService.getFilterCategory( Number(params.id),);
+    const [categorie, error2] = await categoryService.getCategory(Number(params.id));
+    const [products, error3] = await productsService.searchProducts();
     return {
-        id,
+        filter,
+        categorie,
+        products,
+        error: error || error2,
     };
 }
 
-export async function clientAction() {}
+export async function clientAction({request}: Route.ActionArgs) {
+    const data = await request.formData();
+    console.log(data);
+}
 
 export default function Category({ loaderData }: Route.ComponentProps) {
+
+    const [products, setProducts] = useState<SearchProductsPagination>(loaderData.products || {} as SearchProductsPagination);
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target as HTMLFormElement);
+        
+        // Tạo object để lưu trữ dữ liệu form, bao gồm cả các giá trị mảng
+        const formValues: Record<string, string | string[]> = {};
+        
+        // Duyệt qua từng cặp key-value trong formData
+        formData.forEach((value, key) => {
+            // Kiểm tra xem key có phải là dạng mảng không (kết thúc bằng [])
+            if (key.endsWith('[]')) {
+                const actualKey = key.slice(0, -2); // Loại bỏ [] ở cuối
+                
+                if (!formValues[actualKey]) {
+                    formValues[actualKey] = [];
+                }
+                
+                // Thêm giá trị vào mảng
+                (formValues[actualKey] as string[]).push(value.toString());
+            } else {
+                // Nếu không phải mảng thì xử lý bình thường
+                formValues[key] = value.toString();
+            }
+        });
+        
+        console.log('Form values:', formValues);
+
+        // chuyển dữ liệu formValues thành query string
+        const queryString = new URLSearchParams(formValues as Record<string, string>)
+
+        // Gửi dữ liệu đến server
+        productsService.searchProducts(queryString)
+        
+    }
+
+    if (loaderData.error) {
+        return (
+            <div className="hero">
+                <div className="hero-content w-full">
+                    <h1 className="text-5xl font-extrabold">Có lỗi xảy ra</h1>
+                    <p className="text-sm max-w-[700px] text-center text-base-content/70">
+                        Không thể tải danh mục sản phẩm
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <>
             <section>
@@ -26,7 +86,7 @@ export default function Category({ loaderData }: Route.ComponentProps) {
                                 <li>
                                     <a>Danh mục</a>
                                 </li>
-                                <li>{loaderData.id.replaceAll('-', ' ')}</li>
+                                <li>{loaderData.categorie?.data.name.replaceAll('-', ' ')}</li>
                             </ul>
                         </div>
                     </div>
@@ -54,7 +114,7 @@ export default function Category({ loaderData }: Route.ComponentProps) {
                 <div className="hero">
                     <div className="hero-content w-full">
                         <div className="grid grid-cols-[300px_1fr] gap-4 w-full">
-                            <div>
+                            <form onSubmit={handleSubmit}>
                                 <h2 className="text-2xl font-bold">Bộ lọc</h2>
                                 <div className="divider m-0"></div>
 
@@ -63,6 +123,7 @@ export default function Category({ loaderData }: Route.ComponentProps) {
                                     <div className="form-control">
                                         <div className="join w-full">
                                             <input
+                                                name='query'
                                                 type="text"
                                                 placeholder="Tìm kiếm..."
                                                 className="input input-bordered input-sm w-full"
@@ -88,59 +149,35 @@ export default function Category({ loaderData }: Route.ComponentProps) {
                                     </div>
                                 </div>
 
-                                <div className="collapse collapse-arrow">
-                                    <input type="checkbox" className="peer p-0 m-0" />
-                                    <div className="collapse-title">Hãng</div>
-                                    <div className="collapse-content">
-                                        <label className="flex gap-5">
-                                            <input
-                                                type="checkbox"
-                                                name=""
-                                                id=""
-                                                className="checkbox"
-                                            />
-                                            <span>hello</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div className="divider m-0"></div>
-                                <div className="collapse collapse-arrow">
-                                    <input type="checkbox" className="peer p-0 m-0" />
-                                    <div className="collapse-title">Ram</div>
-                                    <div className="collapse-content">
-                                        <label className="flex gap-5">
-                                            <input
-                                                type="checkbox"
-                                                name=""
-                                                id=""
-                                                className="checkbox"
-                                            />
-                                            <span>hello</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div className="divider m-0"></div>
-                                <div className="collapse collapse-arrow">
-                                    <input type="checkbox" className="peer p-0 m-0" />
-                                    <div className="collapse-title">Bộ nhớ trong</div>
-                                    <div className="collapse-content">
-                                        <label className="flex gap-5">
-                                            <input
-                                                type="checkbox"
-                                                name=""
-                                                id=""
-                                                className="checkbox"
-                                            />
-                                            <span>hello</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
+                                {
+                                    Object.entries(loaderData.filter?.data || {}).map(([key, value]) => (
+                                        <div key={key} className="collapse collapse-arrow">
+                                            <input type="checkbox" className="peer p-0 m-0" />
+                                            <div className="collapse-title">{key}</div>
+                                            <div className="collapse-content">
+                                                {Object.values(value).map((e) => (
+                                                    <label
+                                                        key={e}
+                                                        className="flex gap-5 my-3"
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            name={`${key}[]`}
+                                                            value={e}
+                                                            className="checkbox"
+                                                        />
+                                                        <span>{e}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))
+                                }
+
+                            </form>
                             <div className="w-full">
                                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                                    {Array(20)
-                                        .keys()
-                                        .map(() => (
+                                    {products.data.map(() => (
                                             <div
                                                 className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden"
                                                 data-v0-t="card"

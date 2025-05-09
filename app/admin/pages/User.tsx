@@ -1,5 +1,5 @@
 //@ts-nocheck
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faDeleteLeft,
@@ -32,6 +32,7 @@ const UserManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false); // Trạng thái tải
+  const passwordRef = useRef();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -96,6 +97,12 @@ const UserManagement = () => {
       }
       if (!newUser.rule) {
         throw new Error('Vui lòng chọn vai trò');
+      }
+      if (newUser.password.length < 8) {
+        throw new Error('Mật khẩu phải có ít nhất 8 kí tự');
+      }
+      if (newUser.password !== passwordRef.current.value) {
+        throw new Error('Mật khẩu xác nhận không khớp');
       }
 
       // Kiểm tra username tồn tại
@@ -283,8 +290,8 @@ const UserManagement = () => {
       </header>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[30em] max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[40em] max-h-[90vh] overflow-y-auto backdrop-blur-lg border-4 border-gray-300">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Thêm người dùng mới</h2>
               <button onClick={closeModal}>
@@ -292,90 +299,111 @@ const UserManagement = () => {
               </button>
             </div>
             <form onSubmit={handleAddUser}>
-              <div className="mb-4">
-                <label className="block mb-2">Họ và tên</label>
-                <input
-                  type="text"
-                  name="fullname"
-                  value={newUser.fullname}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                {/* Cột trái */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block mb-2">Họ và tên</label>
+                    <input
+                      type="text"
+                      name="fullname"
+                      value={newUser.fullname}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2">Số điện thoại</label>
+                    <input
+                      type="text"
+                      name="phone_number"
+                      value={newUser.phone_number}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={newUser.email}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2">Vai trò</label>
+                    <select
+                      name="rule"
+                      value={newUser.rule}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    >
+                      <option disabled selected value="">Chọn vai trò</option>
+                      {rules.map((rule) => (
+                        <option key={rule.id} value={rule.id}>
+                          {rule.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                    
+                {/* Cột phải */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block mb-2">Tên đăng nhập</label>
+                    <input
+                      type="text"
+                      name="username"
+                      value={newUser.username}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2">Mật khẩu</label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={newUser.password}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2">Xác nhận mật khẩu</label>
+                    <input
+                      type="password"
+                      name="confirm_password"
+                      ref={passwordRef}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2">Trạng thái</label>
+                    <select
+                      name="status"
+                      value={newUser.status}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="active">Hoạt động</option>
+                      <option value="hidden">Ẩn</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-              <div className="mb-4">
-                <label className="block mb-2">Số điện thoại</label>
-                <input
-                  type="text"
-                  name="phone_number"
-                  value={newUser.phone_number}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={newUser.email}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2">Tên đăng nhập</label>
-                <input
-                  type="text"
-                  name="username"
-                  value={newUser.username}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2">Mật khẩu</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={newUser.password}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2">Vai trò</label>
-                <select
-                  name="rule"
-                  value={newUser.rule}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                >
-                  <option value="">Chọn vai trò</option>
-                  {rules.map((rule) => (
-                    <option key={rule.id} value={rule.id}>
-                      {rule.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2">Trạng thái</label>
-                <select
-                  name="status"
-                  value={newUser.status}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="active">Hoạt động</option>
-                  <option value="hidden">Ẩn</option>
-                </select>
-              </div>
+                    
+              {/* Nút hành động */}
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
@@ -406,7 +434,7 @@ const UserManagement = () => {
               <input
                 id="searchName"
                 type="text"
-                placeholder="Tìm kiếm theo tên người dùng"
+                placeholder="Nội dung tìm kiếm"
                 className="text-xl w-[16em] p-2 border border-gray-300 rounded-md box-border"
                 value={searchTerm}
                 onChange={handleSearchInputChange}

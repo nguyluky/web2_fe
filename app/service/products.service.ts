@@ -1,28 +1,74 @@
 import { ApiService } from './api.service';
 
-export interface ProductDetailResponse {
-  product: Product
+interface Product {
+  id: number;
+  sku: string;
+  name: string;
+  slug: string;
+  description: string;
+  category_id: number;
+  base_price: number;
+  base_original_price: number;
+  status: string;
+  specifications: Specifications;
+  features: string[];
+  meta_data: null;
+  created_at: string;
+  updated_at: string;
+  product_variants: Productvariant[];
+  product_images: Productimage[];
+  category: Category;
+  product_reviews: ProductReview[];
 }
 
-export interface Product {
-  id: number
-  sku: string
-  name: string
-  slug: string
-  description: string
-  category_id: number
-  base_price: number
-  base_original_price: number
-  status: string
-  specifications: string
-  features: string
-  meta_data: any
-  created_at: string
-  updated_at: string
-  product_variants: ProductVariant[]
-  product_images: ProductImage[]
-  product_reviews: ProductReview[]
-  category: Category
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  status: string;
+  parent_id: null;
+  require_fields: null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Productimage {
+  id: number;
+  product_id: number;
+  variant_id: null;
+  image_url: string;
+  is_primary: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+interface Productvariant {
+  id: number;
+  product_id: number;
+  sku: string;
+  price: number;
+  original_price: number;
+  stock: number;
+  status: string;
+  specifications: Specifications2;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Specifications2 {
+  Color: string;
+  Connection: string;
+}
+
+interface Specifications {
+  sensor: string;
+  buttons: string;
+  weight: string;
+}
+
+
+export interface ProductDetailResponse {
+  product: Product
 }
 
 export interface ProductVariant {
@@ -81,18 +127,6 @@ interface Profile {
   avatar: null;
 }
 
-
-export interface Category {
-  id: number
-  name: string
-  slug: string
-  status: string
-  parent_id: number
-  require_fields: any
-  created_at: string
-  updated_at: string
-}
-
 export interface NewProductsResponse {
   message: string
   data: Datum[]
@@ -114,16 +148,6 @@ interface Datum {
   created_at: string;
   updated_at: string;
   product_images: Productimage[];
-}
-
-interface Productimage {
-  id: number;
-  product_id: number;
-  variant_id: null | null | number;
-  image_url: string;
-  is_primary: boolean;
-  sort_order: number;
-  created_at: string;
 }
 
 export interface CategoryProductsResponse {

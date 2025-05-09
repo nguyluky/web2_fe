@@ -214,7 +214,7 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                                         }`}
                                         onClick={() => setSelectedVariant(variant.id)}
                                     >
-                                        {Object.entries(JSON.parse(variant.attributes)).map(
+                                        {Object.entries(variant.specifications).map(
                                             ([key, value]) => (
                                                 <span key={key} className="text-sm">
                                                     {key}: {String(value)}
@@ -302,7 +302,7 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                             <div>
                                 <h3 className="font-medium text-lg mb-2">Thông số kỹ thuật</h3>
                                 <div className="overflow-x-auto">
-                                    {Object.entries(JSON.parse(product.specifications)).map(
+                                    {Object.entries(product.specifications).map(
                                         (spec: any, index: number) => (
                                             <div key={index} className="flex justify-between py-1">
                                                 <span className="font-medium">{spec[0]}</span>

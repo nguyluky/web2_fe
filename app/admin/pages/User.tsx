@@ -47,20 +47,27 @@ const UserManagement = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch users
-        const usersResponse = await fetch(`http://127.0.0.1:8000/api/admin/users?page=${currentPage}`);
+        // Gọi API tìm kiếm thay vì lấy toàn bộ danh sách
+        const params = new URLSearchParams({
+          fullname: searchTerm,
+          status: statusFilter,
+          page: currentPage,
+          per_page: 10,
+        });
+  
+        const usersResponse = await fetch(`http://127.0.0.1:8000/api/admin/users/search?${params.toString()}`);
         if (!usersResponse.ok) throw new Error('Không thể lấy danh sách người dùng');
         const usersData = await usersResponse.json();
         setUsers(usersData.data.data || []);
         setFilteredUsers(usersData.data.data || []);
         setTotalPages(usersData.data.last_page || 1);
-
+  
         // Fetch accounts
         const accountsResponse = await fetch(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
         if (!accountsResponse.ok) throw new Error('Không thể lấy danh sách tài khoản');
         const accountsData = await accountsResponse.json();
         setAccount(accountsData.data.data || []);
-
+  
         // Fetch rules
         const rulesResponse = await fetch('http://127.0.0.1:8000/api/admin/rules');
         if (!rulesResponse.ok) throw new Error('Không thể lấy danh sách vai trò');
@@ -68,11 +75,11 @@ const UserManagement = () => {
         setRules(rulesData.data.data || []);
       } catch (error) {
         console.error('Lỗi khi lấy dữ liệu:', error.message);
-        toast.error('Lỗi khi lấy dữ liệu: ' + error.message);
+        toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
       }
     };
     fetchData();
-  }, [currentPage]);
+  }, [currentPage, searchTerm, statusFilter]); // Thêm searchTerm và statusFilter vào dependencies
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
@@ -264,15 +271,36 @@ const UserManagement = () => {
     }
   };
 
-  const handleSearch = () => {
-    let filtered = users.filter((user) => {
-      const accountData = account.find((a) => a.id === user.id);
-      if (!accountData) return false;
-      const matchesSearch = user.fullname.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || accountData.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-    setFilteredUsers(filtered);
+  const handleSearch = async () => {
+    try {
+      // Tạo query string từ searchTerm và statusFilter
+      const params = new URLSearchParams({
+        fullname: searchTerm,
+        status: statusFilter,
+        page: currentPage,
+        per_page: 10, // Số bản ghi mỗi trang
+      });
+  
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/users/search?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error('Không thể tìm kiếm người dùng');
+      }
+  
+      const searchData = await response.json();
+      const usersData = searchData.data;
+  
+      // Cập nhật danh sách người dùng tìm kiếm được
+      setFilteredUsers(usersData.data || []);
+      setTotalPages(usersData.last_page || 1);
+  
+      // Lấy lại danh sách tài khoản để hiển thị thông tin bổ sung (rule, status)
+      const updatedAccountsResponse = await fetch(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
+      const updatedAccountData = await updatedAccountsResponse.json();
+      setAccount(updatedAccountData.data.data || []);
+    } catch (error) {
+      console.error('Lỗi khi tìm kiếm người dùng:', error.message);
+      toast.error('Tìm kiếm thất bại: ' + error.message, { autoClose: 3000 });
+    }
   };
 
   const handleSearchInputChange = (e) => setSearchTerm(e.target.value);

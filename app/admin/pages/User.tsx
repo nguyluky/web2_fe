@@ -26,6 +26,7 @@ const UserManagement = () => {
     email: '',
     username: '',
     password: '',
+    confirmPassword: '',
     rule: '',
     status: 'active',
   });
@@ -36,6 +37,7 @@ const UserManagement = () => {
     email: '',
     username: '',
     password: '',
+    confirmPassword: '',
     rule: '',
     status: 'active',
   });
@@ -126,11 +128,17 @@ const UserManagement = () => {
       if (!newUser.rule) {
         throw new Error('Vui lòng chọn vai trò');
       }
-      if (newUser.password.length < 8) {
-        throw new Error('Mật khẩu phải có ít nhất 8 kí tự');
+      if (!newUser.username) {
+        throw new Error('Vui lòng nhập tên đăng nhập');
       }
-      if (newUser.password !== passwordRef.current.value) {
-        throw new Error('Mật khẩu xác nhận không khớp');
+      if (!newUser.password) {
+        throw new Error('Vui lòng nhập mật khẩu');
+      }
+      if (newUser.password.length < 6) {
+        throw new Error('Mật khẩu phải có ít nhất 6 ký tự');
+      }
+      if (newUser.password !== newUser.confirmPassword) {
+        throw new Error('Mật khẩu và xác nhận mật khẩu không khớp');
       }
 
       // Kiểm tra username tồn tại
@@ -142,6 +150,16 @@ const UserManagement = () => {
       if (checkData.exists) {
         throw new Error('Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.');
       }
+      // Kiểm tra email tồn tại
+      const checkEmailResponse = await fetch(`http://127.0.0.1:8000/api/admin/check-email/${newUser.email}`);
+      if (!checkEmailResponse.ok) {
+        throw new Error('Không thể kiểm tra email');
+      }
+      const checkEmailData = await checkEmailResponse.json();
+      if (checkEmailData.exists) {
+        throw new Error('Email đã tồn tại. Vui lòng chọn email khác.');
+      }
+
 
       // Tạo tài khoản
       const accountResponse = await fetch('http://127.0.0.1:8000/api/admin/accounts', {
@@ -441,130 +459,141 @@ const UserManagement = () => {
       </header>
 
       {isModalOpen && (
-  <div className="fixed inset-0 flex justify-center items-center z-50">
-    <div className="bg-white p-6 rounded-lg shadow-lg w-[40em] max-h-[90vh] overflow-y-auto backdrop-blur-lg border-4 border-gray-300">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">{updateUser.id ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}</h2>
-        <button onClick={closeModal}>
-          <FontAwesomeIcon icon={faTimes} className="text-xl" />
-        </button>
-      </div>
-      <form onSubmit={updateUser.id ? handleEditUser : handleAddUser}>
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          {/* Cột trái */}
-          <div className="space-y-4">
-            <div>
-              <label className="block mb-2">Họ và tên</label>
-              <input
-                type="text"
-                name="fullname"
-                value={updateUser.id ? updateUser.fullname : newUser.fullname}
-                onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                required
-              />
+        <div className="fixed inset-0 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[40em] max-h-[90vh] overflow-y-auto backdrop-blur-lg border-4 border-gray-300">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">{updateUser.id ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}</h2>
+              <button onClick={closeModal}>
+                <FontAwesomeIcon icon={faTimes} className="text-xl" />
+              </button>
             </div>
-            <div>
-              <label className="block mb-2">Số điện thoại</label>
-              <input
-                type="text"
-                name="phone_number"
-                value={updateUser.id ? updateUser.phone_number : newUser.phone_number}
-                onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                required
-              />
-            </div>
-            <div>
-              <label className="block mb-2">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={updateUser.id ? updateUser.email : newUser.email}
-                onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block mb-2">Vai trò</label>
-              <select
-                name="rule"
-                value={updateUser.id ? updateUser.rule : newUser.rule}
-                onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                required
-              >
-                <option disabled selected value="">Chọn vai trò</option>
-                {rules.map((rule) => (
-                  <option key={rule.id} value={rule.id}>
-                    {rule.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          {/* Cột phải */}
-          <div className="space-y-4">
-            <div>
-              <label className="block mb-2">Tên đăng nhập</label>
-              <input
-                type="text"
-                name="username"
-                value={updateUser.id ? updateUser.username : newUser.username}
-                onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                required
-              />
-            </div>
-            <div>
-              <label className="block mb-2">Mật khẩu</label>
-              <input
-                type="password"
-                name="password"
-                value={updateUser.id ? updateUser.password : newUser.password}
-                onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                placeholder={updateUser.id ? 'Để trống nếu không muốn thay đổi' : ''}
-                required={!updateUser.id} // Chỉ yêu cầu mật khẩu khi thêm mới
-              />
-            </div>
-            <div>
-              <label className="block mb-2">Trạng thái</label>
-              <select
-                name="status"
-                value={updateUser.id ? updateUser.status : newUser.status}
-                onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              >
-                <option value="active">Hoạt động</option>
-                <option value="hidden">Ẩn</option>
-              </select>
-            </div>
+            <form onSubmit={updateUser.id ? handleEditUser : handleAddUser}>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                {/* Cột trái */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block mb-2">Họ và tên</label>
+                    <input
+                      type="text"
+                      name="fullname"
+                      value={updateUser.id ? updateUser.fullname : newUser.fullname}
+                      onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2">Số điện thoại</label>
+                    <input
+                      type="text"
+                      name="phone_number"
+                      value={updateUser.id ? updateUser.phone_number : newUser.phone_number}
+                      onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={updateUser.id ? updateUser.email : newUser.email}
+                      onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block mb-2">Vai trò</label>
+                    <select
+                      name="rule"
+                      value={updateUser.id ? updateUser.rule : newUser.rule}
+                      onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    >
+                      <option disabled value="">Chọn vai trò</option>
+                      {rules.map((rule) => (
+                        <option key={rule.id} value={rule.id}>
+                          {rule.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                {/* Cột phải */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block mb-2">Tên đăng nhập</label>
+                    <input
+                      type="text"
+                      name="username"
+                      value={updateUser.id ? updateUser.username : newUser.username}
+                      onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2">Mật khẩu</label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={updateUser.id ? updateUser.password : newUser.password}
+                      onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      placeholder={updateUser.id ? 'Để trống nếu không muốn thay đổi' : ''}
+                      required={!updateUser.id}
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2">Nhập lại mật khẩu</label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      value={updateUser.id ? updateUser.confirmPassword : newUser.confirmPassword}
+                      onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      placeholder={updateUser.id ? 'Để trống nếu không muốn thay đổi' : ''}
+                      required={!updateUser.id}
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2">Trạng thái</label>
+                    <select
+                      name="status"
+                      value={updateUser.id ? updateUser.status : newUser.status}
+                      onChange={updateUser.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="active">Hoạt động</option>
+                      <option value="hidden">Ẩn</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 bg-gray-300 rounded-md"
+                  disabled={isLoading}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-700"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Đang xử lý...' : (updateUser.id ? 'Cập nhật' : 'Thêm')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-        {/* Nút hành động */}
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={closeModal}
-            className="px-4 py-2 bg-gray-300 rounded-md"
-            disabled={isLoading}
-          >
-            Hủy
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-700"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Đang xử lý...' : (updateUser.id ? 'Cập nhật' : 'Thêm')}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
 
       <main className="max-w-screen overflow-x-hidden px-4 py-6">
         <div className="flex flex-wrap justify-between mb-6">

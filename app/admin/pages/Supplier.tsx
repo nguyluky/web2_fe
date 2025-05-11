@@ -157,7 +157,7 @@ const SuppplierManagement = () => {
       }
 
       // Làm mới danh sách
-      const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers?page=${currentPage}`);
+      const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/search?page=${currentPage}&status=${statusFilter}`);
       const updatedSuppliersData = await updatedSuppliersResponse.json();
       setSuppliers(updatedSuppliersData.data.data || []);
       setFilteredSuppliers(updatedSuppliersData.data.data || []);
@@ -210,7 +210,7 @@ const SuppplierManagement = () => {
       }
   
       // Làm mới danh sách
-      const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers?page=${currentPage}`);
+      const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/search?page=${currentPage}&status=${statusFilter}`);
       const updatedSuppliersData = await updatedSuppliersResponse.json();
       setSuppliers(updatedSuppliersData.data.data || []);
       setFilteredSuppliers(updatedSuppliersData.data.data || []);
@@ -254,7 +254,7 @@ const SuppplierManagement = () => {
         setTotalPages(supplierData.data.last_page || 1);
 
         // Làm mới danh sách
-        const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers?page=${currentPage}`);
+        const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/search?page=${currentPage}&status=${statusFilter}`);
         const updatedSuppliersData = await updatedSuppliersResponse.json();
         setSuppliers(updatedSuppliersData.data.data || []);
         setFilteredSuppliers(updatedSuppliersData.data.data || []);
@@ -266,7 +266,7 @@ const SuppplierManagement = () => {
       } else {
         // Dự phòng: lấy lại dữ liệu nếu API không trả về danh sách cập nhật
         const fetchData = async () => {
-          const suplliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers?page=${currentPage}`);
+          const suplliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/search?page=${currentPage}&status=${statusFilter}`);
           const suppliersData = await suplliersResponse.json();
           setSuppliers(suppliersData.data.data || []);
           setFilteredSuppliers(suppliersData.data.data || []);
@@ -383,8 +383,8 @@ const SuppplierManagement = () => {
                 onChange={handleStatusChange}
               >
                 <option value="all">Tất cả trạng thái</option>
-                <option value="hd">Hoạt động</option>
-                <option value="an">Đã ngừng</option>
+                <option value="active">Hoạt động</option>
+                <option value="inactive">Đã ngừng</option>
               </select>
             </div>
           </div>

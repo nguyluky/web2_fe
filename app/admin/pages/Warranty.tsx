@@ -19,6 +19,8 @@ const WarrantyManagement = () => {
   const [filteredWarranties, setFilteredWarranties] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [dateStart, setDateStart] = useState('');
+  const [dateEnd, setDateEnd] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newWarranty, setNewWarranty] = useState({
       product_id: '',
@@ -46,6 +48,8 @@ const WarrantyManagement = () => {
         const params = new URLSearchParams({
           keyword: searchTerm,
           status: statusFilter,
+          date_start: dateStart,
+          date_end: dateEnd,
           page: currentPage,
           per_page: 10,
         });
@@ -69,7 +73,7 @@ const WarrantyManagement = () => {
       }
     };
     fetchData();
-  }, [currentPage, searchTerm, statusFilter]);
+  }, [currentPage, searchTerm, statusFilter, dateStart, dateEnd]);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
@@ -186,7 +190,8 @@ const WarrantyManagement = () => {
   }
 
   const handleStatusChange = (e) => setStatusFilter(e.target.value);
-
+  const handleDateStartChange = (e) => setDateStart(e.target.value);
+  const handleDateEndChange = (e) => setDateEnd(e.target.value);
   const goToPage = (page) => {
     if (page > 0 && page <= totalPages) {
       setCurrentPage(page);
@@ -239,6 +244,8 @@ const WarrantyManagement = () => {
                 id="searchDateStart"
                 type="date"
                 className="text-xl w-[12em] p-2 border border-gray-300 rounded-md"
+                value={dateStart}
+                onChange={handleDateStartChange}
               />
             </div>
             <div className="flex flex-col mb-4 mr-8 md:mb-0">
@@ -247,6 +254,8 @@ const WarrantyManagement = () => {
                 id="searchDateEnd"
                 type="date"
                 className="text-xl w-[12em] p-2 border border-gray-300 rounded-md"
+                value={dateEnd}
+                onChange={handleDateEndChange}
               />
             </div>
 

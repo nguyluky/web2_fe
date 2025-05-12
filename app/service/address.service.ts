@@ -1,29 +1,23 @@
-import { ApiService } from "./api.service"
+import { ApiService } from "./api.service";
 
-export interface Address {
-    profile_id: number
-    phone_number: string
-    street: string
-    district: string
-    ward: string
-    city: string
-}
 
 export interface UserAddress {
-  id: number
-  profile_id: number
-  phone_number: string
-  street: string
-  ward: string
-  district: string
-  city: string
+  id: number;
+  profile_id: number;
+  phone_number: string;
+  email: string;
+  name: string;
+  street: string;
+  ward: string;
+  district: string;
+  city: string;
 }
   
 export class AddressService extends ApiService {
-    addNewAddress(address: Address) {
+    addNewAddress(address: Omit<UserAddress, 'id' | 'profile_id'>) {
         const formBody = new URLSearchParams(address as any).toString();
 
-        return this.post<{ data: Address }, any>(
+        return this.post<{ data: UserAddress }, any>(
             `/users/addresses`,
             formBody,
             {

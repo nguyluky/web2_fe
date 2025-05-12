@@ -1,15 +1,19 @@
+import type { Product } from "~/models/Product";
+import type { ProductVariant } from "~/models/ProductVariant";
 import { ApiService } from "./api.service";
 
 export interface OrderProduct {
   product_variant_id: number;
-  serial: number;
 }
 
+
 export interface CreateOrderRequest {
-  account_id: number;
-  employee_id: number;
-  payment_method: string;
-  products: OrderProduct[];
+  products: {
+    product_variant_id: number;
+    // Có thể bổ sung thêm các thuộc tính khác của products nếu cần
+  }[];
+  payment_method: number;
+  address_id: number;
 }
 
 export interface OrderStatus {
@@ -25,7 +29,7 @@ export interface Order {
   account_id: number;
   employee_id: number;
   status: string;
-  payment_method: string;
+  payment_method: number;
   created_at: string;
   updated_at: string;
 }
@@ -37,8 +41,8 @@ export interface OrderResponse {
 export interface OrderDetail {
   id: number;
   order_id: number;
-  product_id: number;
-  variant_id: number;
+  product: Product;
+  variant: ProductVariant;
   amount: number;
   price: number;
   created_at: string;
@@ -112,7 +116,7 @@ export class OrderService extends ApiService {
     if (params?.status) queryParams.append('status', params.status);
     
     const queryString = queryParams.toString();
-    const url = `/user/orders${queryString ? `?${queryString}` : ''}`;
+    const url = `/users/orders${queryString ? `?${queryString}` : ''}`;
     
     return this.get<UserOrdersPagination, any>(url);
   }

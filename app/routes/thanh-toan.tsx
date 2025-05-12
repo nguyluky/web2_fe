@@ -1,303 +1,393 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AddressService } from '~/service/address.service';
 import { cartService, type CartItemWithProduct } from '~/service/cart.service';
 import { orderService, type CreateOrderRequest, type OrderProduct } from '~/service/order.service';
 import { ProfileService } from '~/service/profile.service';
 import type { Route } from './+types/thanh-toan';
 
 const profileService = new ProfileService();
+const addressService = new AddressService();
 
 export async function clientLoader() {
-  try {
-    const cartResponse = await cartService.getCart();
-    const profileResponse = await profileService.getProfile();
-    
-    return { 
-      cartItems: cartResponse?.[0]?.carts || [], 
-      profile: profileResponse?.[0]?.data || null,
-      error: null 
-    };
-  } catch (error) {
-    console.error('Error loading checkout data:', error);
-    return { 
-      cartItems: [], 
-      profile: null,
-      error: 'Không thể tải thông tin thanh toán. Vui lòng thử lại sau.' 
-    };
-  }
+    try {
+        const cartResponse = await cartService.getCart();
+        const profileResponse = await profileService.getProfile();
+        const addressResponse = await addressService.getUserAddress();
+
+        return {
+            cartItems: cartResponse?.[0]?.carts || [],
+            profile: profileResponse?.[0]?.data || null,
+            address: addressResponse?.[0] || [],
+            error: null,
+        };
+    } catch (error) {
+        console.error('Error loading checkout data:', error);
+        return {
+            cartItems: [],
+            profile: null,
+            address: [],
+            error: 'Không thể tải thông tin thanh toán. Vui lòng thử lại sau.',
+        };
+    }
 }
 
-export default function Checkout({loaderData}: Route.ComponentProps) {
-  const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState<CartItemWithProduct[]>(loaderData.cartItems);
-  const [profile, setProfile] = useState(loaderData.profile);
-  const [paymentMethod, setPaymentMethod] = useState<string>('cash');
-  const [error, setError] = useState<string | null>(loaderData.error);
-  const [processing, setProcessing] = useState<boolean>(false);
+export default function Checkout({ loaderData }: Route.ComponentProps) {
+    const navigate = useNavigate();
+    const [cartItems, setCartItems] = useState<CartItemWithProduct[]>(loaderData.cartItems);
+    const [profile, setProfile] = useState(loaderData.profile);
+    const [paymentMethod, setPaymentMethod] = useState<number>(0);
+    const [error, setError] = useState<string | null>(loaderData.error);
+    const [processing, setProcessing] = useState<boolean>(false);
+    const [addressSele, setAddressSele] = useState(loaderData.address[0]);
 
-  const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => {
-      return total + (item.product_variant.price * item.amount);
-    }, 0);
-  };
-
-  const calculateShipping = () => {
-    // Simple shipping calculation example - could be expanded with actual shipping options
-    return 0; // Free shipping for this example
-  };
-
-  const calculateTotal = () => {
-    return calculateSubtotal() + calculateShipping();
-  };
-
-  const handlePlaceOrder = async () => {
-    if (!profile) {
-      setError('Vui lòng đăng nhập để thanh toán');
-      return;
-    }
-
-    // Prepare order products from cart items
-    const orderProducts: OrderProduct[] = cartItems.map(item => ({
-      product_variant_id: item.product_variant_id,
-      serial: item.amount
-    }));
-
-    const orderData: CreateOrderRequest = {
-      account_id: profile.id,
-      employee_id: 1, // Assume default employee ID - this would come from somewhere in a real app
-      payment_method: paymentMethod,
-      products: orderProducts
+    const calculateSubtotal = () => {
+        return cartItems.reduce((total, item) => {
+            return total + item.product_variant.price * item.amount;
+        }, 0);
     };
 
-    try {
-      setProcessing(true);
-      const response = await orderService.createOrder(orderData);
-      
-      if (response && response[0] && response[0].order) {
-        // Order created successfully
-        navigate(`/tai-khoan/don-hang/${response[0].order.id}`, { 
-          state: { success: true, message: 'Đặt hàng thành công!' } 
-        });
-      }
-    } catch (err) {
-      console.error('Error creating order:', err);
-      setError('Không thể tạo đơn hàng. Vui lòng thử lại sau.');
-    } finally {
-      setProcessing(false);
+    const calculateShipping = () => {
+        // Simple shipping calculation example - could be expanded with actual shipping options
+        return 0; // Free shipping for this example
+    };
+
+    const calculateTotal = () => {
+        return calculateSubtotal() + calculateShipping();
+    };
+
+    const handlePlaceOrder = async () => {
+        if (!profile) {
+            setError('Vui lòng đăng nhập để thanh toán');
+            return;
+        }
+
+        // Prepare order products from cart items
+        const orderProducts: OrderProduct[] = cartItems.map((item) => ({
+            product_variant_id: item.product_variant_id,
+            serial: item.amount,
+        }));
+
+        const orderData: CreateOrderRequest = {
+            payment_method: paymentMethod,
+            products: orderProducts,
+            address_id: addressSele.id,
+        };
+
+        try {
+            setProcessing(true);
+            const response = await orderService.createOrder(orderData);
+
+            if (response && response[0] && response[0].order) {
+                navigate('/thanh-toan-thanh-cong')
+            }
+        } catch (err) {
+            console.error('Error creating order:', err);
+            setError('Không thể tạo đơn hàng. Vui lòng thử lại sau.');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+            amount
+        );
+    };
+
+    if (error && cartItems.length === 0) {
+        return (
+            <div className="flex justify-center items-center min-h-[500px]">
+                <div className="alert alert-error">
+                    <span>{error}</span>
+                </div>
+            </div>
+        );
     }
-  };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
-
-  if (error && cartItems.length === 0) {
     return (
-      <div className="flex justify-center items-center min-h-[500px]">
-        <div className="alert alert-error">
-          <span>{error}</span>
-        </div>
-      </div>
+        <>
+            <div className="container mx-auto py-8 px-4">
+                <h1 className="text-3xl font-bold mb-8">Thanh toán</h1>
+
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+                    <div className="card bg-base-100 shadow-sm">
+                        <div className="card-body">
+                            <div className="card-title">Sản phẩm</div>
+                            <div className="">
+                                <table className="table table-xs">
+                                    {/* head */}
+                                    <thead>
+                                        <tr>
+                                            <th>Hình ảnh</th>
+                                            <th>Sản phẩm</th>
+                                            <th>Đơn giá</th>
+                                            <th>Số lượng</th>
+                                            <th>thành tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {error ? (
+                                            <tr>
+                                                <td
+                                                    colSpan={7}
+                                                    className="text-center py-4 text-error"
+                                                >
+                                                    {error}
+                                                </td>
+                                            </tr>
+                                        ) : cartItems.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={7} className="text-center py-4">
+                                                    Giỏ hàng của bạn đang trống
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            cartItems.map((item) => (
+                                                <tr key={item.product_variant_id}>
+                                                    <td>
+                                                        <div className="avatar">
+                                                            <div className="mask mask-squircle h-12 w-12">
+                                                                {item.product_variant.product
+                                                                    .product_images?.[0] ? (
+                                                                    <img
+                                                                        src={
+                                                                            item.product_variant
+                                                                                .product
+                                                                                .product_images[0]
+                                                                                .image_url
+                                                                        }
+                                                                        alt={
+                                                                            item.product_variant
+                                                                                .product.name
+                                                                        }
+                                                                    />
+                                                                ) : (
+                                                                    <img
+                                                                        src="https://placehold.co/30"
+                                                                        alt="Placeholder image"
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        {item.product_variant.product.name}
+                                                        <br />
+                                                        <span className="badge badge-ghost badge-sm">
+                                                            {'('}
+                                                            {Object.entries(
+                                                                item.product_variant.specifications
+                                                            ).map(([key, value], index) => (
+                                                                <span key={key}>
+                                                                    {key}: {String(value)}
+                                                                    {Object.keys(
+                                                                        item.product_variant
+                                                                            .specifications
+                                                                    ).length -
+                                                                        1 >
+                                                                    index
+                                                                        ? ', '
+                                                                        : ''}
+                                                                </span>
+                                                            ))}
+                                                            {')'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        {formatCurrency(item.product_variant.price)}
+                                                    </td>
+                                                    <td>
+                                                        <div className="join">
+                                                            <input
+                                                                className="input join-item w-12"
+                                                                type="number"
+                                                                value={item.amount}
+                                                                min={1}
+                                                                disabled={true}
+                                                            />
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        {formatCurrency(
+                                                            item.product_variant.price * item.amount
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Order Summary */}
+                    <div className="space-y-6">
+                        <div className="flex flex-col gap-8">
+                            <div className="card bg-base-100 shadow-sm">
+                                <div className="card-body">
+                                    <h2 className="card-title">
+                                        Thông tin giao hàng
+                                        <button className="btn btn-sm btn-outline ml-auto"
+                                            onClick={() => {
+                                                const modal = document.getElementById('my_modal_1') as HTMLDialogElement;
+                                                if (modal) {
+                                                    modal.showModal();
+                                                }
+                                            }}>
+                                            <span className="material-symbols-outlined">edit</span>
+                                        </button>
+                                    </h2>
+                                    {addressSele ? (
+                                        <div>
+                                            <div className="flex flex-col gap-2">
+                                                <div className="flex justify-between">
+                                                    <span>Họ tên:</span>
+                                                    <span>{addressSele.name}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Số điện thoại:</span>
+                                                    <span>{addressSele.phone_number}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Địa chỉ:</span>
+                                                    <span>
+                                                        {`${addressSele.street}, ${addressSele.ward}, ${addressSele.district}, ${addressSele.city}`}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="alert alert-warning">
+                                            Vui lòng đăng nhập để xem thông tin giao hàng
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="card bg-base-100 shadow-sm">
+                                <div className="card-body">
+                                    <h2 className="card-title">Đơn hàng của bạn</h2>
+                                    <div className="overflow-x-auto">
+                                        <table className="table table-xs">
+                                            <thead>
+                                                <tr>
+                                                    <th>Sản phẩm</th>
+                                                    <th className="text-right">Giá</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {cartItems.map((item) => (
+                                                    <tr key={item.product_variant_id}>
+                                                        <td>
+                                                            {item.product_variant.product.name} (
+                                                            {Object.entries(
+                                                                item.product_variant.specifications
+                                                            )
+                                                                .map((e) => `${e[0]}: ${e[1]}`)
+                                                                .join(', ')}
+                                                            ) x {item.amount}
+                                                        </td>
+                                                        <td className="text-right">
+                                                            {formatCurrency(
+                                                                item.product_variant.price *
+                                                                    item.amount
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div className="divider"></div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <span>Tạm tính</span>
+                                            <span>{formatCurrency(calculateSubtotal())}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Phí vận chuyển</span>
+                                            <span>{formatCurrency(calculateShipping())}</span>
+                                        </div>
+                                        <div className="divider"></div>
+                                        <div className="flex justify-between font-bold">
+                                            <span>Tổng cộng</span>
+                                            <span className="text-xl">
+                                                {formatCurrency(calculateTotal())}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {error && (
+                                        <div className="alert alert-error mt-4">
+                                            <span>{error}</span>
+                                        </div>
+                                    )}
+
+                                    <button
+                                        className="btn btn-primary w-full mt-4"
+                                        onClick={handlePlaceOrder}
+                                        disabled={processing || !profile || cartItems.length === 0}
+                                    >
+                                        {processing ? (
+                                            <span className="loading loading-spinner"></span>
+                                        ) : (
+                                            'Đặt hàng'
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <dialog id="my_modal_1" className="modal">
+                <div className="modal-box">
+
+
+                    <h2 className="card-title">Chọn địa chỉ giao hàng</h2>
+                    <div className="overflow-x-auto">
+                        <table className="table table-xs">
+                            <thead>
+                                <tr>
+                                    <th>Họ tên</th>
+                                    <th>Số điện thoại</th>
+                                    <th>Địa chỉ</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {loaderData.address.map((address) => (
+                                    <tr key={address.id}>
+                                        <td>{address.name}</td>
+                                        <td>{address.phone_number}</td>
+                                        <td>
+                                            {`${address.street}, ${address.ward}, ${address.district}, ${address.city}`}
+                                        </td>
+                                        <td>
+                                            <button
+                                                className="btn btn-sm btn-primary"
+                                                onClick={() => {
+                                                    setAddressSele(address);
+                                                    const modal = document.getElementById('my_modal_1') as HTMLDialogElement;
+                                                    if (modal) {
+                                                        modal.close();
+                                                    }
+                                                }}
+                                            >
+                                                Chọn
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </dialog>
+        </>
     );
-  }
-
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-8">Thanh toán</h1>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
-        {/* Customer Information */}
-        <div className="space-y-6">
-          <div className="card bg-base-100 shadow-sm">
-            <div className="card-body">
-              <h2 className="card-title">Thông tin khách hàng</h2>
-              
-                <div className="space-y-2">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="label">Họ tên</label>
-                      <input 
-                        type="text" 
-                        className="input input-bordered w-full" 
-                        value={profile?.fullname || ''}
-                        readOnly
-                      />
-                    </div>
-                    <div>
-                      <label className="label">Số điện thoại</label>
-                      <input 
-                        type="text" 
-                        className="input input-bordered w-full" 
-                        value={profile?.phone_number || ''}
-                        readOnly
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="label">Email</label>
-                    <input 
-                      type="email" 
-                      className="input input-bordered w-full" 
-                      value={profile?.email || ''}
-                      readOnly
-                    />
-                  </div>
-                </div>
-            </div>
-          </div>
-
-          <div className="card bg-base-100 shadow-sm">
-            <div className="card-body">
-              <h2 className="card-title">Địa chỉ giao hàng</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="label">Địa chỉ</label>
-                  <textarea 
-                    className="textarea textarea-bordered w-full" 
-                    rows={3}
-                    placeholder="Nhập địa chỉ giao hàng"
-                  ></textarea>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="label">Tỉnh/Thành phố</label>
-                    <select className="select select-bordered w-full">
-                      <option disabled selected>Chọn tỉnh/thành phố</option>
-                      <option>Hà Nội</option>
-                      <option>TP. Hồ Chí Minh</option>
-                      <option>Đà Nẵng</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label">Quận/Huyện</label>
-                    <select className="select select-bordered w-full">
-                      <option disabled selected>Chọn quận/huyện</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label">Phường/Xã</label>
-                    <select className="select select-bordered w-full">
-                      <option disabled selected>Chọn phường/xã</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="card bg-base-100 shadow-sm">
-            <div className="card-body">
-              <h2 className="card-title">Phương thức thanh toán</h2>
-              <div className="space-y-4">
-                <div className="form-control">
-                  <label className="label cursor-pointer justify-start gap-4">
-                    <input 
-                      type="radio" 
-                      name="payment-method" 
-                      className="radio radio-primary" 
-                      checked={paymentMethod === 'cash'}
-                      onChange={() => setPaymentMethod('cash')}
-                    />
-                    <span className="label-text">Thanh toán khi nhận hàng (COD)</span>
-                  </label>
-                </div>
-                <div className="form-control">
-                  <label className="label cursor-pointer justify-start gap-4">
-                    <input 
-                      type="radio" 
-                      name="payment-method" 
-                      className="radio radio-primary"
-                      checked={paymentMethod === 'bank_transfer'}
-                      onChange={() => setPaymentMethod('bank_transfer')}
-                    />
-                    <span className="label-text">Chuyển khoản ngân hàng</span>
-                  </label>
-                </div>
-                <div className="form-control">
-                  <label className="label cursor-pointer justify-start gap-4">
-                    <input 
-                      type="radio" 
-                      name="payment-method" 
-                      className="radio radio-primary"
-                      checked={paymentMethod === 'momo'}
-                      onChange={() => setPaymentMethod('momo')}
-                    />
-                    <span className="label-text">Ví điện tử MoMo</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Order Summary */}
-        <div className="space-y-6">
-          <div className="card bg-base-100 shadow-sm">
-            <div className="card-body">
-              <h2 className="card-title">Đơn hàng của bạn</h2>
-              <div className="overflow-x-auto">
-                <table className="table table-xs">
-                  <thead>
-                    <tr>
-                      <th>Sản phẩm</th>
-                      <th className="text-right">Giá</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cartItems.map((item) => (
-                      <tr key={item.product_variant_id}>
-                        <td>
-                          {item.product_variant.product.name} ({
-                            Object.entries(JSON.parse(item.product_variant.attributes)).map(e => ( `${e[0]}: ${e[1]}`)).join(', ')}) x {item.amount}
-                        </td>
-                        <td className="text-right">
-                          {formatCurrency(item.product_variant.price * item.amount)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="divider"></div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Tạm tính</span>
-                  <span>{formatCurrency(calculateSubtotal())}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Phí vận chuyển</span>
-                  <span>{formatCurrency(calculateShipping())}</span>
-                </div>
-                <div className="divider"></div>
-                <div className="flex justify-between font-bold">
-                  <span>Tổng cộng</span>
-                  <span className="text-xl">{formatCurrency(calculateTotal())}</span>
-                </div>
-              </div>
-
-              {error && (
-                <div className="alert alert-error mt-4">
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <button 
-                className="btn btn-primary w-full mt-4"
-                onClick={handlePlaceOrder}
-                disabled={processing || !profile || cartItems.length === 0}
-              >
-                {processing ? (
-                  <span className="loading loading-spinner"></span>
-                ) : (
-                  'Đặt hàng'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 }

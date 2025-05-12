@@ -19,8 +19,10 @@ export default function Address() {
     const [currentAddress, setCurrentAddress] = useState<UserAddress | null>(null);
     
     // Form state
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<Omit<UserAddress, "id" | "profile_id">>({
         phone_number: "",
+        email: "",
+        name: "",
         street: "",
         ward: "",
         district: "",
@@ -72,10 +74,7 @@ export default function Address() {
             setLoading(true);
             
             // Thêm profile_id vào formData khi gửi lên server
-            const [response, error] = await addressService.addNewAddress({
-                ...formData,
-                profile_id: 0 // Server sẽ tự lấy profile_id từ token
-            });
+            const [response, error] = await addressService.addNewAddress(formData);
             
             if (error) {
                 toast.error("Không thể thêm địa chỉ mới");
@@ -87,6 +86,8 @@ export default function Address() {
             // Reset form
             setFormData({
                 phone_number: "",
+                email: "",
+                name: "",
                 street: "",
                 ward: "",
                 district: "",
@@ -108,6 +109,8 @@ export default function Address() {
         setCurrentAddress(address);
         setFormData({
             phone_number: address.phone_number,
+            email: address.email,
+            name: address.name,
             street: address.street,
             ward: address.ward,
             district: address.district,
@@ -140,6 +143,8 @@ export default function Address() {
             // Reset form
             setFormData({
                 phone_number: "",
+                email: "",
+                name: "",
                 street: "",
                 ward: "",
                 district: "",
@@ -191,6 +196,8 @@ export default function Address() {
         setShowEditForm(false);
         setFormData({
             phone_number: "",
+            email: "",
+            name: "",
             street: "",
             ward: "",
             district: "",
@@ -245,6 +252,34 @@ export default function Address() {
                                                     type="text" 
                                                     name="phone_number"
                                                     value={formData.phone_number}
+                                                    onChange={handleChange}
+                                                    className="input input-bordered w-full" 
+                                                    required
+                                                />
+                                            </div>
+                                            
+                                            <div className="form-control w-full">
+                                                <label className="label">
+                                                    <span className="label-text">Email</span>
+                                                </label>
+                                                <input 
+                                                    type="email" 
+                                                    name="email"
+                                                    value={formData.email}
+                                                    onChange={handleChange}
+                                                    className="input input-bordered w-full" 
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div className="form-control w-full">
+                                                <label className="label">
+                                                    <span className="label-text">Tên</span>
+                                                </label>
+                                                <input 
+                                                    type="text" 
+                                                    name="name"
+                                                    value={formData.name}
                                                     onChange={handleChange}
                                                     className="input input-bordered w-full" 
                                                     required
@@ -350,6 +385,34 @@ export default function Address() {
                                                     type="text" 
                                                     name="phone_number"
                                                     value={formData.phone_number}
+                                                    onChange={handleChange}
+                                                    className="input input-bordered w-full" 
+                                                    required
+                                                />
+                                            </div>
+                                            
+                                            <div className="form-control w-full">
+                                                <label className="label">
+                                                    <span className="label-text">Email</span>
+                                                </label>
+                                                <input 
+                                                    type="email" 
+                                                    name="email"
+                                                    value={formData.email}
+                                                    onChange={handleChange}
+                                                    className="input input-bordered w-full" 
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div className="form-control w-full">
+                                                <label className="label">
+                                                    <span className="label-text">Tên</span>
+                                                </label>
+                                                <input 
+                                                    type="text" 
+                                                    name="name"
+                                                    value={formData.name}
                                                     onChange={handleChange}
                                                     className="input input-bordered w-full" 
                                                     required
@@ -477,6 +540,8 @@ export default function Address() {
                                                     </div>
                                                     <div className="divider my-1"></div>
                                                     <p><strong>Số điện thoại:</strong> {address.phone_number}</p>
+                                                    <p><strong>Email:</strong> {address.email}</p>
+                                                    <p><strong>Tên:</strong> {address.name}</p>
                                                     <p><strong>Địa chỉ:</strong> {formatFullAddress(address)}</p>
                                                 </div>
                                             </div>

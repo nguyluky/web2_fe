@@ -79,9 +79,9 @@ export interface ProductVariant {
   original_price: number
   stock: number
   status: string
-  attributes: string
   created_at: string
   updated_at: string
+  specifications: Specifications;
 }
 
 export interface ProductImage {
@@ -160,6 +160,14 @@ export interface SearchProductsPagination {
   total: number;
   per_page: number;
   last_page: number;
+  
+  links: Link[];
+}
+
+interface Link {
+  url: null | string;
+  label: string;
+  active: boolean;
 }
 
 export class ProductsService extends ApiService {
@@ -180,7 +188,7 @@ export class ProductsService extends ApiService {
      * @param id Product ID
      * @returns Product details with variants, images, reviews, and category
      */
-    getProductsDetail(id: number) {
+    getProductsDetail(id: number | string) {
         return this.get<ProductDetailResponse, any>(
             `/products/${id}`
         );

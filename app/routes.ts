@@ -22,7 +22,9 @@ const userRoutes = [
   layout('./component/cart-layout.tsx', [
     route('/cart', './routes/cart.tsx'),
     route('/thanh-toan', './routes/thanh-toan.tsx'),
+    route('/thanh-toan-thanh-cong', './routes/thanhtoan-thanhcong.tsx'),
   ]),
+
   // Thêm định tuyến cho đăng nhập và đăng ký
   ...prefix('auth', [
     route('/login', './routes/auth/login.tsx'),

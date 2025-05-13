@@ -1,131 +1,265 @@
+// @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import LineChartComponent from '../components/LineChartComponent';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faSortUp, faSortDown, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const RevenueStatisticsPage = () => {
-  const [data, setData] = useState([]);
-  const [selected, setSelected] = useState('Năm');
-  const [year, setYear] = useState(2025);
-  const [month, setMonth] = useState(1);
-  const [day, setDay] = useState(1);
+const TopCustomersStatisticsPage = () => {
+  const [customers, setCustomers] = useState([]);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [expandedOrders, setExpandedOrders] = useState({});
+  const [orders, setOrders] = useState({}); // Store as { [order_id]: details }
 
-  const dataKeys = [
-    { key: 'thu', color: '#8884d8' },
-    { key: 'chi', color: '#82ca9d' },
-  ];
-  const xAxisKey = 'name';
-
+  // Fetch customers
   useEffect(() => {
     const fetchData = async () => {
+      if (!startDate || !endDate) {
+        toast.error('Vui lòng nhập đầy đủ khoảng thời gian', { autoClose: 3000 });
+        return;
+      }
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (end < start) {
+        toast.error('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu', { autoClose: 3000 });
+        return;
+      }
+
       try {
-        const response = await fetch(`/api/admin/statistics/revenue-cost?year=${year}&type=${selected.toLowerCase()}&month=${month}&day=${day}`);
-        if (!response.ok) throw new Error('Không thể lấy dữ liệu thống kê');
+        const params = new URLSearchParams({
+          start_date: startDate,
+          end_date: endDate,
+          sort: sortOrder,
+        }).toString();
+        console.log('Fetching customers with params:', params);
+        const response = await fetch(`http://127.0.0.1:8000/api/admin/top-customers?${params}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Không thể lấy dữ liệu thống kê (Mã trạng thái: ${response.status}, Chi tiết: ${errorText})`);
+        }
         const data = await response.json();
-        setData(data);
+        console.log('API Response (top-customers):', data);
+
+        // // Check if data.data.data exists and is an array
+        // if (!data.data || !data.data.data || !Array.isArray(data.data.data)) {
+        //   console.warn('No valid customer data found:', data);
+        //   setCustomers([]);
+        //   toast.warn(data.message || 'Không tìm thấy khách hàng trong khoảng thời gian này', { autoClose: 3000 });
+        //   return;
+        // }
+
+        setCustomers(data);
       } catch (error) {
         console.error('Lỗi khi lấy dữ liệu:', error.message);
         toast.error('Lỗi khi lấy dữ liệu thống kê: ' + error.message, { autoClose: 3000 });
+        setCustomers([]);
       }
     };
     fetchData();
-  }, [year, selected, month, day]);
+  }, [startDate, endDate, sortOrder]);
 
-  const handleSelect = (value) => {
-    setSelected(value);
-  };
-
-  const totalProfit = data.reduce((total, item) => total + (item.thu - item.chi), 0);
-
-  const increaseYear = () => {
-    if (year < 2025) {
-      setYear(year + 1);
+  // Fetch order details for a specific order_id
+  const fetchOrderDetails = async (orderId) => {
+    if (orders[orderId]) return; // Skip if already fetched
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/order-details?order_id=${orderId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Không thể lấy chi tiết đơn hàng #${orderId}: ${errorText}`);
+      }
+      const data = await response.json();
+      console.log(`Order details for #${orderId}:`, data);
+      setOrders((prev) => ({
+        ...prev,
+        [orderId]: data.data || [],
+      }));
+    } catch (error) {
+      console.error(`Error fetching details for order ${orderId}:`, error.message);
+      toast.error(`Lỗi khi lấy chi tiết đơn hàng #${orderId}: ${error.message}`, { autoClose: 3000 });
+      setOrders((prev) => ({
+        ...prev,
+        [orderId]: [],
+      }));
     }
   };
-  const decreaseYear = () => {
-    if (year > 2000) {
-      setYear(year - 1);
-    }
+
+  const handleSort = () => {
+    setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
   };
 
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
+  const getSortIcon = () => {
+    if (sortOrder === 'desc') return faSortDown;
+    if (sortOrder === 'asc') return faSortUp;
+    return faSort;
+  };
+
+  const toggleOrderDetails = (orderId) => {
+    setExpandedOrders((prev) => ({
+      ...prev,
+      [orderId]: !prev[orderId],
+    }));
+    if (!orders[orderId]) {
+      fetchOrderDetails(orderId); // Fetch details when expanding
+    }
+  };
 
   return (
     <div className="max-w-screen overflow-x-hidden px-4 py-6">
       <ToastContainer />
-      <h1 className="text-2xl font-bold mb-6 text-center">Thống kê thu chi</h1>
-      <div>
-        <label tabIndex={0} className="mb-2 mr-3">
-          Loại thống kê:
-        </label>
-        <div className="dropdown border border-gray-300 rounded-lg mb-4">
-          <label tabIndex={0} className="btn rounded-lg">
-            {selected} <FontAwesomeIcon icon={faChevronDown} className="ml-2" />
-          </label>
-          <ul
-            tabIndex={0}
-            className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
-          >
-            <li>
-              <a onClick={() => handleSelect('Năm')}>Năm</a>
-            </li>
-            <li>
-              <a onClick={() => handleSelect('Tháng')}>Tháng</a>
-            </li>
-            <li>
-              <a onClick={() => handleSelect('Ngày')}>Ngày</a>
-            </li>
-          </ul>
-        </div>
+      <h1 className="text-2xl font-bold mb-6 text-center">Thống kê 5 khách hàng mua hàng cao nhất</h1>
+
+      <div className="mb-4">
+        <label className="mr-2">Từ ngày:</label>
+        <input
+          type="date"
+          value={startDate || ''}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="border p-2 rounded"
+        />
+        <label className="ml-4 mr-2">Đến ngày:</label>
+        <input
+          type="date"
+          value={endDate || ''}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="border p-2 rounded"
+        />
       </div>
-      <div className="inline-flex items-center border border-gray-200 rounded-lg shadow-sm mb-4">
-        <button onClick={decreaseYear} className="btn bg-white rounded-lg mr-3">
-          <FontAwesomeIcon icon={faChevronLeft} className="text-sm" />
-        </button>
-        <span>{year}</span>
-        <button onClick={increaseYear} className="btn bg-white rounded-lg ml-3">
-          <FontAwesomeIcon icon={faChevronRight} className="text-sm" />
-        </button>
-      </div>
-      {selected !== 'Năm' && (
-        <div className="dropdown border border-gray-300 rounded-lg mb-4">
-          <label tabIndex={0} className="btn rounded-lg">
-            Tháng {month} <FontAwesomeIcon icon={faChevronDown} className="ml-2" />
-          </label>
-          <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-            {months.map((m) => (
-              <li key={m}>
-                <a onClick={() => setMonth(m)}>Tháng {m}</a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {selected === 'Ngày' && (
-        <div className="dropdown border border-gray-300 rounded-lg mb-4">
-          <label tabIndex={0} className="btn rounded-lg">
-            Ngày {day} <FontAwesomeIcon icon={faChevronDown} className="ml-2" />
-          </label>
-          <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-            {days.map((d) => (
-              <li key={d}>
-                <a onClick={() => setDay(d)}>Ngày {d}</a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <LineChartComponent data={data} dataKeys={dataKeys} xAxisKey={xAxisKey} />
-      <div className="flex justify-end">
-        <span className="font-bold text-2xl text-blue-600">
-          Tổng lợi nhuận: {totalProfit.toLocaleString('vi-VN')} VND
-        </span>
-      </div>
+
+      <table className="w-full border-collapse border">
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="border p-2">Tên khách hàng</th>
+            <th className="border p-2">
+              Tổng tiền mua
+              <button onClick={handleSort} className="ml-2">
+                <FontAwesomeIcon icon={getSortIcon()} />
+              </button>
+            </th>
+            <th className="border p-2">Danh sách đơn hàng</th>
+          </tr>
+        </thead>
+        <tbody>
+          {customers.length === 0 ? (
+            <tr>
+              <td colSpan="3" className="border p-2 text-center">
+                Không có dữ liệu khách hàng
+              </td>
+            </tr>
+          ) : (
+            customers.map((customer) => (
+              <React.Fragment key={customer.customer_id}>
+                <tr className="border">
+                  <td className="border p-2">{customer.customer_name}</td>
+                  <td className="border p-2">{customer.total_purchase.toLocaleString('vi-VN')} VND</td>
+                  <td className="border p-2">
+                    {customer.orders.length === 0 ? (
+                      <span>Không có đơn hàng</span>
+                    ) : (
+                      <ul className="list-disc pl-5">
+                        {customer.orders.map((order) => (
+                          <li key={order.order_id} className="flex items-center">
+                            <span>
+                              Đơn hàng #{order.order_id} ({new Date(order.created_at).toLocaleDateString('vi-VN')}):{' '}
+                              {order.order_total.toLocaleString('vi-VN')} VND
+                            </span>
+                            <button
+                              onClick={() => toggleOrderDetails(order.order_id)}
+                              className="ml-2 text-blue-500 hover:underline text-sm"
+                            >
+                              <FontAwesomeIcon icon={expandedOrders[order.order_id] ? faChevronUp : faChevronDown} />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </td>
+                </tr>
+                {customer.orders.map((order) =>
+                  expandedOrders[order.order_id] ? (
+                    <tr key={`details-${order.order_id}`} className="border bg-gray-50">
+                      <td colSpan="3" className="border p-2">
+                        <div className="ml-8">
+                          <h4 className="font-semibold">Chi tiết đơn hàng #{order.order_id}</h4>
+                          {!orders[order.order_id] || orders[order.order_id].length === 0 ? (
+                            <p>Không có chi tiết đơn hàng</p>
+                          ) : (
+                            <table className="w-full border-collapse border mt-2">
+                              <thead>
+                                <tr className="bg-gray-100">
+                                  <th className="border p-2">Tên sản phẩm</th>
+                                  <th className="border p-2">Giá</th>
+                                  <th className="border p-2">Thuộc tính</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {orders[order.order_id].map((detail) => (
+                                  <tr key={detail.detail_id} className="border">
+                                    <td className="border p-2">{detail.product_name}</td>
+                                    <td className="border p-2">{detail.price.toLocaleString('vi-VN')} VND</td>
+                                    <td className="border p-2">
+                                        {(() => {
+                                          let attrs = detail.attributes;
+
+                                          try {
+                                            // Nếu là mảng ký tự hoặc string JSON
+                                            if (typeof attrs === 'string') {
+                                              // Có thể là JSON string
+                                              attrs = JSON.parse(attrs);
+                                            }
+                                            // Nếu là mảng ký tự thì ghép lại và parse
+                                            if (Array.isArray(attrs)) {
+                                              attrs = JSON.parse(attrs.join(''));
+                                            }
+
+                                            // Nếu vẫn là object sau xử lý
+                                            if (attrs && typeof attrs === 'object') {
+                                              return (
+                                                <ul className="list-disc list-inside">
+                                                  {Object.entries(attrs).map(([key, value]) => (
+                                                    <li key={key}>
+                                                      <strong>{key}:</strong> {value}
+                                                    </li>
+                                                  ))}
+                                                </ul>
+                                              );
+                                            } else {
+                                              return 'Không có thuộc tính';
+                                            }
+                                          } catch (error) {
+                                            console.error('Lỗi khi xử lý attributes:', error);
+                                            return 'Thuộc tính không hợp lệ';
+                                          }
+                                        })()}
+                                      </td>
+
+
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ) : null
+                )}
+              </React.Fragment>
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 };
 
-export default RevenueStatisticsPage;
+export default TopCustomersStatisticsPage;

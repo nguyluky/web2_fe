@@ -172,7 +172,7 @@ const ProductManagement = () => {
                   <td>
                     {categories.find((category) => category.id === product.id)?.name || 'Not Found'}
                   </td>
-                  <td>{product.base_price}</td>
+                  <td>{product.base_original_price}</td>
                   <td>
                     {productVars
                       .filter((productVar) => productVar.product_id === product.id) 

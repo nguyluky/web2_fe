@@ -56,7 +56,7 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
 
                     if (detailsResponse && detailsResponse.orderDetail) {
                         const productFound = detailsResponse.orderDetail.some(
-                            item => item.product.id === product.id
+                            item => item.product.id === product?.id
                         );
 
                         if (productFound) {
@@ -148,12 +148,12 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
             setSubmittingReview(true);
 
             const reviewData = {
-                product_id: product.id,
+                product_id: product?.id,
                 rating: reviewFormData.rating,
                 comment: reviewFormData.comment
             };
 
-            const [response, error] = await productReviewService.createReview(product.id, reviewData);
+            const [response, error] = await productReviewService.createReview(product?.id || -1, reviewData);
 
             if (error) {
                 toast.error('Không thể gửi đánh giá. Vui lòng thử lại sau!');

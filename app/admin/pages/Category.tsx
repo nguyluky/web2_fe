@@ -1,13 +1,13 @@
 //@ts-nocheck
-import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faDeleteLeft,
-  faEdit,
-  faChevronLeft,
-  faChevronRight,
-  faTimes,
+    faChevronLeft,
+    faChevronRight,
+    faDeleteLeft,
+    faEdit,
+    faTimes,
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -16,15 +16,30 @@ const CategoryManagement = () => {
   const [filteredCategories, setFilteredCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [requiredFields, setRequiredFields] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newCategory, setNewCategory] = useState({
     name: '',
     status: 'active',
+    parent_id: null,
+    small_image: null,
+    large_image: null,
+    description: '',
+    small_image_preview: null,
+    large_image_preview: null,
   });
   const [updateCategory, setUpdateCategory] = useState({
     id: null,
     name: '',
     status: 'active',
+    parent_id: null,
+    small_image: null,
+    large_image: null,
+    description: '',
+    small_image_preview: null,
+    large_image_preview: null,
+    small_image_url: '',
+    large_image_url: '',
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -59,19 +74,41 @@ const CategoryManagement = () => {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
     setIsModalOpen(false);
-    setNewCategory({ name: '', status: 'active' });
-    setUpdateCategory({ id: null, name: '', status: 'active' });
+    setNewCategory({ name: '', status: 'active', parent_id: null, small_image: null, large_image: null, description: '', small_image_preview: null, large_image_preview: null });
+    setUpdateCategory({ id: null, name: '', status: 'active', parent_id: null, small_image: null, large_image: null, description: '', small_image_preview: null, large_image_preview: null, small_image_url: '', large_image_url: '' });
   };
 
   // Xử lý input
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewCategory((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, files } = e.target;
+    if (type === 'file') {
+      const file = files[0];
+      setNewCategory((prev) => ({ ...prev, [name]: file }));
+      
+      // Tạo URL preview cho hình ảnh
+      if (file && file.type.startsWith('image/')) {
+        const previewUrl = URL.createObjectURL(file);
+        setNewCategory((prev) => ({ ...prev, [`${name}_preview`]: previewUrl }));
+      }
+    } else {
+      setNewCategory((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleUpdateInputChange = (e) => {
-    const { name, value } = e.target;
-    setUpdateCategory((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, files } = e.target;
+    if (type === 'file') {
+      const file = files[0];
+      setUpdateCategory((prev) => ({ ...prev, [name]: file }));
+      
+      // Tạo URL preview cho hình ảnh
+      if (file && file.type.startsWith('image/')) {
+        const previewUrl = URL.createObjectURL(file);
+        setUpdateCategory((prev) => ({ ...prev, [`${name}_preview`]: previewUrl }));
+      }
+    } else {
+      setUpdateCategory((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   // Thêm danh mục
@@ -82,13 +119,29 @@ const CategoryManagement = () => {
     try {
         if (!newCategory.name) throw new Error('Vui lòng nhập tên danh mục');
 
+        const formData = new FormData();
+        formData.append('name', newCategory.name);
+        formData.append('status', newCategory.status);
+        if (newCategory.parent_id) {
+          formData.append('parent_id', newCategory.parent_id);
+        }
+        formData.append('require_fields', JSON.stringify(requiredFields));
+        
+        if (newCategory.small_image) {
+          formData.append('small_image', newCategory.small_image);
+        }
+        
+        if (newCategory.large_image) {
+          formData.append('large_image', newCategory.large_image);
+        }
+        
+        if (newCategory.description) {
+          formData.append('description', newCategory.description);
+        }
+
         const response = await fetch('http://127.0.0.1:8000/api/admin/categories', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: newCategory.name,
-                status: newCategory.status,
-            }),
+            body: formData,
         });
 
         if (!response.ok) {
@@ -130,13 +183,32 @@ const CategoryManagement = () => {
     try {
       if (!updateCategory.name) throw new Error('Vui lòng nhập tên danh mục');
 
+      const formData = new FormData();
+      formData.append('name', updateCategory.name);
+      formData.append('status', updateCategory.status);
+      if (updateCategory.parent_id) {
+        formData.append('parent_id', updateCategory.parent_id);
+      }
+      formData.append('require_fields', JSON.stringify(requiredFields));
+      
+      if (updateCategory.small_image) {
+        formData.append('small_image', updateCategory.small_image);
+      }
+      
+      if (updateCategory.large_image) {
+        formData.append('large_image', updateCategory.large_image);
+      }
+      
+      if (updateCategory.description) {
+        formData.append('description', updateCategory.description);
+      }
+      
+      // Thêm _method=PUT để Laravel hiểu đây là request PUT
+      formData.append('_method', 'PUT');
+
       const response = await fetch(`http://127.0.0.1:8000/api/admin/categories/${updateCategory.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: updateCategory.name,
-          status: updateCategory.status,
-        }),
+        method: 'POST', // Sử dụng POST nhưng với _method=PUT
+        body: formData,
       });
 
       if (!response.ok) {
@@ -242,7 +314,17 @@ const CategoryManagement = () => {
       id: category.id,
       name: category.name,
       status: category.status,
+      parent_id: category.parent_id,
+      small_image: null,
+      large_image: null,
+      description: category.description || '',
+      small_image_preview: null,
+      large_image_preview: null,
+      small_image_url: category.small_image ? category.small_image : '',
+      large_image_url: category.large_image ? category.large_image : '',
     });
+    // Cập nhật requiredFields từ category
+    setRequiredFields(category.require_fields || []);
     setIsModalOpen(true);
   };
 
@@ -267,7 +349,7 @@ const CategoryManagement = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[30em] max-h-[90vh] overflow-y-auto backdrop-blur-lg border-4 border-gray-300">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[60em] max-h-[90vh] overflow-y-auto backdrop-blur-lg border-4 border-gray-300">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">{updateCategory.id ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới'}</h2>
               <button onClick={closeModal}>
@@ -275,32 +357,168 @@ const CategoryManagement = () => {
               </button>
             </div>
             <form onSubmit={updateCategory.id ? handleEditCategory : handleAddCategory}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block mb-2">Tên danh mục</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={updateCategory.id ? updateCategory.name : newCategory.name}
-                    onChange={updateCategory.id ? handleUpdateInputChange : handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    required
-                  />
+              <div className="grid grid-cols-2 gap-6">
+                {/* Cột 1 */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block mb-2">Tên danh mục</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={updateCategory.id ? updateCategory.name : newCategory.name}
+                      onChange={updateCategory.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block mb-2">Trạng thái</label>
+                    <select
+                      name="status"
+                      value={updateCategory.id ? updateCategory.status : newCategory.status}
+                      onChange={updateCategory.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="active">Hoạt động</option>
+                      <option value="hidden">Ẩn</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block mb-2">Danh mục cha</label>
+                    <select
+                      name="parent_id"
+                      value={updateCategory.id ? updateCategory.parent_id : newCategory.parent_id}
+                      onChange={updateCategory.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Không có danh mục cha</option>
+                      {categories.map((category) => (
+                        // Loại trừ danh mục hiện tại đang sửa để tránh chọn chính nó làm cha
+                        updateCategory.id !== category.id && (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        )
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block mb-2">Mô tả</label>
+                    <textarea
+                      name="description"
+                      value={updateCategory.id ? updateCategory.description : newCategory.description}
+                      onChange={updateCategory.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      maxLength={255}
+                      placeholder="Nhập mô tả danh mục"
+                      rows={4}
+                    ></textarea>
+                  </div>
                 </div>
-                <div>
-                  <label className="block mb-2">Trạng thái</label>
-                  <select
-                    name="status"
-                    value={updateCategory.id ? updateCategory.status : newCategory.status}
-                    onChange={updateCategory.id ? handleUpdateInputChange : handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="active">Hoạt động</option>
-                    <option value="hidden">Ẩn</option>
-                  </select>
+                
+                {/* Cột 2 */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block mb-2">Ảnh nhỏ (small_image)</label>
+                    <input
+                      type="file"
+                      name="small_image"
+                      onChange={updateCategory.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      accept="image/*"
+                    />
+                    {/* Hiển thị ảnh preview khi tải lên hoặc khi đang sửa */}
+                    {((updateCategory.id && updateCategory.small_image_url) || updateCategory.small_image_preview || newCategory.small_image_preview) && (
+                      <div className="mt-2">
+                        <img 
+                          src={updateCategory.id 
+                            ? (updateCategory.small_image_preview || updateCategory.small_image_url) 
+                            : newCategory.small_image_preview} 
+                          alt="Xem trước ảnh nhỏ" 
+                          className="h-20 object-contain border rounded-md"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block mb-2">Ảnh lớn (large_image)</label>
+                    <input
+                      type="file"
+                      name="large_image"
+                      onChange={updateCategory.id ? handleUpdateInputChange : handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      accept="image/*"
+                    />
+                    {/* Hiển thị ảnh preview khi tải lên hoặc khi đang sửa */}
+                    {((updateCategory.id && updateCategory.large_image_url) || updateCategory.large_image_preview || newCategory.large_image_preview) && (
+                      <div className="mt-2">
+                        <img 
+                          src={updateCategory.id 
+                            ? (updateCategory.large_image_preview || updateCategory.large_image_url) 
+                            : newCategory.large_image_preview} 
+                          alt="Xem trước ảnh lớn" 
+                          className="h-32 object-contain border rounded-md"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block mb-2">Các trường yêu cầu (required fields)</label>
+                    <div className="border border-gray-300 rounded-md p-3 bg-gray-50">
+                      {
+                        requiredFields.map((field, index) => (
+                          <div key={index} className="flex items-center mb-2">
+                            <input
+                              type="text"
+                              value={field}
+                              onChange={(e) => {
+                                const newFields = [...requiredFields];
+                                newFields[index] = e.target.value;
+                                setRequiredFields(newFields);
+                              }}
+                              className="w-full p-2 border border-gray-300 rounded-md"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newFields = requiredFields.filter((_, i) => i !== index);
+                                setRequiredFields(newFields);
+                              }}
+                              className="ml-2 text-red-500"
+                            >
+                              <FontAwesomeIcon icon={faTimes} />
+                            </button>
+                          </div>
+                        ))
+                      }
+
+                      <input
+                        type="text"
+                        placeholder="Thêm trường yêu cầu và nhấn Enter"
+                        className="w-full p-2 border border-gray-300 rounded-md mb-2"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const newField = e.target.value;
+                            if (newField && !requiredFields.includes(newField)) {
+                              setRequiredFields([...requiredFields, newField]);
+                              e.target.value = '';
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-2 mt-4">
+              
+              <div className="flex justify-end gap-2 mt-6">
                 <button
                   type="button"
                   onClick={closeModal}

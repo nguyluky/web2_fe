@@ -1,10 +1,13 @@
-import { faChevronLeft, faChevronRight, faEye, faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faChevronLeft, faChevronRight, faComment, faEye, faFilter, faSearch, faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useAuth } from "~/contexts/AuthContext";
-import type { Order } from "~/service/order.service";
+import type { Order, OrderDetail } from "~/service/order.service";
 import { orderService } from "~/service/order.service";
+import { productReviewService, type Review } from "~/service/productReview.service";
+import { formatCurrency } from "~/utils/formatCurrency";
 
 export default function DonHang() {
   const { isAuthenticated, user } = useAuth();
@@ -15,9 +18,17 @@ export default function DonHang() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [orderDetails, setOrderDetails] = useState<OrderDetail[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [reviewItem, setReviewItem] = useState<OrderDetail | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewFormData, setReviewFormData] = useState({
+    rating: 5,
+    comment: "",
+  });
 
-
-  console.log(orders)
+  console.log(orders);
 
   // Các trạng thái đơn hàng để hiển thị
   const orderStatuses = [
@@ -72,6 +83,24 @@ export default function DonHang() {
     }
   };
 
+  // Hàm hiển thị tên phương thức thanh toán
+  const getPaymentMethodName = (method: string | number) => {
+    // Xử lý với cả kiểu chuỗi và kiểu số
+    if (method === 0 || method === '0') {
+      return 'Thanh toán khi nhận hàng';
+    } else if (method === 1 || method === '1') {
+      return 'Chuyển khoản';
+    } else if (method === 2 || method === '2') {
+      return 'Momo';
+    } else if (method === 'cod') {
+      return 'Thanh toán khi nhận hàng';
+    } else if (method === 'banking') {
+      return 'Chuyển khoản ngân hàng';
+    } else {
+      return method?.toString() || 'Không xác định';
+    }
+  };
+
   // Hàm tải danh sách đơn hàng
   const fetchOrders = useCallback(async () => {
     if (!isAuthenticated) {
@@ -91,7 +120,7 @@ export default function DonHang() {
       }
 
       const [response, err] = await orderService.getUserOrders(params);
-      if (!response) return
+      if (!response) return;
       setOrders(response.data);
       setTotalPages(response.last_page);
       setError(null);
@@ -123,9 +152,86 @@ export default function DonHang() {
   };
 
   // Lọc đơn hàng theo từ khóa tìm kiếm
-  const filteredOrders = orders.filter(order => 
+  const filteredOrders = orders.filter(order =>
     order.id.toString().includes(searchTerm)
   );
+
+  // Hàm lấy chi tiết đơn hàng
+  const fetchOrderDetails = async (orderId: number) => {
+    try {
+      setLoadingDetails(true);
+      const [response, err] = await orderService.getOrderDetail(orderId);
+      if (response) {
+        setOrderDetails(response.orderDetail);
+      }
+    } catch (error) {
+      console.error("Error fetching order details:", error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  // Hàm hiển thị modal chi tiết đơn hàng
+  const handleViewOrderDetails = (orderId: number) => {
+    setSelectedOrderId(orderId);
+    fetchOrderDetails(orderId);
+    (document.getElementById(`order_detail_modal_${orderId}`) as HTMLDialogElement)?.showModal();
+  };
+
+  // Hàm mở modal đánh giá sản phẩm
+  const handleOpenReviewModal = (item: OrderDetail) => {
+    setReviewItem(item);
+    setReviewFormData({
+      rating: 5,
+      comment: "",
+    });
+    setShowReviewModal(true);
+    (document.getElementById(`review_modal`) as HTMLDialogElement)?.showModal();
+  };
+
+  // Hàm đóng modal đánh giá
+  const handleCloseReviewModal = () => {
+    setShowReviewModal(false);
+    setReviewItem(null);
+    (document.getElementById(`review_modal`) as HTMLDialogElement)?.close();
+  };
+
+  // Xử lý thay đổi giá trị đánh giá
+  const handleReviewChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setReviewFormData(prev => ({
+      ...prev,
+      [name]: name === 'rating' ? parseInt(value) : value
+    }));
+  };
+
+  // Gửi đánh giá sản phẩm
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!reviewItem) return;
+    
+    try {
+      const reviewData: Review = {
+        product_id: reviewItem.product.id,
+        rating: reviewFormData.rating,
+        comment: reviewFormData.comment
+      };
+      
+      const [response, error] = await productReviewService.createReview(reviewItem.product.id, reviewData);
+      
+      if (error) {
+        toast.error("Không thể gửi đánh giá. Vui lòng thử lại sau!");
+        return;
+      }
+      
+      toast.success("Đã gửi đánh giá thành công!");
+      handleCloseReviewModal();
+    } catch (err) {
+      console.error("Error submitting review:", err);
+      toast.error("Đã xảy ra lỗi khi gửi đánh giá!");
+    }
+  };
 
   return (
     <div className="card border-1 border-base-300">
@@ -136,7 +242,7 @@ export default function DonHang() {
             {/* Lọc theo trạng thái */}
             <div className="form-control">
               <div className="join">
-                <select 
+                <select
                   className="select select-bordered"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
@@ -152,14 +258,14 @@ export default function DonHang() {
                 </button>
               </div>
             </div>
-            
+
             {/* Tìm kiếm */}
             <div className="form-control">
               <div className="join">
-                <input 
-                  type="text" 
-                  placeholder="Tìm theo mã đơn hàng" 
-                  className="input input-bordered" 
+                <input
+                  type="text"
+                  placeholder="Tìm theo mã đơn hàng"
+                  className="input input-bordered"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -204,11 +310,7 @@ export default function DonHang() {
                     <tr key={order.id}>
                       <td>#{order.id}</td>
                       <td>{order.created_at ? formatDate(order.created_at) : 'N/A'}</td>
-                      <td>
-                        {order.payment_method === 'cod' ? 'Thanh toán khi nhận hàng' : 
-                         order.payment_method === 'banking' ? 'Chuyển khoản ngân hàng' : 
-                         order.payment_method}
-                      </td>
+                      <td>{getPaymentMethodName(order.payment_method)}</td>
                       <td>
                         <div className={`badge ${getStatusColor(order.status)} gap-1`}>
                           {getStatusName(order.status)}
@@ -216,11 +318,14 @@ export default function DonHang() {
                       </td>
                       <td>
                         <div className="flex gap-2">
-                          <Link to={`/tai-khoan/don-hang/${order.id}`} className="btn btn-sm btn-ghost">
+                          <button
+                            className="btn btn-sm btn-ghost"
+                            onClick={() => handleViewOrderDetails(order.id)}
+                          >
                             <FontAwesomeIcon icon={faEye} /> Xem
-                          </Link>
+                          </button>
                           {order.status === 'pending' && (
-                            <button 
+                            <button
                               className="btn btn-sm btn-error"
                               onClick={() => handleCancelOrder(order.id)}
                             >
@@ -239,16 +344,16 @@ export default function DonHang() {
             {totalPages > 1 && (
               <div className="flex justify-center mt-4">
                 <div className="join">
-                  <button 
+                  <button
                     className="join-item btn"
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
                   >
                     <FontAwesomeIcon icon={faChevronLeft} />
                   </button>
-                  
+
                   {[...Array(totalPages)].map((_, index) => (
-                    <button 
+                    <button
                       key={index}
                       className={`join-item btn ${currentPage === index + 1 ? 'btn-active' : ''}`}
                       onClick={() => setCurrentPage(index + 1)}
@@ -256,8 +361,8 @@ export default function DonHang() {
                       {index + 1}
                     </button>
                   ))}
-                  
-                  <button 
+
+                  <button
                     className="join-item btn"
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
@@ -269,6 +374,219 @@ export default function DonHang() {
             )}
           </>
         )}
+
+        {/* Modal Chi tiết đơn hàng */}
+        {orders.map((order) => (
+          <dialog key={order.id} id={`order_detail_modal_${order.id}`} className="modal">
+            <div className="modal-box max-w-3xl">
+              <h3 className="font-bold text-lg border-b pb-2">Chi tiết đơn hàng #{order.id}</h3>
+
+              <div className="py-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <h4 className="font-semibold">Thông tin đơn hàng</h4>
+                    <div className="mt-2">
+                      <p><span className="font-medium">Mã đơn hàng:</span> #{order.id}</p>
+                      <p><span className="font-medium">Ngày đặt:</span> {formatDate(order.created_at)}</p>
+                      <p>
+                        <span className="font-medium">Trạng thái:</span>
+                        <span className={`badge ${getStatusColor(order.status)} ml-2`}>
+                          {getStatusName(order.status)}
+                        </span>
+                      </p>
+                      <p>
+                        <span className="font-medium">Phương thức thanh toán:</span> {getPaymentMethodName(order.payment_method)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <h4 className="font-semibold border-b pb-2">Sản phẩm đã đặt</h4>
+
+                  {loadingDetails ? (
+                    <div className="flex justify-center py-4">
+                      <span className="loading loading-spinner loading-md"></span>
+                    </div>
+                  ) : orderDetails.length === 0 ? (
+                    <div className="text-center py-4">
+                      <p>Không có thông tin sản phẩm</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto mt-2">
+                      <table className="table table-compact w-full">
+                        <thead>
+                          <tr>
+                            <th>Sản phẩm</th>
+                            <th>Phiên bản</th>
+                            <th className="text-right">Số lượng</th>
+                            <th className="text-right">Đơn giá</th>
+                            <th className="text-right">Thành tiền</th>
+                            {order.status === 'completed' && <th>Đánh giá</th>}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {orderDetails.map((item) => (
+                            <tr key={item.id}>
+                              <td>
+                                <Link 
+                                  to={`/san-pham/${item.product.id}`} 
+                                  className="flex items-center gap-2 hover:text-primary"
+                                >
+                                  <div className="avatar">
+                                    <div className="w-12 h-12 rounded">
+                                      {item.product.product_images?.length > 0 ? (
+                                        <img 
+                                          src={item.product.product_images[0]?.image_url} 
+                                          alt={item.product.name}
+                                          onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100x100.png?text=No+Image';
+                                          }}
+                                        />
+                                      ) : (
+                                        <div className="bg-base-300 w-full h-full flex items-center justify-center">
+                                          <span className="text-xs">No image</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <span className="font-medium">{item.product.name}</span>
+                                </Link>
+                              </td>
+                              <td>
+                                <span className="badge badge-outline">
+                                  {item.variant.sku || `#${item.variant.id}`}
+                                </span>
+                              </td>
+                              <td className="text-right">{item.amount}</td>
+                              <td className="text-right">{formatCurrency(item.price)}</td>
+                              <td className="text-right">{formatCurrency(item.price * item.amount)}</td>
+                              {order.status === 'completed' && (
+                                <td>
+                                  <button 
+                                    className="btn btn-xs btn-secondary"
+                                    onClick={() => handleOpenReviewModal(item)}
+                                  >
+                                    <FontAwesomeIcon icon={faComment} className="mr-1" />
+                                    Đánh giá
+                                  </button>
+                                </td>
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <td colSpan={order.status === 'completed' ? 5 : 4} className="text-right font-semibold">Tổng cộng:</td>
+                            <td className="text-right font-semibold">
+                              {formatCurrency(orderDetails.reduce((sum, item) => sum + item.price * item.amount, 0))}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="modal-action">
+                <form method="dialog">
+                  <button className="btn btn-primary">Đóng</button>
+                </form>
+              </div>
+            </div>
+          </dialog>
+        ))}
+
+        {/* Modal đánh giá sản phẩm */}
+        <dialog id="review_modal" className="modal">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg border-b pb-2">Đánh giá sản phẩm</h3>
+            
+            {reviewItem && (
+              <form onSubmit={handleSubmitReview} className="py-4">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="avatar">
+                    <div className="w-16 h-16 rounded">
+                      {reviewItem.product.product_images?.length > 0 ? (
+                        <img 
+                          src={reviewItem.product.product_images[0]?.image_url} 
+                          alt={reviewItem.product.name}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100x100.png?text=No+Image';
+                          }}
+                        />
+                      ) : (
+                        <div className="bg-base-300 w-full h-full flex items-center justify-center">
+                          <span className="text-xs">No image</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium">{reviewItem.product.name}</h4>
+                    <p className="text-sm">
+                      <span className="badge badge-outline badge-sm">
+                        {reviewItem.variant.sku || `#${reviewItem.variant.id}`}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="form-control mb-4">
+                  <label className="label">
+                    <span className="label-text font-medium">Đánh giá</span>
+                  </label>
+                  <div className="rating rating-lg">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <div key={star} className="flex items-center mr-2">
+                        <input
+                          type="radio"
+                          name="rating"
+                          value={star}
+                          className="hidden"
+                          id={`star-${star}`}
+                          checked={reviewFormData.rating === star}
+                          onChange={handleReviewChange}
+                        />
+                        <label 
+                          htmlFor={`star-${star}`}
+                          className={`cursor-pointer ${reviewFormData.rating >= star ? 'text-warning' : 'text-gray-300'}`}
+                          onClick={() => setReviewFormData(prev => ({ ...prev, rating: star }))}
+                        >
+                          <FontAwesomeIcon icon={faStar} size="lg" />
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="form-control mb-4">
+                  <label className="label">
+                    <span className="label-text font-medium">Nội dung đánh giá</span>
+                  </label>
+                  <textarea 
+                    name="comment"
+                    value={reviewFormData.comment}
+                    onChange={handleReviewChange}
+                    className="textarea textarea-bordered h-32" 
+                    placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
+                    required
+                  ></textarea>
+                </div>
+                
+                <div className="modal-action">
+                  <button type="button" className="btn btn-ghost" onClick={handleCloseReviewModal}>
+                    Hủy
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Gửi đánh giá
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </dialog>
       </div>
     </div>
   );

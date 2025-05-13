@@ -1,6 +1,6 @@
 import { faEye, faEyeSlash, faLock, faUser } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '~/contexts/AuthContext';
@@ -28,13 +28,16 @@ export default function Login() {
             username: data.username, 
             password: data.password
         })
-
-        navigate('/');
-
     } catch {
 
     }
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+        navigate('/'); // Redirect to home page or any other page after successful login
+    }
+    }, [isAuthenticated, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-base-200 px-4">

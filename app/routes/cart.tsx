@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { cartService } from '~/service/cart.service';
 import type { Route } from './+types/cart';
 
+
+import { formatCurrency } from '~/utils/formatCurrency';
+
 export async function clientLoader() {
   try {
     const response = await cartService.getCart();
@@ -70,10 +73,6 @@ export default function Cart({loaderData}: Route.ComponentProps) {
     navigate('/thanh-toan');
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
-
   return (
     <section>
       <div className="hero">
@@ -137,10 +136,10 @@ export default function Cart({loaderData}: Route.ComponentProps) {
                               <br />
                               <span className="badge badge-ghost badge-sm">
                                 {'('}
-                                {Object.entries(JSON.parse(item.product_variant.attributes)).map(([key, value]) => (
+                                {Object.entries(item.product_variant.specifications).map(([key, value], index) => (
                                     <span key={key}>
                                     {key}: {String(value)}
-                                    {Object.keys(JSON.parse(item.product_variant.attributes)).length > 1 ? ', ' : ''}
+                                    {Object.keys(item.product_variant.specifications).length - 1 > index ? ', ' : ''}
                                   </span>
                                 ))}
                                 {')'}

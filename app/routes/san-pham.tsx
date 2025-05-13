@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { faStar as regularStar, faStar as solidStar } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useAuth } from '~/contexts/AuthContext';
 import { cartService } from '~/service/cart.service';
+import { orderService } from '~/service/order.service';
+import { productReviewService } from '~/service/productReview.service';
 import { productsService } from '~/service/products.service';
 import type { Route } from './+types/san-pham';
 
 export async function clientLoader({ params }: { params: { id: string } }) {
     try {
-        const productId = parseInt(params.id);
+        const productId = params.id;
         const response = await productsService.getProductsDetail(productId);
         return { product: response?.[0]?.product, error: null };
     } catch (error) {
@@ -19,6 +24,7 @@ export async function clientLoader({ params }: { params: { id: string } }) {
 export default function ProductDetail({ loaderData }: Route.ComponentProps) {
     const navigate = useNavigate();
     const { product } = loaderData;
+    const { isAuthenticated, user } = useAuth();
     const [selectedVariant, setSelectedVariant] = useState<number | null>(
         product?.product_variants?.[0]?.id || null
     );
@@ -26,6 +32,44 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
     const [error, setError] = useState<string | null>(loaderData.error);
     const [addingToCart, setAddingToCart] = useState<boolean>(false);
     const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
+    const [hasPurchased, setHasPurchased] = useState<boolean>(false);
+    const [showReviewForm, setShowReviewForm] = useState<boolean>(false);
+    const [reviewFormData, setReviewFormData] = useState({
+        rating: 5,
+        comment: '',
+    });
+    const [submittingReview, setSubmittingReview] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (isAuthenticated && product) {
+            checkPurchaseStatus();
+        }
+    }, [isAuthenticated, product]);
+
+    const checkPurchaseStatus = async () => {
+        try {
+            const [response, error] = await orderService.getUserOrders({ status: 'completed' });
+
+            if (response && response.data.length > 0) {
+                for (const order of response.data) {
+                    const [detailsResponse, detailsError] = await orderService.getOrderDetail(order.id);
+
+                    if (detailsResponse && detailsResponse.orderDetail) {
+                        const productFound = detailsResponse.orderDetail.some(
+                            item => item.product.id === product?.id
+                        );
+
+                        if (productFound) {
+                            setHasPurchased(true);
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Error checking purchase status:', err);
+        }
+    };
 
     const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = parseInt(e.target.value);
@@ -37,7 +81,6 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
     const handleAddToCart = async () => {
         if (!selectedVariant) {
             toast.error('Vui lòng chọn phiên bản sản phẩm');
-            //   setError('Vui lòng chọn phiên bản sản phẩm');
             return;
         }
 
@@ -48,12 +91,9 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                 amount: quantity,
             });
 
-            // Show success message or navigate to cart
-            //   alert('Đã thêm sản phẩm vào giỏ hàng');
             toast.success('Đã thêm sản phẩm vào giỏ hàng');
         } catch (err) {
             console.error('Error adding to cart:', err);
-            //   setError('Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại sau.');
             toast.error('Vui lòng chọn phiên bản sản phẩm');
         } finally {
             setAddingToCart(false);
@@ -87,6 +127,55 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
         );
     };
 
+    const handleReviewChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setReviewFormData(prev => ({
+            ...prev,
+            [name]: name === 'rating' ? parseInt(value) : value
+        }));
+    };
+
+    const handleSubmitReview = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!isAuthenticated) {
+            toast.error('Vui lòng đăng nhập để đánh giá sản phẩm');
+            navigate('/auth/login');
+            return;
+        }
+
+        try {
+            setSubmittingReview(true);
+
+            const reviewData = {
+                product_id: product?.id,
+                rating: reviewFormData.rating,
+                comment: reviewFormData.comment
+            };
+
+            const [response, error] = await productReviewService.createReview(product?.id || -1, reviewData);
+
+            if (error) {
+                toast.error('Không thể gửi đánh giá. Vui lòng thử lại sau!');
+                return;
+            }
+
+            toast.success('Đã gửi đánh giá thành công!');
+            setShowReviewForm(false);
+            setReviewFormData({
+                rating: 5,
+                comment: ''
+            });
+
+            window.location.reload();
+        } catch (err) {
+            console.error('Error submitting review:', err);
+            toast.error('Đã xảy ra lỗi khi gửi đánh giá!');
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
+
     if (error && !product) {
         return (
             <div className="flex justify-center items-center min-h-[500px]">
@@ -112,7 +201,6 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
     return (
         <div className="container mx-auto py-8 px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Product Images */}
                 <div className="space-y-4">
                     <div className="border rounded-lg overflow-hidden">
                         {product.product_images && product.product_images.length > 0 ? (
@@ -128,7 +216,6 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                         )}
                     </div>
 
-                    {/* Thumbnails */}
                     {product.product_images && product.product_images.length > 1 && (
                         <div className="flex space-x-2 overflow-x-auto">
                             {product.product_images.map((image, index) => (
@@ -150,7 +237,6 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                     )}
                 </div>
 
-                {/* Product Info */}
                 <div className="space-y-4">
                     <h1 className="text-3xl font-bold">{product.name}</h1>
 
@@ -199,7 +285,6 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                         )}
                     </div>
 
-                    {/* Variants */}
                     {product.product_variants && product.product_variants.length > 0 && (
                         <div className="space-y-2">
                             <h3 className="font-medium">Phiên bản</h3>
@@ -230,7 +315,6 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                         </div>
                     )}
 
-                    {/* Quantity */}
                     <div className="space-y-2">
                         <h3 className="font-medium">Số lượng</h3>
                         <div className="join">
@@ -256,7 +340,6 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                         </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex space-x-4 pt-4">
                         <button
                             className="btn btn-outline btn-primary flex-1"
@@ -288,14 +371,12 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                         </div>
                     )}
 
-                    {/* Description */}
                     <div className="divider"></div>
                     <div>
                         <h3 className="font-medium text-lg mb-2">Mô tả sản phẩm</h3>
                         <p className="text-gray-700">{product.description}</p>
                     </div>
 
-                    {/* Specifications */}
                     {product.specifications && (
                         <>
                             <div className="divider"></div>
@@ -317,9 +398,107 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                 </div>
             </div>
 
-            {/* Reviews Section */}
             <div className="mt-12">
-                <h2 className="text-2xl font-bold mb-4">Đánh giá sản phẩm</h2>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold">Đánh giá sản phẩm</h2>
+
+                    {/* {isAuthenticated && hasPurchased && !showReviewForm && (
+                        <button
+                            className="btn btn-primary"
+                            onClick={() => setShowReviewForm(true)}
+                        >
+                            Viết đánh giá
+                        </button>
+                    )} */}
+                </div>
+
+                {showReviewForm && (
+                    <div className="card bg-base-100 shadow-lg mb-6">
+                        <div className="card-body">
+                            <h3 className="card-title">Viết đánh giá của bạn</h3>
+                            <form onSubmit={handleSubmitReview}>
+                                <div className="form-control mb-4">
+                                    <label className="label">
+                                        <span className="label-text font-medium">Đánh giá</span>
+                                    </label>
+                                    <div className="flex items-center">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <div key={star} className="mr-2">
+                                                <input
+                                                    type="radio"
+                                                    name="rating"
+                                                    value={star}
+                                                    id={`star-${star}`}
+                                                    checked={reviewFormData.rating === star}
+                                                    onChange={handleReviewChange}
+                                                    className="hidden"
+                                                />
+                                                <label
+                                                    htmlFor={`star-${star}`}
+                                                    className="cursor-pointer text-2xl"
+                                                    onClick={() =>
+                                                        setReviewFormData(prev => ({
+                                                            ...prev,
+                                                            rating: star
+                                                        }))
+                                                    }
+                                                >
+                                                    <FontAwesomeIcon
+                                                        icon={
+                                                            reviewFormData.rating >= star
+                                                                ? solidStar
+                                                                : regularStar
+                                                        }
+                                                        className={
+                                                            reviewFormData.rating >= star
+                                                                ? 'text-yellow-400'
+                                                                : 'text-gray-300'
+                                                        }
+                                                    />
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="form-control mb-4">
+                                    <label className="label">
+                                        <span className="label-text font-medium">Nội dung đánh giá</span>
+                                    </label>
+                                    <textarea
+                                        name="comment"
+                                        value={reviewFormData.comment}
+                                        onChange={handleReviewChange}
+                                        className="textarea textarea-bordered h-24"
+                                        placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
+                                        required
+                                    ></textarea>
+                                </div>
+
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        className="btn btn-ghost"
+                                        onClick={() => setShowReviewForm(false)}
+                                    >
+                                        Hủy
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary"
+                                        disabled={submittingReview}
+                                    >
+                                        {submittingReview ? (
+                                            <span className="loading loading-spinner loading-xs"></span>
+                                        ) : (
+                                            'Gửi đánh giá'
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
 
                 {product.product_reviews && product.product_reviews.length > 0 ? (
                     <div className="space-y-4">
@@ -340,8 +519,9 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                                             ))}
                                         </div>
                                         <span className="ml-2 font-medium">
-                                            {review.account.profile.fullname}
+                                            {review.account?.profile?.fullname || 'Khách hàng'}
                                         </span>
+                                        <div className="ml-2 badge badge-success badge-sm">Đã mua hàng</div>
                                         <span className="ml-auto text-sm text-gray-500">
                                             {new Date(review.created_at).toLocaleDateString(
                                                 'vi-VN'
@@ -356,6 +536,14 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                 ) : (
                     <div className="text-center py-8">
                         <p className="text-gray-500">Chưa có đánh giá nào cho sản phẩm này</p>
+                        {isAuthenticated && hasPurchased && (
+                            <button
+                                className="btn btn-primary mt-4"
+                                onClick={() => setShowReviewForm(true)}
+                            >
+                                Hãy là người đầu tiên đánh giá
+                            </button>
+                        )}
                     </div>
                 )}
             </div>

@@ -1,6 +1,5 @@
 //@ts-nocheck
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faDeleteLeft,
@@ -14,7 +13,6 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const SuppplierManagement = () => {
   const [suppliers, setSuppliers] = useState([]);
-  const [filteredSuppliers, setFilteredSuppliers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,7 +52,6 @@ const SuppplierManagement = () => {
         if (!suppliersResponse.ok) throw new Error('Không thể lấy danh sách nhà cung cấp');
         const suppliersData = await suppliersResponse.json();
         setSuppliers(suppliersData.data.data || []);
-        setFilteredSuppliers(suppliersData.data.data || []);
         setTotalPages(suppliersData.data.last_page || 1);
       } catch (error) {
         console.error('Lỗi khi lấy dữ liệu:', error.message);
@@ -157,10 +154,9 @@ const SuppplierManagement = () => {
       }
 
       // Làm mới danh sách
-      const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers?page=${currentPage}`);
+      const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/search?page=${currentPage}&status=${statusFilter}`);
       const updatedSuppliersData = await updatedSuppliersResponse.json();
       setSuppliers(updatedSuppliersData.data.data || []);
-      setFilteredSuppliers(updatedSuppliersData.data.data || []);
       setTotalPages(updatedSuppliersData.data.last_page || 1);
 
       closeModal();
@@ -210,10 +206,9 @@ const SuppplierManagement = () => {
       }
   
       // Làm mới danh sách
-      const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers?page=${currentPage}`);
+      const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/search?page=${currentPage}&status=${statusFilter}`);
       const updatedSuppliersData = await updatedSuppliersResponse.json();
       setSuppliers(updatedSuppliersData.data.data || []);
-      setFilteredSuppliers(updatedSuppliersData.data.data || []);
       setTotalPages(updatedSuppliersData.data.last_page || 1);
 
       closeModal();
@@ -254,27 +249,15 @@ const SuppplierManagement = () => {
         setTotalPages(supplierData.data.last_page || 1);
 
         // Làm mới danh sách
-        const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers?page=${currentPage}`);
+        const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/search?page=${currentPage}&status=${statusFilter}`);
         const updatedSuppliersData = await updatedSuppliersResponse.json();
         setSuppliers(updatedSuppliersData.data.data || []);
-        setFilteredSuppliers(updatedSuppliersData.data.data || []);
 
         // Quay về trang trước nếu trang hiện tại trống
         if (updatedSuppliersData.data.data.length === 0 && currentPage > 1) {
           setCurrentPage(currentPage - 1);
         }
-      } else {
-        // Dự phòng: lấy lại dữ liệu nếu API không trả về danh sách cập nhật
-        const fetchData = async () => {
-          const suplliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers?page=${currentPage}`);
-          const suppliersData = await suplliersResponse.json();
-          setSuppliers(suppliersData.data.data || []);
-          setFilteredSuppliers(suppliersData.data.data || []);
-          setTotalPages(suppliersData.data.last_page || 1);
-        };
-        fetchData();
       }
-
       toast.success('Xóa nhà cung cấp thành công!');
     } catch (error) {
       console.error('Lỗi khi xóa nhà cung cấp:', error.message);
@@ -282,39 +265,12 @@ const SuppplierManagement = () => {
     }
   };
 
-  const handleSearch = async () => {
-    try {
-      // Tạo query string từ searchTerm và statusFilter
-      const params = new URLSearchParams({
-        keyword: searchTerm,
-        status: statusFilter,
-        page: currentPage,
-        per_page: 10, // Số bản ghi mỗi trang
-      });
+  const handleSearchInputChange = (e) => {
+    setCurrentPage(1);
+    setSearchTerm(e.target.value);
+  }
   
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/search?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error('Không thể tìm kiếm nhà cung cấp');
-      }
-  
-      const searchData = await response.json();
-      const suppliersData = searchData.data;
-  
-      // Cập nhật danh sách nhà cung cấp tìm kiếm được
-      setFilteredSuppliers(suppliersData.data || []);
-      setTotalPages(suppliersData.last_page || 1);
-    } catch (error) {
-      console.error('Lỗi khi tìm kiếm nhà cung cấp:', error.message);
-      toast.error('Tìm kiếm thất bại:' + error.message, { autoClose: 3000 });
-    }
-  };
-
-  const handleSearchInputChange = (e) => setSearchTerm(e.target.value);
   const handleStatusChange = (e) => setStatusFilter(e.target.value);
-  const handleSearchButtonClick = () => handleSearch();
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') handleSearch();
-  };
 
   const goToPage = (page) => {
     if (page > 0 && page <= totalPages) {
@@ -369,7 +325,6 @@ const SuppplierManagement = () => {
                 className="text-xl w-[16em] p-2 border border-gray-300 rounded-md box-border"
                 value={searchTerm}
                 onChange={handleSearchInputChange}
-                onKeyPress={handleKeyPress}
               />
             </div>
 
@@ -383,20 +338,10 @@ const SuppplierManagement = () => {
                 onChange={handleStatusChange}
               >
                 <option value="all">Tất cả trạng thái</option>
-                <option value="hd">Hoạt động</option>
-                <option value="an">Đã ngừng</option>
+                <option value="active">Hoạt động</option>
+                <option value="inactive">Đã ngừng</option>
               </select>
             </div>
-          </div>
-
-          {/* Nút Tìm kiếm */}
-          <div className="flex items-end mt-2 mb-4 mr-3 md:mb-0">
-            <button 
-              className="px-4 py-2 rounded-md bg-gray-500 text-white text-xl hover:bg-gray-700 shadow"
-              onClick={handleSearchButtonClick}
-            >
-              Tìm kiếm
-            </button>
           </div>
         </div>
 

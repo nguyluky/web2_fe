@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { categoryService } from '~/service/category.service';
 import type { SearchProductsPagination } from '~/service/products.service';
 import { productsService } from '~/service/products.service';
@@ -200,7 +201,7 @@ export default function Category({ loaderData }: Route.ComponentProps) {
                                             className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden"
                                             data-v0-t="card"
                                         >
-                                            <a href="/san-pham/iphone-15-pro-max" className="block">
+                                            <Link to={"/san-pham/" + e.slug} className="block">
                                                 <div className="relative aspect-square">
                                                     <img
                                                         alt="iPhone 15 Pro Max 256GB"
@@ -315,7 +316,7 @@ export default function Category({ loaderData }: Route.ComponentProps) {
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </a>
+                                            </Link>
                                         </div>
                                     ))}
                                 </div>

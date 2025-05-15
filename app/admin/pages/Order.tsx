@@ -193,10 +193,9 @@ const OrderManagement = () => {
       case 'completed':
         return 'text-green-500';
       case 'pending':
-        return 'text-blue-500';
-      case 'processing':
-        
         return 'text-yellow-500';
+      case 'processing':
+        return 'text-blue-500';
       case 'cancelled':
         return 'text-red-500';
       default:
@@ -232,10 +231,18 @@ const OrderManagement = () => {
                     className="w-full p-2 border border-gray-300 rounded-md"
                     required
                   >
-                    <option value="pending">Đang xử lý</option>
-                    <option value="processing">Đã thanh toán</option>
-                    <option value="completed">Đã giao hàng</option>
-                    <option value="cancelled">Đã hủy</option>
+                    {['pending', 'processing', 'completed', 'cancelled']
+                      .slice(['pending', 'processing', 'completed', 'cancelled'].indexOf(editStatus))
+                      .map((status) => (
+                        <option key={status} value={status}>
+                          {{
+                            pending: 'Đang xử lý',
+                            processing: 'Đã thanh toán',
+                            completed: 'Đã giao hàng',
+                            cancelled: 'Đã hủy',
+                          }[status]}
+                        </option>
+                      ))}
                   </select>
                 </div>
               </div>
@@ -268,7 +275,7 @@ const OrderManagement = () => {
             <input
               id="searchName"
               type="text"
-              placeholder="ID đơn hàng hoặc phương thức"
+              placeholder="Thông tin đơn hàng"
               className="text-xl w-[16em] p-2 border border-gray-300 rounded-md box-border"
               value={searchTerm}
               onChange={handleSearchInputChange}
@@ -310,15 +317,6 @@ const OrderManagement = () => {
               <option value="cancelled">Đã hủy</option>
             </select>
           </div>
-        </div>
-        <div className="flex items-end mt-2 mb-4 mr-3 md:mb-0">
-          <button
-            className="px-4 py-2 rounded-md bg-gray-500 text-white text-xl hover:bg-gray-700 shadow"
-            onClick={handleSearchButtonClick}
-            disabled={isLoading}
-          >
-            Tìm kiếm
-          </button>
         </div>
       </div>
 

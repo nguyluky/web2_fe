@@ -191,11 +191,12 @@ const OrderManagement = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'completed':
-        return 'text-yellow-500';
+        return 'text-green-500';
       case 'pending':
         return 'text-blue-500';
       case 'processing':
-        return 'text-green-500';
+        
+        return 'text-yellow-500';
       case 'cancelled':
         return 'text-red-500';
       default:

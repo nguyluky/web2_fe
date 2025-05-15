@@ -1,3 +1,4 @@
+//@ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -18,6 +19,7 @@ const OrderManagement = () => {
   const [importDetails, setImportDetails] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
+  const [productVars, setProductVars] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateStart, setDateStart] = useState('');
@@ -32,8 +34,7 @@ const OrderManagement = () => {
   const [newImport, setNewImport] = useState({
     employee_id: '',
     supplier_id: '',
-    status: 'pending',
-    import_details: [{ product_id: '', amount: '' }],
+    import_details: [{ product_variant_id: '', amount: '' }], // Sử dụng product_variant_id thay vì product_id
   });
 
   useEffect(() => {
@@ -63,7 +64,7 @@ const OrderManagement = () => {
         const importDetailsResponse = await fetch('http://127.0.0.1:8000/api/admin/import-details');
         if (!importDetailsResponse.ok) throw new Error('Không thể lấy chi tiết phiếu nhập');
         const importDetailsData = await importDetailsResponse.json();
-        setImportDetails(importDetailsData.data.data || []);
+        setImportDetails(importDetailsData.data || []);
 
         const suppliersResponse = await fetch('http://127.0.0.1:8000/api/admin/suppliers');
         if (!suppliersResponse.ok) throw new Error('Không thể lấy danh sách nhà cung cấp');
@@ -74,6 +75,11 @@ const OrderManagement = () => {
         if (!productsResponse.ok) throw new Error('Không thể lấy danh sách sản phẩm');
         const productsData = await productsResponse.json();
         setProducts(productsData.data.data || []);
+
+        const productVarRes = await fetch(`http://127.0.0.1:8000/api/admin/product-variants`);
+        if (!productVarRes.ok) throw new Error('Không thể lấy danh sách product-variants');
+        const productVarData = await productVarRes.json();
+        setProductVars(productVarData.data || []);
       } catch (error) {
         console.error('Lỗi khi lấy dữ liệu:', error.message);
         toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
@@ -85,7 +91,7 @@ const OrderManagement = () => {
   }, [currentPage, searchTerm, statusFilter, dateStart, dateEnd]);
 
   const calculateTotalPerImport = (details = []) => {
-    return details.reduce((sum, item) => sum + item.import_price * item.amount, 0);
+    return details.reduce((sum, item) => sum + (item.import_price || 0) * item.amount, 0);
   };
 
   const getStatusText = (status) => {
@@ -106,11 +112,11 @@ const OrderManagement = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'completed':
-        return 'text-yellow-500';
-      case 'pending':
-        return 'text-blue-500';
-      case 'processing':
         return 'text-green-500';
+      case 'pending':
+        return 'text-yellow-500';
+      case 'processing':
+        return 'text-blue-500';
       case 'cancelled':
         return 'text-red-500';
       default:
@@ -139,8 +145,7 @@ const OrderManagement = () => {
     setNewImport({
       employee_id: '',
       supplier_id: '',
-      status: 'pending',
-      import_details: [{ product_id: '', amount: '' }],
+      import_details: [{ product_variant_id: '', amount: '' }],
     });
   };
 
@@ -161,7 +166,7 @@ const OrderManagement = () => {
   const addImportDetail = () => {
     setNewImport((prev) => ({
       ...prev,
-      import_details: [...prev.import_details, { product_id: '', amount: '' }],
+      import_details: [...prev.import_details, { product_variant_id: '', amount: '' }],
     }));
   };
 
@@ -180,14 +185,13 @@ const OrderManagement = () => {
       if (!newImport.employee_id || !newImport.supplier_id) {
         throw new Error('Vui lòng chọn nhân viên và nhà cung cấp');
       }
-      if (newImport.import_details.some((detail) => !detail.product_id || !detail.amount || detail.amount <= 0)) {
-        throw new Error('Vui lòng chọn sản phẩm và nhập số lượng hợp lệ cho tất cả chi tiết');
+      if (newImport.import_details.some((detail) => !detail.product_variant_id || !detail.amount || detail.amount <= 0)) {
+        throw new Error('Vui lòng chọn biến thể sản phẩm và nhập số lượng hợp lệ cho tất cả chi tiết');
       }
 
-      // Check for duplicate products
-      const productIds = newImport.import_details.map((detail) => detail.product_id);
-      if (new Set(productIds).size !== productIds.length) {
-        throw new Error('Không được chọn sản phẩm trùng lặp');
+      const variantIds = newImport.import_details.map((detail) => detail.product_variant_id);
+      if (new Set(variantIds).size !== variantIds.length) {
+        throw new Error('Không được chọn biến thể sản phẩm trùng lặp');
       }
 
       const response = await fetch('http://127.0.0.1:8000/api/admin/imports', {
@@ -199,9 +203,8 @@ const OrderManagement = () => {
         body: JSON.stringify({
           employee_id: parseInt(newImport.employee_id),
           supplier_id: parseInt(newImport.supplier_id),
-          status: newImport.status,
           import_details: newImport.import_details.map((detail) => ({
-            product_id: parseInt(detail.product_id),
+            product_variant_id: parseInt(detail.product_variant_id),
             amount: parseInt(detail.amount),
           })),
         }),
@@ -212,19 +215,29 @@ const OrderManagement = () => {
         throw new Error(errorData.message || 'Không thể tạo phiếu nhập');
       }
 
+      const newImportData = await response.json();
+      const newImportRecord = newImportData.data;
+
+      const params = new URLSearchParams({
+        search: searchTerm,
+        status: statusFilter === 'all' ? '' : statusFilter,
+        date_start: dateStart,
+        date_end: dateEnd,
+        limit: 10,
+        page: currentPage,
+      });
+
       const updatedImportsResponse = await fetch(
-        `http://127.0.0.1:8000/api/admin/imports?page=${currentPage}&limit=10`
+        `http://127.0.0.1:8000/api/admin/imports?${params.toString()}`
       );
       if (!updatedImportsResponse.ok) throw new Error('Không thể lấy danh sách phiếu nhập');
       const updatedImportsData = await updatedImportsResponse.json();
       setImports(updatedImportsData.data.data || []);
       setTotalPages(updatedImportsData.data.last_page || 1);
 
-      // Refresh import details
-      const updatedImportDetailsResponse = await fetch('http://127.0.0.1:8000/api/admin/import-details');
-      if (!updatedImportDetailsResponse.ok) throw new Error('Không thể lấy chi tiết phiếu nhập');
-      const updatedImportDetailsData = await updatedImportDetailsResponse.json();
-      setImportDetails(updatedImportDetailsData.data.data || []);
+      if (newImportRecord.importDetails && newImportRecord.importDetails.length > 0) {
+        setImportDetails((prevDetails) => [...prevDetails, ...newImportRecord.importDetails]);
+      }
 
       closeAddModal();
       toast.success('Thêm phiếu nhập thành công!', { autoClose: 3000 });
@@ -275,36 +288,50 @@ const OrderManagement = () => {
   };
 
   const handleCancelImport = async (importId) => {
-    if (!window.confirm('Bạn có chắc muốn hủy phiếu nhập này không?')) return;
+    if (!window.confirm('Bạn có chắc muốn xóa phiếu nhập này không?')) return;
 
     setIsLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/imports/${importId}/cancel`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/imports/${importId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Không thể hủy phiếu nhập');
+        throw new Error(errorData.message || 'Không thể xóa phiếu nhập');
       }
 
+      const params = new URLSearchParams({
+        search: searchTerm,
+        status: statusFilter === 'all' ? '' : statusFilter,
+        date_start: dateStart,
+        date_end: dateEnd,
+        limit: 10,
+        page: currentPage,
+      });
+
       const updatedImportsResponse = await fetch(
-        `http://127.0.0.1:8000/api/admin/imports?page=${currentPage}&limit=10`
+        `http://127.0.0.1:8000/api/admin/imports?${params.toString()}`
       );
-      if (!updatedImportsResponse.ok) throw new Error('Không thể lấy danh sách phiếu nhập');
+      if (!updatedImportsResponse.ok) throw new Error('Không thể lấy danh sách phiếu nhập sau khi xóa');
       const updatedImportsData = await updatedImportsResponse.json();
       setImports(updatedImportsData.data.data || []);
       setTotalPages(updatedImportsData.data.last_page || 1);
 
       if (updatedImportsData.data.data.length === 0 && currentPage > 1) {
         setCurrentPage(currentPage - 1);
+      } else if (currentPage > updatedImportsData.data.last_page) {
+        setCurrentPage(updatedImportsData.data.last_page);
       }
 
-      toast.success('Hủy phiếu nhập thành công!', { autoClose: 3000 });
+      toast.success('Xóa phiếu nhập thành công!', { autoClose: 3000 });
     } catch (error) {
-      console.error('Lỗi khi hủy phiếu nhập:', error.message);
-      toast.error('Hủy phiếu nhập thất bại: ' + error.message, { autoClose: 3000 });
+      console.error('Lỗi khi xóa phiếu nhập:', error.message);
+      toast.error('Xóa phiếu nhập thất bại: ' + error.message, { autoClose: 3000 });
     } finally {
       setIsLoading(false);
     }
@@ -356,12 +383,12 @@ const OrderManagement = () => {
             <form onSubmit={handleAddImport}>
               <div className="space-y-4">
                 <div>
-                  <label className="block mb-2">Nhân viên</label>
+                  <label className="block mb-2 text-lg font-medium">Nhân viên</label>
                   <select
                     name="employee_id"
                     value={newImport.employee_id}
                     onChange={handleNewImportChange}
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    className="w-full p-2 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-gray-500"
                     required
                   >
                     <option value="">Chọn nhân viên</option>
@@ -373,12 +400,12 @@ const OrderManagement = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block mb-2">Nhà cung cấp</label>
+                  <label className="block mb-2 text-lg font-medium">Nhà cung cấp</label>
                   <select
                     name="supplier_id"
                     value={newImport.supplier_id}
                     onChange={handleNewImportChange}
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    className="w-full p-2 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-gray-500"
                     required
                   >
                     <option value="">Chọn nhà cung cấp</option>
@@ -390,81 +417,101 @@ const OrderManagement = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block mb-2">Trạng thái</label>
-                  <select
-                    name="status"
-                    value={newImport.status}
-                    onChange={handleNewImportChange}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    required
-                  >
-                    <option value="pending">Đang xử lý</option>
-                    <option value="processing">Đã thanh toán</option>
-                    <option value="completed">Đã giao hàng</option>
-                    <option value="cancelled">Đã hủy</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block mb-2">Chi tiết phiếu nhập</label>
+                  <label className="block mb-2 text-lg font-medium">Chi tiết phiếu nhập</label>
                   {newImport.import_details.map((detail, index) => (
-                    <div key={index} className="flex items-center gap-2 mb-2">
-                      <select
-                        name="product_id"
-                        value={detail.product_id}
-                        onChange={(e) => handleImportDetailChange(index, e)}
-                        className="w-1/2 p-2 border border-gray-300 rounded-md"
-                        required
-                      >
-                        <option value="">Chọn sản phẩm</option>
-                        {products.map((product) => (
-                          <option key={product.id} value={product.id}>
-                            {product.name}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        type="number"
-                        name="amount"
-                        value={detail.amount}
-                        onChange={(e) => handleImportDetailChange(index, e)}
-                        className="w-1/4 p-2 border border-gray-300 rounded-md"
-                        placeholder="Số lượng"
-                        min="1"
-                        required
-                      />
-                      {newImport.import_details.length > 1 && (
+                    <div key={index} className="flex items-center gap-3 mb-3 bg-gray-50 p-3 rounded-md border border-gray-200">
+                      <div className="flex-1">
+                        <select
+                          name="product_variant_id"
+                          value={detail.product_variant_id || ''}
+                          onChange={(e) => handleImportDetailChange(index, e)}
+                          className="w-full p-2 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-gray-500"
+                          required
+                        >
+                          <option value="">Chọn biến thể sản phẩm</option>
+                          {productVars.map((variant) => {
+                            const product = products.find((p) => p.id === variant.product_id);
+                            let variantAttrs = variant.attributes;
+
+                            try {
+                              if (typeof variantAttrs === 'string') {
+                                while (typeof variantAttrs === 'string') {
+                                  variantAttrs = JSON.parse(variantAttrs);
+                                }
+                              }
+                              if (Array.isArray(variantAttrs)) {
+                                variantAttrs = JSON.parse(variantAttrs.join('') || '{}');
+                              }
+                              if (!variantAttrs || typeof variantAttrs !== 'object') {
+                                variantAttrs = { 'Thuộc tính': 'Không xác định' };
+                              }
+                            } catch (error) {
+                              console.error('Lỗi khi parse attributes cho variant ID:', variant.id, error);
+                              variantAttrs = { 'Thuộc tính': 'Không hợp lệ' };
+                            }
+
+                            const displayAttrs = Object.entries(variantAttrs)
+                              .map(([key, value]) => `${key}: ${value}`)
+                              .join(', ');
+
+                            const displayName = product
+                              ? `${product.name} (${displayAttrs})`
+                              : `Biến thể #${variant.id} (${displayAttrs})`;
+
+                            return (
+                              <option key={variant.id} value={variant.id}>
+                                {displayName}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+                      <div className="w-24">
+                        <input
+                          type="number"
+                          name="amount"
+                          value={detail.amount || ''}
+                          onChange={(e) => handleImportDetailChange(index, e)}
+                          className="w-full p-2 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-gray-500"
+                          placeholder="Số lượng"
+                          min="1"
+                          required
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        {newImport.import_details.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeImportDetail(index)}
+                            className="p-2 text-red-500 hover:text-red-700 transition-colors"
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                          </button>
+                        )}
                         <button
                           type="button"
-                          onClick={() => removeImportDetail(index)}
-                          className="p-2 text-red-500 hover:text-red-700"
+                          onClick={addImportDetail}
+                          className="p-2 text-green-500 hover:text-green-700 transition-colors"
                         >
-                          <FontAwesomeIcon icon={faTrash} />
+                          <FontAwesomeIcon icon={faPlus} />
                         </button>
-                      )}
+                      </div>
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    onClick={addImportDetail}
-                    className="mt-2 px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 flex items-center"
-                  >
-                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                    Thêm sản phẩm
-                  </button>
                 </div>
               </div>
-              <div className="flex justify-end gap-2 mt-4">
+              <div className="flex justify-end gap-2 mt-6">
                 <button
                   type="button"
                   onClick={closeAddModal}
-                  className="px-4 py-2 bg-gray-300 rounded-md"
+                  className="px-4 py-2 bg-gray-300 rounded-md text-gray-700 hover:bg-gray-400 transition-colors"
                   disabled={isLoading}
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-700"
+                  className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-700 transition-colors"
                   disabled={isLoading}
                 >
                   {isLoading ? 'Đang xử lý...' : 'Thêm'}

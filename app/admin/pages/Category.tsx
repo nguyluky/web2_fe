@@ -238,41 +238,36 @@ const CategoryManagement = () => {
   };
 
   // Xóa danh mục
-  const handleDeleteCategory = async (categoryId) => {
-    if (!window.confirm('Bạn có chắc muốn xóa danh mục này không?')) return;
+const handleCancelImport = async (importId) => {
+  if (!window.confirm('Bạn có chắc muốn xóa phiếu nhập này không?')) return;
 
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/categories/${categoryId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      });
+  setIsLoading(true);
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/imports/${importId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        try {
-          const errorData = JSON.parse(errorText);
-          throw new Error(errorData.message || 'Không thể xóa danh mục');
-        } catch {
-          throw new Error('Máy chủ trả về phản hồi không phải JSON: ' + errorText);
-        }
-      }
-
-      const updatedResponse = await fetch(`http://127.0.0.1:8000/api/admin/categories?page=${currentPage}`);
-      const updatedData = await updatedResponse.json();
-      setCategories(updatedData.data.data || []);
-      setFilteredCategories(updatedData.data.data || []);
-      setTotalPages(updatedData.data.last_page || 1);
-
-      if (updatedData.data.data.length === 0 && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
-      }
-
-      toast.success('Xóa danh mục thành công!', { autoClose: 3000 });
-    } catch (error) {
-      console.error('Lỗi khi xóa danh mục:', error.message);
-      toast.error('Xóa danh mục thất bại: ' + error.message, { autoClose: 3000 });
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Error response from server:', errorData); // Debug error details
+      throw new Error(errorData.message || 'Không thể xóa phiếu nhập');
     }
-  };
+
+    // Perform a full page reload after successful deletion
+    window.location.reload(); // Reloads the entire page
+
+    toast.success('Xóa phiếu nhập thành công!', { autoClose: 3000 });
+  } catch (error) {
+    console.error('Lỗi khi xóa phiếu nhập:', error.message);
+    toast.error('Xóa phiếu nhập thất bại: ' + error.message, { autoClose: 3000 });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Tìm kiếm
   const handleSearch = async () => {

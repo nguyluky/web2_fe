@@ -84,7 +84,7 @@ const items = [
     children: [
       {
         id: 11,
-        text: 'Thống kê thu chi',
+        text: 'Thống kê khách hàng',
         to: '/admin/statistical/revenueandcoststatistics',
       },
       { id: 12, text: 'Thống kê tồn kho', to: '/admin/statistical/inventorystatistics' },

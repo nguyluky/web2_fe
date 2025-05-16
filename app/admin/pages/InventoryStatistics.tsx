@@ -1,59 +1,191 @@
 //@ts-nocheck
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const InventoryStatistics = () => {
-const [products, setProducts] = useState([]);
-useEffect(() => {
+  const [products, setProducts] = useState([]);
+  const [productVars, setProductVars] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedVariant, setSelectedVariant] = useState('');
+
   const fetchProducts = async () => {
-    const response = await fetch('/api/products'); // Replace with your API endpoint
-    const data = await response.json();
-    setProducts(data);
+    try {
+      const params = new URLSearchParams({
+        keyword: searchTerm,
+        status: statusFilter,
+        page: currentPage,
+        per_page: 10,
+      });
+      const productRes = await fetch(
+        `http://127.0.0.1:8000/api/admin/products/search?${params.toString()}`
+      );
+      if (!productRes.ok) throw new Error('Không thể lấy dữ liệu sản phẩm');
+      const productData = await productRes.json();
+      setProducts(productData.data.data || []);
+      setTotalPages(productData.data.last_page || 1);
+    } catch (error) {
+      console.error('Lỗi khi lấy dữ liệu sản phẩm:', error);
+      toast.error('Lỗi khi lấy dữ liệu sản phẩm: ' + error.message);
+    }
+
+    try {
+      const productVarRes = await fetch(`http://127.0.0.1:8000/api/admin/product-variants`);
+      const productVarData = await productVarRes.json();
+      setProductVars(productVarData.data || []);
+    } catch (error) {
+      console.error('Lỗi khi lấy dữ liệu biến thể:', error);
+      toast.error('Lỗi khi lấy dữ liệu biến thể: ' + error.message);
+    }
   };
-  fetchProducts();
-},[]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage, searchTerm, statusFilter]);
+
+  const handleSearchInputChange = (e) => setSearchTerm(e.target.value);
+  const handleStatusChange = (e) => setStatusFilter(e.target.value);
+  const handleVariantChange = (e) => setSelectedVariant(e.target.value);
+  const handleSearchButtonClick = () => setCurrentPage(1);
+  const handleKeyPress = (e) => e.key === 'Enter' && setCurrentPage(1);
+
+  const goToPage = (page) => {
+    if (page > 0 && page <= totalPages) setCurrentPage(page);
+  };
+
   return (
     <div className="max-w-screen overflow-x-hidden px-4 py-6">
-      {/* Header */}
+      <ToastContainer />
+
       <header className="py-10 mb-6">
         <div className="max-w-8xl mx-auto flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-800">Thống kê tồn kho</h1>
         </div>
       </header>
 
-      {/* Bảng */}
+      <div className="flex flex-wrap justify-between mb-6">
+        <div className="flex gap-4">
+          <div className="flex flex-col mb-4 mr-8 md:mb-0">
+            <span className="text-xl mb-2">Tìm kiếm</span>
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên sản phẩm"
+              className="text-xl w-[16em] p-2 border border-gray-300 rounded-md"
+              value={searchTerm}
+              onChange={handleSearchInputChange}
+              onKeyPress={handleKeyPress}
+            />
+          </div>
+
+          <div className="flex flex-col mb-4 md:mb-0">
+            <span className="text-xl mb-2">Trạng thái</span>
+            <select
+              className="text-xl w-[10em] p-2 border border-gray-300 rounded-md"
+              value={statusFilter}
+              onChange={handleStatusChange}
+            >
+              <option value="all">Tất cả</option>
+              <option value="active">chưa phát triển</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col mb-4 md:mb-0">
+            <span className="text-xl mb-2">Chọn thể loại </span>
+            <select
+              className="text-xl w-[20em] p-2 border border-gray-300 rounded-md"
+              value={selectedVariant}
+              onChange={handleVariantChange}
+            >
+              <option value="">Chưa phát triển</option>
+
+            </select>
+          </div>
+        </div>
+
+        <div className="flex items-end mt-2 mb-4 md:mb-0">
+          <button
+            className="px-4 py-2 rounded-md bg-gray-500 text-white text-xl hover:bg-gray-700 shadow"
+            onClick={handleSearchButtonClick}
+          >
+            Tìm kiếm
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 overflow-x-auto border border-gray-300 rounded-lg shadow-md">
         <table className="table text-lg w-full">
-          {' '}
           <thead className="text-lg">
             <tr>
-              <th> ID</th>
+              <th>ID</th>
               <th>Tên</th>
+              <th>Thuộc tính</th>
+              <th>Trạng thái</th>
               <th>Tồn kho</th>
             </tr>
           </thead>
           <tbody>
-            {products.map((product) => (
-              <tr key={product.id} className="border-b border-gray-300">
-                <td>{product.id}</td>
-                <td>{product.name}</td>
-                <td>{product.stock}</td>
+            {productVars.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="text-center py-4">
+                  Không có sản phẩm nào
+                </td>
               </tr>
-            ))}
+            ) : (
+              productVars.map((variant) => {
+                const product = products.find((p) => p.id === variant.product_id);
+                return (
+                  <tr key={variant.id} className="border-b border-gray-300">
+                    <td>{variant.id}</td>
+                    <td>{product?.name || 'Không xác định'}</td>
+                    <td>
+                      {(() => {
+                        try {
+                          let attrs = variant.attributes;
+                          if (typeof attrs === 'string') {
+                            while (typeof attrs === 'string') {
+                              attrs = JSON.parse(attrs);
+                            }
+                          }
+                          return Object.entries(attrs)
+                            .map(([key, val]) => `${key}: ${val}`)
+                            .join(', ');
+                        } catch (e) {
+                          return 'Thuộc tính không hợp lệ';
+                        }
+                      })()}
+                    </td>
+
+                       <td>{variant.status}</td>
+                    <td>{variant.stock}</td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
-      {/* Phân trang */}
+
       <div className="flex justify-center mt-4">
-        <button className="btn rounded-lg ml-3">
+        <button
+          className="btn rounded-lg ml-3"
+          onClick={() => goToPage(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
           <FontAwesomeIcon icon={faChevronLeft} className="text-xl" />
         </button>
-        <button className="px-4 py-4 mx-2 badge text-gray-800 rounded-md hover:bg-gray-400 mt-1">
-          <span className="text-lg">1</span>
-        </button>
-        <button className="btn rounded-lg mr-3">
+        <span className="px-4 py-2 mx-2 text-gray-800">
+          Trang {currentPage} / {totalPages}
+        </span>
+        <button
+          className="btn rounded-lg mr-3"
+          onClick={() => goToPage(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
           <FontAwesomeIcon icon={faChevronRight} className="text-xl" />
         </button>
       </div>

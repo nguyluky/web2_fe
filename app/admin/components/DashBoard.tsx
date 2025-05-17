@@ -1,8 +1,28 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import LineChartComponent from './LineChartComponent';
 import PieChartComponent from './PieChartComponent';
 import { XAxis } from 'recharts';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 const Dashboard = () => {
+  const [topProducts, setTopProducts] = useState([]);
+
+  useEffect(() => {
+    const fetchTopProducts = async () => {
+      try {
+        const topProductRes = await fetch('http://127.0.0.1:8000/api/admin/products/top');
+        const topProductData = await topProductRes.json();
+        setTopProducts(topProductData || []);
+        console.log(topProductData);
+      } catch (error) {
+          console.error('Lỗi khi lấy dữ liệu:', error.message);
+          toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
+      };
+    };
+    fetchTopProducts();
+  }, []);
+
   const data = [
     { name: 'Tháng 1', 'năm này': 4000, 'năm trước': 2400, amt: 2400 },
     { name: 'Tháng 2', 'năm này': 3000, 'năm trước': 1398, amt: 2210 },
@@ -130,27 +150,19 @@ const Dashboard = () => {
               <table className="table text-lg w-full">
                 <thead>
                   <tr className="text-lg">
+                    <th className="px-4 py-2">ID</th>
                     <th className="px-4 py-2">Tên sản phẩm</th>
-                    <th className="px-4 py-2">Số lượng</th>
+                    <th className="px-4 py-2 text-center">Số lượng</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td className="px-4 py-3">Điện thoại XYZ</td>
-                    <td className="px-4 py-3">150</td>
-                  </tr>
-                  <tr>
-                    <td>Laptop ABC</td>
-                    <td>120</td>
-                  </tr>
-                  <tr>
-                    <td>Máy tính bảng DEF</td>
-                    <td>80</td>
-                  </tr>
-                  <tr>
-                    <td>Phụ kiện GHI</td>
-                    <td>200</td>
-                  </tr>
+                  {topProducts.map((topProduct) => (
+                    <tr key={topProduct.id}>
+                      <td>{topProduct.id}</td>
+                      <td>{topProduct.name}</td>
+                      <td className="text-center">{topProduct.total_sold}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

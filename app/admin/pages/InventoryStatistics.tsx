@@ -1,4 +1,4 @@
-//@ts-nocheck
+// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
@@ -28,16 +28,30 @@ const InventoryStatistics = () => {
       if (!productRes.ok) throw new Error('Không thể lấy dữ liệu sản phẩm');
       const productData = await productRes.json();
       setProducts(productData.data.data || []);
-      setTotalPages(productData.data.last_page || 1);
     } catch (error) {
       console.error('Lỗi khi lấy dữ liệu sản phẩm:', error);
       toast.error('Lỗi khi lấy dữ liệu sản phẩm: ' + error.message);
     }
+  };
 
+  const fetchProductVariants = async () => {
     try {
-      const productVarRes = await fetch(`http://127.0.0.1:8000/api/admin/product-variants`);
+      const params = new URLSearchParams({
+        keyword: searchTerm,
+        status: statusFilter,
+        page: currentPage,
+        per_page: 10,
+      });
+      if (selectedVariant) {
+        params.append('variant_id', selectedVariant);
+      }
+      const productVarRes = await fetch(
+        `http://127.0.0.1:8000/api/admin/product-variants/search?${params.toString()}`
+      );
+      if (!productVarRes.ok) throw new Error('Không thể lấy dữ liệu biến thể');
       const productVarData = await productVarRes.json();
-      setProductVars(productVarData.data || []);
+      setProductVars(productVarData.data.data || []);
+      setTotalPages(productVarData.data.last_page || 1);
     } catch (error) {
       console.error('Lỗi khi lấy dữ liệu biến thể:', error);
       toast.error('Lỗi khi lấy dữ liệu biến thể: ' + error.message);
@@ -46,7 +60,8 @@ const InventoryStatistics = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, [currentPage, searchTerm, statusFilter]);
+    fetchProductVariants();
+  }, [currentPage, searchTerm, statusFilter, selectedVariant]);
 
   const handleSearchInputChange = (e) => setSearchTerm(e.target.value);
   const handleStatusChange = (e) => setStatusFilter(e.target.value);
@@ -74,7 +89,7 @@ const InventoryStatistics = () => {
             <span className="text-xl mb-2">Tìm kiếm</span>
             <input
               type="text"
-              placeholder="Tìm kiếm theo tên sản phẩm"
+              placeholder="Tìm kiếm theo tên sản phẩm hoặc thuộc tính"
               className="text-xl w-[16em] p-2 border border-gray-300 rounded-md"
               value={searchTerm}
               onChange={handleSearchInputChange}
@@ -90,21 +105,13 @@ const InventoryStatistics = () => {
               onChange={handleStatusChange}
             >
               <option value="all">Tất cả</option>
-              <option value="active">chưa phát triển</option>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Ngừng</option>
+              <option value="out_of_stock">Hết hàng</option>
             </select>
           </div>
 
-          <div className="flex flex-col mb-4 md:mb-0">
-            <span className="text-xl mb-2">Chọn thể loại </span>
-            <select
-              className="text-xl w-[20em] p-2 border border-gray-300 rounded-md"
-              value={selectedVariant}
-              onChange={handleVariantChange}
-            >
-              <option value="">Chưa phát triển</option>
 
-            </select>
-          </div>
         </div>
 
         <div className="flex items-end mt-2 mb-4 md:mb-0">
@@ -131,7 +138,7 @@ const InventoryStatistics = () => {
           <tbody>
             {productVars.length === 0 ? (
               <tr>
-                <td colSpan="4" className="text-center py-4">
+                <td colSpan="5" className="text-center py-4">
                   Không có sản phẩm nào
                 </td>
               </tr>
@@ -159,8 +166,13 @@ const InventoryStatistics = () => {
                         }
                       })()}
                     </td>
-
-                       <td>{variant.status}</td>
+                    <td>
+                      {variant.status === 'active'
+                        ? 'Hoạt động'
+                        : variant.status === 'inactive'
+                        ? 'Ngừng'
+                        : 'Hết hàng'}
+                    </td>
                     <td>{variant.stock}</td>
                   </tr>
                 );

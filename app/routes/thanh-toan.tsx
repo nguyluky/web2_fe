@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AddressService } from '~/service/address.service';
 import { cartService, type CartItemWithProduct } from '~/service/cart.service';
@@ -40,6 +40,57 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
     const [error, setError] = useState<string | null>(loaderData.error);
     const [processing, setProcessing] = useState<boolean>(false);
     const [addressSele, setAddressSele] = useState(loaderData.address[0]);
+    const [differentSpecsByProduct, setDifferentSpecsByProduct] = useState<Record<number, string[]>>({});
+
+    // Hàm để xác định các thông số khác nhau giữa các biến thể của một sản phẩm
+    const findDifferentSpecifications = (productId: number, cartItems: CartItemWithProduct[]) => {
+        // Lọc ra các biến thể của sản phẩm hiện tại
+        const productVariants = cartItems
+            .filter(item => item.product_variant.product.id === productId)
+            .map(item => item.product_variant);
+        
+        if (productVariants.length <= 1) {
+            return Object.keys(productVariants[0]?.specifications || {});
+        }
+
+        const allSpecKeys = new Set<string>();
+        
+        // Thu thập tất cả các khóa từ các biến thể
+        productVariants.forEach(variant => {
+            Object.keys(variant.specifications).forEach(key => {
+                allSpecKeys.add(key);
+            });
+        });
+
+        // Kiểm tra từng khóa xem có khác nhau giữa các biến thể không
+        const differentKeys = Array.from(allSpecKeys).filter(key => {
+            const values = new Set<string>();
+            
+            // Thu thập tất cả giá trị cho khóa này từ mọi biến thể
+            productVariants.forEach(variant => {
+                if (variant.specifications[key] !== undefined) {
+                    values.add(String(variant.specifications[key]));
+                }
+            });
+            
+            // Nếu có nhiều hơn 1 giá trị khác nhau, thì khóa này là khác nhau giữa các biến thể
+            return values.size > 1;
+        });
+
+        return differentKeys.length > 0 ? differentKeys : Object.keys(productVariants[0]?.specifications || {});
+    };
+
+    // Phân tích và lưu trữ các thông số khác nhau cho mỗi sản phẩm
+    useEffect(() => {
+        const productIds = [...new Set(cartItems.map(item => item.product_variant.product.id))];
+        const specsByProduct: Record<number, string[]> = {};
+
+        productIds.forEach(productId => {
+            specsByProduct[productId] = findDifferentSpecifications(productId, cartItems);
+        });
+
+        setDifferentSpecsByProduct(specsByProduct);
+    }, [cartItems]);
 
     const calculateSubtotal = () => {
         return cartItems.reduce((total, item) => {
@@ -65,7 +116,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
         // Prepare order products from cart items
         const orderProducts: OrderProduct[] = cartItems.map((item) => ({
             product_variant_id: item.product_variant_id,
-            serial: item.amount,
+            amount: item.amount,
         }));
 
         const orderData: CreateOrderRequest = {
@@ -176,21 +227,25 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
                                                         <br />
                                                         <span className="badge badge-ghost badge-sm">
                                                             {'('}
-                                                            {Object.entries(
-                                                                item.product_variant.specifications
-                                                            ).map(([key, value], index) => (
-                                                                <span key={key}>
-                                                                    {key}: {String(value)}
-                                                                    {Object.keys(
-                                                                        item.product_variant
-                                                                            .specifications
-                                                                    ).length -
-                                                                        1 >
-                                                                    index
-                                                                        ? ', '
-                                                                        : ''}
-                                                                </span>
-                                                            ))}
+                                                            {differentSpecsByProduct[item.product_variant.product.id] ? (
+                                                                differentSpecsByProduct[item.product_variant.product.id].map((key, index) => (
+                                                                    <span key={key}>
+                                                                        {key}: {String(item.product_variant.specifications[key] || 'N/A')}
+                                                                        {differentSpecsByProduct[item.product_variant.product.id].length - 1 > index ? ', ' : ''}
+                                                                    </span>
+                                                                ))
+                                                            ) : (
+                                                                Object.entries(
+                                                                    item.product_variant.specifications
+                                                                ).map(([key, value], index) => (
+                                                                    <span key={key}>
+                                                                        {key}: {String(value)}
+                                                                        {Object.keys(
+                                                                            item.product_variant.specifications
+                                                                        ).length - 1 > index ? ', ' : ''}
+                                                                    </span>
+                                                                ))
+                                                            )}
                                                             {')'}
                                                         </span>
                                                     </td>
@@ -282,11 +337,14 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
                                                     <tr key={item.product_variant_id}>
                                                         <td>
                                                             {item.product_variant.product.name} (
-                                                            {Object.entries(
-                                                                item.product_variant.specifications
-                                                            )
-                                                                .map((e) => `${e[0]}: ${e[1]}`)
-                                                                .join(', ')}
+                                                            {differentSpecsByProduct[item.product_variant.product.id] 
+                                                                ? differentSpecsByProduct[item.product_variant.product.id]
+                                                                    .map((key) => `${key}: ${String(item.product_variant.specifications[key] || 'N/A')}`)
+                                                                    .join(', ')
+                                                                : Object.entries(item.product_variant.specifications)
+                                                                    .map((e) => `${e[0]}: ${e[1]}`)
+                                                                    .join(', ')
+                                                            }
                                                             ) x {item.amount}
                                                         </td>
                                                         <td className="text-right">

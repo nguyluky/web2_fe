@@ -162,13 +162,43 @@ export default function DonHang() {
       setLoadingDetails(true);
       const [response, err] = await orderService.getOrderDetail(orderId);
       if (response) {
-        setOrderDetails(response.orderDetail);
+        // Nhóm các sản phẩm giống nhau
+        const groupedDetails = groupSimilarItems(response.orderDetail);
+        setOrderDetails(groupedDetails);
       }
     } catch (error) {
       console.error("Error fetching order details:", error);
     } finally {
       setLoadingDetails(false);
     }
+  };
+  
+  // Hàm nhóm các sản phẩm giống nhau
+  const groupSimilarItems = (items: OrderDetail[]) => {
+    const groupedMap = new Map<string, OrderDetail & { originalItems?: OrderDetail[] }>();
+    
+    items.forEach(item => {
+      // Tạo key duy nhất cho mỗi sản phẩm dựa trên product_id và variant_id
+      const key = `${item.product.id}-${item.variant.id}`;
+      
+      if (groupedMap.has(key)) {
+        // Nếu sản phẩm đã tồn tại, tăng số lượng và cập nhật tổng giá
+        const existingItem = groupedMap.get(key)!;
+        existingItem.amount += item.amount;
+        
+        // Lưu lại item gốc để đảm bảo id gốc được giữ lại cho đánh giá
+        if (!existingItem.originalItems) {
+          existingItem.originalItems = [{ ...existingItem }];
+        }
+        existingItem.originalItems.push(item);
+      } else {
+        // Nếu sản phẩm chưa tồn tại, thêm vào map
+        groupedMap.set(key, { ...item, originalItems: [item] });
+      }
+    });
+    
+    // Chuyển map thành mảng để hiển thị
+    return Array.from(groupedMap.values());
   };
 
   // Hàm hiển thị modal chi tiết đơn hàng
@@ -179,8 +209,10 @@ export default function DonHang() {
   };
 
   // Hàm mở modal đánh giá sản phẩm
-  const handleOpenReviewModal = (item: OrderDetail) => {
-    setReviewItem(item);
+  const handleOpenReviewModal = (item: OrderDetail & { originalItems?: OrderDetail[] }) => {
+    // Sử dụng item gốc đầu tiên để đánh giá, hoặc sử dụng item hiện tại nếu không có originalItems
+    const reviewTargetItem = item.originalItems ? item.originalItems[0] : item;
+    setReviewItem(reviewTargetItem);
     setReviewFormData({
       rating: 5,
       comment: "",
@@ -463,13 +495,21 @@ export default function DonHang() {
                               <td className="text-right">{formatCurrency(item.price * item.amount)}</td>
                               {order.status === 'completed' && (
                                 <td>
-                                  <button 
-                                    className="btn btn-xs btn-secondary"
-                                    onClick={() => handleOpenReviewModal(item)}
-                                  >
-                                    <FontAwesomeIcon icon={faComment} className="mr-1" />
-                                    Đánh giá
-                                  </button>
+                                  <div className="flex flex-col gap-1">
+                                    <button 
+                                      className="btn btn-xs btn-secondary"
+                                      onClick={() => handleOpenReviewModal(item)}
+                                    >
+                                      <FontAwesomeIcon icon={faComment} className="mr-1" />
+                                      Đánh giá
+                                    </button>
+                                    {/* Hiển thị số lượng sản phẩm đã nhóm (nếu > 1) */}
+                                    {item.originalItems && item.originalItems.length > 1 && (
+                                      <span className="text-xs text-gray-500 text-center">
+                                        ({item.originalItems.length} sản phẩm)
+                                      </span>
+                                    )}
+                                  </div>
                                 </td>
                               )}
                             </tr>

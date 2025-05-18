@@ -196,6 +196,41 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
         );
     }
 
+    // Xác định các thông số khác nhau giữa các phiên bản
+    const findDifferentSpecifications = () => {
+        if (!product.product_variants || product.product_variants.length <= 1) {
+            return [];
+        }
+
+        const allSpecKeys = new Set<string>();
+        
+        // Thu thập tất cả các keys từ tất cả các phiên bản
+        product.product_variants.forEach(variant => {
+            Object.keys(variant.specifications).forEach(key => {
+                allSpecKeys.add(key);
+            });
+        });
+
+        // Kiểm tra từng key xem có khác nhau giữa các phiên bản không
+        const differentKeys = Array.from(allSpecKeys).filter(key => {
+            const values = new Set<string>();
+            
+            // Thu thập tất cả giá trị cho key này từ mọi phiên bản
+            product.product_variants.forEach(variant => {
+                if (variant.specifications[key] !== undefined) {
+                    values.add(String(variant.specifications[key]));
+                }
+            });
+            
+            // Nếu có nhiều hơn 1 giá trị khác nhau, thì key này là khác nhau giữa các phiên bản
+            return values.size > 1;
+        });
+
+        return differentKeys;
+    };
+
+    const differentSpecKeys = findDifferentSpecifications();
+    
     const selectedVariantData = product.product_variants.find((v) => v.id === selectedVariant);
 
     return (
@@ -299,11 +334,25 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                                         }`}
                                         onClick={() => setSelectedVariant(variant.id)}
                                     >
-                                        {Object.entries(variant.specifications).map(
-                                            ([key, value]) => (
-                                                <span key={key} className="text-sm">
-                                                    {key}: {String(value)}
+                                        {differentSpecKeys.length > 0 ? (
+                                            // Chỉ hiển thị các thông số khác nhau
+                                            differentSpecKeys.map((key, index) => (
+                                                <>
+                                                    {index > 0 && ' | '}
+                                                <span key={key} className="text-sm mx-1">
+                                                    {key}: {String(variant.specifications[key] || 'N/A')}
                                                 </span>
+                                                </>
+                                            ))
+                                        ) : (
+                                            // Nếu không có thông số khác nhau, hiển thị tất cả
+                                            Object.entries(variant.specifications).map(
+                                                ([key, value], index, arr) => (
+                                                    <span key={key} className="text-sm mx-1">
+                                                        {index > 0 && ' | '}
+                                                        {key}: {String(value)}
+                                                    </span>
+                                                )
                                             )
                                         )}
                                         {variant.stock > 0

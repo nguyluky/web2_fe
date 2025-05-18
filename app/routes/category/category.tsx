@@ -119,14 +119,17 @@ export default function Category({ loaderData }: Route.ComponentProps) {
                 <div className="hero">
                     <div className="hero-content w-full">
                         <div className="relative w-full rounded-lg overflow-hidden">
-                            <img src="https://placehold.co/1000x400" alt="" className="w-full" />
+                            <img 
+                                src={loaderData.categorie?.data.large_image || `https://placehold.co/1000x400?text=${loaderData.categorie?.data.name}`} 
+                                alt="" 
+                                className="w-full h-[400px] object-cover" 
+                            />
                             <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent p-6 flex flex-col justify-center">
                                 <h1 className="text-2xl font-bold text-base-100 md:text-3xl lg:text-4xl">
                                     {loaderData.categorie?.data.name}
                                 </h1>
                                 <p className="text-base-100/70 text-sm md:text-base lg:text-lg max-w-1/2">
-                                    Khám phá các mẫu điện thoại thông minh mới nhất từ các thương
-                                    hiệu hàng đầu với đa dạng mức giá.
+                                {loaderData.categorie?.data.description}
                                 </p>
                             </div>
                         </div>

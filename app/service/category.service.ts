@@ -10,6 +10,9 @@ export interface Category {
   require_fields: any;
   created_at: string;
   updated_at: string;
+  small_image?: string;
+    large_image?: string;
+    description?: string;
 }
 
 export interface GetCategoriesResponse {

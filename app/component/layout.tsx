@@ -1,4 +1,4 @@
-import { Link, Outlet, useNavigation } from 'react-router';
+import { Link, Outlet, useNavigate, useNavigation, useSearchParams } from 'react-router';
 import { useAuth } from '~/contexts/AuthContext';
 import { useCategories } from '~/contexts/CategoryContext';
 import './loading.css';
@@ -6,7 +6,21 @@ import './loading.css';
 export function Header() {
     const { isAuthenticated, profile: user, account } = useAuth();
     const { categories, loading } = useCategories();
-
+    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        console.log('handleSearch', e.key);
+        const location = window.location.pathname;
+        if (e.key === 'Enter') {
+            if (location === '/tim-kiem') {
+                const value = (e.target as HTMLInputElement).value;
+                setSearchParams({ q: value });
+            }
+            else {
+                navigate('/tim-kiem?q=' + (e.target as HTMLInputElement).value);
+            }
+        }
+    };
     return (
         <header className="navbar bg-base-100 shadow-sm sticky top-0 z-50 justify-center flex">
             <div className="navbar-center w-full max-w-[80rem]">
@@ -87,7 +101,7 @@ export function Header() {
                                 <path d="m21 21-4.3-4.3"></path>
                             </g>
                         </svg>
-                        <input type="search" className="grow" placeholder="Search" />
+                        <input type="search" className="grow" placeholder="Search" onKeyDown={handleSearch}/>
                         <kbd className="kbd kbd-sm">Ctrl</kbd>
                         <kbd className="kbd kbd-sm">/</kbd>
                     </label>

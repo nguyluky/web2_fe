@@ -32,7 +32,7 @@ export default function TimKiem() {
     setCurrentPage(page);
   }, [location.search]);
 
-  // Function to update URL with search parameters
+  // Function to update URL with pagination
   const updateSearchParams = useCallback(() => {
     const searchParams = new URLSearchParams();
     
@@ -55,7 +55,7 @@ export default function TimKiem() {
       setError(null);
       
       const params = new URLSearchParams();
-      params.set("q", searchTerm);
+      params.set("query", searchTerm);
       params.set("page", currentPage.toString());
       params.set("limit", "12"); // Số sản phẩm mỗi trang
       
@@ -87,17 +87,16 @@ export default function TimKiem() {
     searchProducts();
   }, [searchProducts]);
 
-  // Effect to update URL when filter parameters change
+  // Effect to update URL when pagination changes
   useEffect(() => {
-    updateSearchParams();
-  }, [updateSearchParams]);
+    // Only update URL when pagination changes, not on initial load or search term changes
+    // that come from the URL
+    if (location.search && location.search.includes('page=')) {
+      updateSearchParams();
+    }
+  }, [currentPage, updateSearchParams]);
 
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCurrentPage(1); // Reset to first page on new search
-    searchProducts();
-  };
+  // No need for handleSubmit as we only rely on URL parameters
 
   // Calculate average rating for a product
   const getAverageRating = (product: Product) => {
@@ -231,41 +230,6 @@ export default function TimKiem() {
         {searchTerm ? `Kết quả tìm kiếm cho "${searchTerm}"` : "Tìm kiếm sản phẩm"}
       </h1>
       
-      {/* Search form */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <form onSubmit={handleSubmit} className="flex flex-col md:flex-row items-center gap-4">
-          <div className="flex-grow w-full">
-            <div className="join w-full">
-              <div className="join-item bg-base-100 border border-base-300 rounded-l-lg px-3 flex items-center">
-                <FontAwesomeIcon icon={faSearch} className="text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Nhập từ khóa tìm kiếm..."
-                className="input input-bordered join-item w-full border-l-0"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                autoFocus
-              />
-              <button
-                type="submit"
-                className="btn btn-primary join-item"
-                disabled={loading}
-              >
-                {loading ? (
-                  <span className="loading loading-spinner loading-sm"></span>
-                ) : (
-                  <>
-                    <FontAwesomeIcon icon={faSearch} />
-                    <span className="ml-2 hidden sm:inline">Tìm kiếm</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-      
       {/* Results info */}
       {!loading && !error && products.length > 0 && (
         <div className="bg-white rounded-lg shadow p-4 mb-4">
@@ -301,9 +265,9 @@ export default function TimKiem() {
           <div className="text-6xl text-gray-300 mb-4">
             <FontAwesomeIcon icon={faSearch} />
           </div>
-          <h2 className="text-xl font-medium mb-2">Tìm kiếm sản phẩm</h2>
+          <h2 className="text-xl font-medium mb-2">Không có từ khóa tìm kiếm</h2>
           <p className="text-gray-600">
-            Nhập từ khóa vào ô tìm kiếm để tìm sản phẩm bạn cần
+            Vui lòng thêm tham số tìm kiếm vào URL (ví dụ: /tim-kiem?q=điện thoại)
           </p>
         </div>
       )}

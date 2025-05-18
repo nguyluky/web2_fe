@@ -1,9 +1,10 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import { faChevronDown, faChevronUp, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSort, faSortUp, faSortDown, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import React, { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import fetchWithToken from '~/utils/fechWithToken';
 
 const TopCustomersStatisticsPage = () => {
   const [customers, setCustomers] = useState([]);
@@ -13,9 +14,9 @@ const TopCustomersStatisticsPage = () => {
   const [expandedOrders, setExpandedOrders] = useState({});
   const [orders, setOrders] = useState({}); // Store as { [order_id]: details }
 
-  // Fetch customers
+  // fetchWithToken customers
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchWithTokenData = async () => {
       if (!startDate || !endDate) {
         toast.error('Vui lòng nhập đầy đủ khoảng thời gian', { autoClose: 3000 });
         return;
@@ -33,8 +34,8 @@ const TopCustomersStatisticsPage = () => {
           end_date: endDate,
           sort: sortOrder,
         }).toString();
-        console.log('Fetching customers with params:', params);
-        const response = await fetch(`http://127.0.0.1:8000/api/admin/top-customers?${params}`, {
+        console.log('fetchWithTokening customers with params:', params);
+        const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/top-customers?${params}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -62,14 +63,14 @@ const TopCustomersStatisticsPage = () => {
         setCustomers([]);
       }
     };
-    fetchData();
+    fetchWithTokenData();
   }, [startDate, endDate, sortOrder]);
 
-  // Fetch order details for a specific order_id
-  const fetchOrderDetails = async (orderId) => {
-    if (orders[orderId]) return; // Skip if already fetched
+  // fetchWithToken order details for a specific order_id
+  const fetchWithTokenOrderDetails = async (orderId) => {
+    if (orders[orderId]) return; // Skip if already fetchWithTokened
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/order-details?order_id=${orderId}`, {
+      const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/order-details?order_id=${orderId}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -84,7 +85,7 @@ const TopCustomersStatisticsPage = () => {
         [orderId]: data.data || [],
       }));
     } catch (error) {
-      console.error(`Error fetching details for order ${orderId}:`, error.message);
+      console.error(`Error fetchWithTokening details for order ${orderId}:`, error.message);
       toast.error(`Lỗi khi lấy chi tiết đơn hàng #${orderId}: ${error.message}`, { autoClose: 3000 });
       setOrders((prev) => ({
         ...prev,
@@ -109,7 +110,7 @@ const TopCustomersStatisticsPage = () => {
       [orderId]: !prev[orderId],
     }));
     if (!orders[orderId]) {
-      fetchOrderDetails(orderId); // Fetch details when expanding
+      fetchWithTokenOrderDetails(orderId); // fetchWithToken details when expanding
     }
   };
 

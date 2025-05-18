@@ -1,16 +1,17 @@
 
 //@ts-nocheck
-import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faDeleteLeft,
-  faEdit,
-  faChevronLeft,
-  faChevronRight,
-  faTimes,
+    faChevronLeft,
+    faChevronRight,
+    faDeleteLeft,
+    faEdit,
+    faTimes,
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import fetchWithToken from '~/utils/fechWithToken';
 
 const RoleManagement = () => {
   const [roles, setRoles] = useState([]);
@@ -32,7 +33,7 @@ const RoleManagement = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchWithTokenData = async () => {
       try {
         const params = new URLSearchParams({
           name: searchTerm,
@@ -41,7 +42,7 @@ const RoleManagement = () => {
           per_page: 10,
         });
 
-        const rolesResponse = await fetch(`http://127.0.0.1:8000/api/admin/rules/search?${params.toString()}`);
+        const rolesResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/rules/search?${params.toString()}`);
         if (!rolesResponse.ok) throw new Error('Không thể lấy danh sách nhóm quyền');
         const rolesData = await rolesResponse.json();
         setRoles(rolesData.data.data || []);
@@ -52,7 +53,7 @@ const RoleManagement = () => {
         toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
       }
     };
-    fetchData();
+    fetchWithTokenData();
   }, [currentPage, searchTerm, statusFilter]);
 
   const openModal = () => setIsModalOpen(true);
@@ -88,7 +89,7 @@ const RoleManagement = () => {
         throw new Error('Vui lòng nhập tên nhóm quyền');
       }
 
-      const response = await fetch('http://127.0.0.1:8000/api/admin/rules', {
+      const response = await fetchWithToken('http://127.0.0.1:8000/api/admin/rules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -107,7 +108,7 @@ const RoleManagement = () => {
         }
       }
 
-      const updatedRolesResponse = await fetch(`http://127.0.0.1:8000/api/admin/rules?page=${currentPage}`);
+      const updatedRolesResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/rules?page=${currentPage}`);
       const updatedRolesData = await updatedRolesResponse.json();
       setRoles(updatedRolesData.data.data || []);
       setFilteredRoles(updatedRolesData.data.data || []);
@@ -132,7 +133,7 @@ const RoleManagement = () => {
         throw new Error('Vui lòng nhập tên nhóm quyền');
       }
 
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/rules/${updateRole.id}`, {
+      const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/rules/${updateRole.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -151,7 +152,7 @@ const RoleManagement = () => {
         }
       }
 
-      const updatedRolesResponse = await fetch(`http://127.0.0.1:8000/api/admin/rules?page=${currentPage}`);
+      const updatedRolesResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/rules?page=${currentPage}`);
       const updatedRolesData = await updatedRolesResponse.json();
       setRoles(updatedRolesData.data.data || []);
       setFilteredRoles(updatedRolesData.data.data || []);
@@ -173,7 +174,7 @@ const RoleManagement = () => {
     }
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/rules/${roleId}`, {
+      const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/rules/${roleId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -188,7 +189,7 @@ const RoleManagement = () => {
         }
       }
 
-      const updatedRolesResponse = await fetch(`http://127.0.0.1:8000/api/admin/rules?page=${currentPage}`);
+      const updatedRolesResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/rules?page=${currentPage}`);
       const updatedRolesData = await updatedRolesResponse.json();
       setRoles(updatedRolesData.data.data || []);
       setFilteredRoles(updatedRolesData.data.data || []);
@@ -214,7 +215,7 @@ const RoleManagement = () => {
         per_page: 10,
       });
 
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/rules/search?${params.toString()}`);
+      const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/rules/search?${params.toString()}`);
       if (!response.ok) {
         throw new Error('Không thể tìm kiếm nhóm quyền');
       }

@@ -1,33 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import LineChartComponent from './LineChartComponent';
-import PieChartComponent from './PieChartComponent';
-import { XAxis } from 'recharts';
+import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import fetchWithToken from '~/utils/fechWithToken';
+import LineChartComponent from './LineChartComponent';
+import PieChartComponent from './PieChartComponent';
 const Dashboard = () => {
   const [stats, setStats] = useState([]);
   const [statusStats, setStatusStats] = useState([]);
-    const [topProducts, setTopProducts] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    const fetchTopProducts = async () => {
+    const fetchWithTokenTopProducts = async () => {
       try {
-        const topProductRes = await fetch('http://127.0.0.1:8000/api/admin/products/top');
+        const topProductRes = await fetchWithToken('http://127.0.0.1:8000/api/admin/products/top');
         const topProductData = await topProductRes.json();
         setTopProducts(topProductData || []);
         console.log(topProductData);
       } catch (error) {
-          console.error('Lỗi khi lấy dữ liệu:', error.message);
-          toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
+        console.error('Lỗi khi lấy dữ liệu:', error.message);
+        toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
       };
     };
-    fetchTopProducts();
+    fetchWithTokenTopProducts();
   }, []);
 
 
-  const fetchStats = async () => {
+  const fetchWithTokenStats = async () => {
     try {
-      const statsRes = await fetch('http://127.0.0.1:8000/api/admin/tk_orders/stats');
+      const statsRes = await fetchWithToken('http://127.0.0.1:8000/api/admin/tk_orders/stats');
       if (!statsRes.ok) throw new Error('Không thể lấy dữ liệu thống kê');
       const statsData = await statsRes.json();
       setStats(statsData.data || []);
@@ -37,9 +38,9 @@ const Dashboard = () => {
     }
   };
 
-  const fetchStatusStats = async () => {
+  const fetchWithTokenStatusStats = async () => {
     try {
-      const statusRes = await fetch('http://127.0.0.1:8000/api/admin/tk_orders/status-stats');
+      const statusRes = await fetchWithToken('http://127.0.0.1:8000/api/admin/tk_orders/status-stats');
       if (!statusRes.ok) throw new Error('Không thể lấy dữ liệu trạng thái');
       const statusData = await statusRes.json();
       setStatusStats(statusData.data || []);
@@ -50,8 +51,44 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchStats();
-    fetchStatusStats(); // Uncomment when backend endpoint is ready
+    const fetchOrders = async () => {
+      try {
+        const response = await fetchWithToken('http://127.0.0.1:8000/api/admin/orders');
+        if (!response.ok) throw new Error('Failed to fetch orders');
+        const data = await response.json();
+        console.log('Orders API Response:', data);
+        const sortedOrders = Array.isArray(data.data.data) ? data.data.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : [];
+        setOrders(sortedOrders);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        setOrders([]);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/admin/orders');
+        if (!response.ok) throw new Error('Failed to fetch orders');
+        const data = await response.json();
+        console.log('Orders API Response:', data);
+        const sortedOrders = Array.isArray(data.data.data) ? data.data.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : [];
+        setOrders(sortedOrders);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        setOrders([]);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  useEffect(() => {
+    fetchWithTokenStats();
+    fetchWithTokenStatusStats(); // Uncomment when backend endpoint is ready
   }, []);
 
   const dataKeys = [
@@ -128,7 +165,7 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  {/* <tr>
                     <td>#ORD-7352</td>
                     <td>Nguyễn Văn A</td>
                     <td className="text-blue-500">Đang xử lý</td>
@@ -151,7 +188,19 @@ const Dashboard = () => {
                     <td>Phạm Thị D</td>
                     <td className="text-red-500">Đã hủy</td>
                     <td>2,490,000₫</td>
-                  </tr>
+                  </tr> */}
+                  {Array.isArray(orders) && orders.map((order) => (
+                    <tr key={order.id}>
+                      <td>{order.id}</td>
+                      <td>{order.profile?.fullname || 'Unknown'}</td>
+                      <td>
+                        {order.status === 'completed' && <span className="text-green-500">Đã thanh toán</span>}
+                        {order.status === 'processing' && <span className="text-blue-500">Đang xử lý</span>}
+                        {order.status === 'pending' && <span className="text-yellow-500">Đang chờ</span>}
+                        {order.status === 'cancelled' && <span className="text-red-500">Đã hủy</span>}
+                      </td>                      <td>{new Date(order.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
               <button className="flex items-center justify-center border border-gray-300 w-full px-4 py-2 text-base bg-white-500 text-gray-500 rounded hover:bg-gray-200 hover:text-black">

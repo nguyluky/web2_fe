@@ -1,3 +1,4 @@
+import type { Account } from "~/models/Account";
 import { ApiService } from "./api.service";
 
 
@@ -40,6 +41,10 @@ export class AuthService extends ApiService {
 
     async logout() {
         return this.post<void, any>('/auth/logout');
+    }
+
+    async getUserInfo() {
+        return this.get<{user: Account}, any>('/users/info');
     }
     // TODO: Implement other auth-related methods as needed
 }

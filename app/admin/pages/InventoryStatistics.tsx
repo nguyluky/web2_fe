@@ -1,9 +1,10 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import fetchWithToken from '~/utils/fechWithToken';
 
 const InventoryStatistics = () => {
   const [products, setProducts] = useState([]);
@@ -14,7 +15,7 @@ const InventoryStatistics = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState('');
 
-  const fetchProducts = async () => {
+  const fetchWithTokenProducts = async () => {
     try {
       const params = new URLSearchParams({
         keyword: searchTerm,
@@ -22,7 +23,7 @@ const InventoryStatistics = () => {
         page: currentPage,
         per_page: 10,
       });
-      const productRes = await fetch(
+      const productRes = await fetchWithToken(
         `http://127.0.0.1:8000/api/admin/products/search?${params.toString()}`
       );
       if (!productRes.ok) throw new Error('Không thể lấy dữ liệu sản phẩm');
@@ -34,7 +35,7 @@ const InventoryStatistics = () => {
     }
   };
 
-  const fetchProductVariants = async () => {
+  const fetchWithTokenProductVariants = async () => {
     try {
       const params = new URLSearchParams({
         keyword: searchTerm,
@@ -45,7 +46,7 @@ const InventoryStatistics = () => {
       if (selectedVariant) {
         params.append('variant_id', selectedVariant);
       }
-      const productVarRes = await fetch(
+      const productVarRes = await fetchWithToken(
         `http://127.0.0.1:8000/api/admin/product-variants/search?${params.toString()}`
       );
       if (!productVarRes.ok) throw new Error('Không thể lấy dữ liệu biến thể');
@@ -59,8 +60,8 @@ const InventoryStatistics = () => {
   };
 
   useEffect(() => {
-    fetchProducts();
-    fetchProductVariants();
+    fetchWithTokenProducts();
+    fetchWithTokenProductVariants();
   }, [currentPage, searchTerm, statusFilter, selectedVariant]);
 
   const handleSearchInputChange = (e) => setSearchTerm(e.target.value);

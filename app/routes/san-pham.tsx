@@ -24,7 +24,7 @@ export async function clientLoader({ params }: { params: { id: string } }) {
 export default function ProductDetail({ loaderData }: Route.ComponentProps) {
     const navigate = useNavigate();
     const { product } = loaderData;
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, profile: user } = useAuth();
     const [selectedVariant, setSelectedVariant] = useState<number | null>(
         product?.product_variants?.[0]?.id || null
     );

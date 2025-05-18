@@ -1,17 +1,18 @@
 //@ts-nocheck
-import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faEdit,
-  faDeleteLeft,
-  faChevronLeft,
-  faChevronRight,
-  faTimes,
-  faPlus,
-  faTrash,
+    faChevronLeft,
+    faChevronRight,
+    faDeleteLeft,
+    faEdit,
+    faPlus,
+    faTimes,
+    faTrash,
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import fetchWithToken from '~/utils/fechWithToken';
 
 const OrderManagement = () => {
   const [users, setUsers] = useState([]);
@@ -38,7 +39,7 @@ const OrderManagement = () => {
   });
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchWithTokenData = async () => {
       setIsLoading(true);
       try {
         const params = new URLSearchParams({
@@ -50,33 +51,33 @@ const OrderManagement = () => {
           page: currentPage,
         });
 
-        const usersResponse = await fetch('http://127.0.0.1:8000/api/admin/users');
+        const usersResponse = await fetchWithToken('http://127.0.0.1:8000/api/admin/users');
         if (!usersResponse.ok) throw new Error('Không thể lấy danh sách người dùng');
         const usersData = await usersResponse.json();
         setUsers(usersData.data.data || []);
 
-        const importsResponse = await fetch(`http://127.0.0.1:8000/api/admin/imports?${params.toString()}`);
+        const importsResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/imports?${params.toString()}`);
         if (!importsResponse.ok) throw new Error('Không thể lấy danh sách phiếu nhập');
         const importsData = await importsResponse.json();
         setImports(importsData.data.data || []);
         setTotalPages(importsData.data.last_page || 1);
 
-        const importDetailsResponse = await fetch('http://127.0.0.1:8000/api/admin/import-details');
+        const importDetailsResponse = await fetchWithToken('http://127.0.0.1:8000/api/admin/import-details');
         if (!importDetailsResponse.ok) throw new Error('Không thể lấy chi tiết phiếu nhập');
         const importDetailsData = await importDetailsResponse.json();
         setImportDetails(importDetailsData.data || []);
 
-        const suppliersResponse = await fetch('http://127.0.0.1:8000/api/admin/suppliers');
+        const suppliersResponse = await fetchWithToken('http://127.0.0.1:8000/api/admin/suppliers');
         if (!suppliersResponse.ok) throw new Error('Không thể lấy danh sách nhà cung cấp');
         const suppliersData = await suppliersResponse.json();
         setSuppliers(suppliersData.data.data || []);
 
-        const productsResponse = await fetch('http://127.0.0.1:8000/api/admin/products');
+        const productsResponse = await fetchWithToken('http://127.0.0.1:8000/api/admin/products');
         if (!productsResponse.ok) throw new Error('Không thể lấy danh sách sản phẩm');
         const productsData = await productsResponse.json();
         setProducts(productsData.data.data || []);
 
-        const productVarRes = await fetch(`http://127.0.0.1:8000/api/admin/product-variants`);
+        const productVarRes = await fetchWithToken(`http://127.0.0.1:8000/api/admin/product-variants`);
         if (!productVarRes.ok) throw new Error('Không thể lấy danh sách product-variants');
         const productVarData = await productVarRes.json();
         setProductVars(productVarData.data || []);
@@ -87,7 +88,7 @@ const OrderManagement = () => {
         setIsLoading(false);
       }
     };
-    fetchData();
+    fetchWithTokenData();
   }, [currentPage, searchTerm, statusFilter, dateStart, dateEnd]);
 
   const calculateTotalPerImport = (details = []) => {
@@ -194,7 +195,7 @@ const OrderManagement = () => {
         throw new Error('Không được chọn biến thể sản phẩm trùng lặp');
       }
 
-      const response = await fetch('http://127.0.0.1:8000/api/admin/imports', {
+      const response = await fetchWithToken('http://127.0.0.1:8000/api/admin/imports', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -227,7 +228,7 @@ const OrderManagement = () => {
         page: currentPage,
       });
 
-      const updatedImportsResponse = await fetch(
+      const updatedImportsResponse = await fetchWithToken(
         `http://127.0.0.1:8000/api/admin/imports?${params.toString()}`
       );
       if (!updatedImportsResponse.ok) throw new Error('Không thể lấy danh sách phiếu nhập');
@@ -255,7 +256,7 @@ const OrderManagement = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/imports/${selectedImport.id}`, {
+      const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/imports/${selectedImport.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -269,7 +270,7 @@ const OrderManagement = () => {
         throw new Error(errorData.message || 'Không thể cập nhật trạng thái phiếu nhập');
       }
 
-      const updatedImportsResponse = await fetch(
+      const updatedImportsResponse = await fetchWithToken(
         `http://127.0.0.1:8000/api/admin/imports?page=${currentPage}&limit=10`
       );
       if (!updatedImportsResponse.ok) throw new Error('Không thể lấy danh sách phiếu nhập');
@@ -292,7 +293,7 @@ const OrderManagement = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/imports/${importId}`, {
+      const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/imports/${importId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -314,7 +315,7 @@ const OrderManagement = () => {
         page: currentPage,
       });
 
-      const updatedImportsResponse = await fetch(
+      const updatedImportsResponse = await fetchWithToken(
         `http://127.0.0.1:8000/api/admin/imports?${params.toString()}`
       );
       if (!updatedImportsResponse.ok) throw new Error('Không thể lấy danh sách phiếu nhập sau khi xóa');

@@ -12,6 +12,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import fetchWithToken from '~/utils/fechWithToken';
 
 const ProductManagement = () => {
     // ============= STATE MANAGEMENT =============
@@ -142,7 +143,7 @@ const ProductManagement = () => {
     const prepareProductForEdit = async (productId) => {
         try {
             setIsLoading(true);
-            // Fetch product details from API
+            // fetchWithToken product details from API
 
             const data = await products.find((product) => product.id === productId);
             const variants = await productVars.filter(
@@ -477,8 +478,11 @@ const ProductManagement = () => {
                 ? `http://127.0.0.1:8000/api/admin/products/${editProduct.product.id}`
                 : 'http://127.0.0.1:8000/api/admin/products';
 
-            const response = await fetch(url, {
+            const response = await fetchWithToken(url, {
                 method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify(editProduct.product),
             });
 
@@ -501,7 +505,7 @@ const ProductManagement = () => {
                     product_id: productId,
                 };
 
-                return fetch(url, {
+                return fetchWithToken(url, {
                     method,
                     body: JSON.stringify(variantData),
                     headers: {
@@ -516,17 +520,35 @@ const ProductManagement = () => {
                 const url = isEditing
                     ? `http://127.0.0.1:8000/api/admin/product-images/${image.id}`
                     : 'http://127.0.1:8000/api/admin/product-images';
-                
+
                 const method = image.id ? 'PUT' : 'POST';
 
+
+                const formData = new FormData();
+                formData.append('product_id', productId);
+                formData.append('image', image.file);
+
+
                 console.log(image)
+                return fetchWithToken(url, {
+                    method,
+                    body: formData,
+                    headers: {
+                        accept: 'application/json',
+                    }
+                    // Don't set Content-Type header for FormData
+                    // Browser will automatically set it with the correct boundary
+                });
+
             })
+
+            await Promise.all(imagePromises);
 
             toast.success(isEditing ? 'Cập nhật sản phẩm thành công!' : 'Tạo sản phẩm thành công!');
             console.log('Sản phẩm:', data);
 
             // Refresh danh sách sản phẩm
-            fetchProducts();
+            fetchWithTokenProducts();
             closeModal();
         } catch (error) {
             console.error('Lỗi khi lưu sản phẩm:', error);
@@ -636,7 +658,7 @@ const ProductManagement = () => {
         return formData;
     };
 
-    const fetchProducts = async () => {
+    const fetchWithTokenProducts = async () => {
         try {
             const params = new URLSearchParams({
                 keyword: searchTerm,
@@ -646,7 +668,7 @@ const ProductManagement = () => {
                 page: currentPage,
                 per_page: 10,
             });
-            const productRes = await fetch(
+            const productRes = await fetchWithToken(
                 `http://127.0.0.1:8000/api/admin/products/search?${params.toString()}`
             );
             const productData = await productRes.json();
@@ -658,9 +680,9 @@ const ProductManagement = () => {
         }
     };
 
-    const fetchProductVariants = async () => {
+    const fetchWithTokenProductVariants = async () => {
         try {
-            const productVarRes = await fetch(`http://127.0.0.1:8000/api/admin/product-variants`);
+            const productVarRes = await fetchWithToken(`http://127.0.0.1:8000/api/admin/product-variants`);
             const productVarData = await productVarRes.json();
             setProductVars(productVarData.data || []);
         } catch (error) {
@@ -669,9 +691,9 @@ const ProductManagement = () => {
         }
     };
 
-    const fetchCategories = async () => {
+    const fetchWithTokenCategories = async () => {
         try {
-            const categoryRes = await fetch(`http://127.0.0.1:8000/api/admin/categories`);
+            const categoryRes = await fetchWithToken(`http://127.0.0.1:8000/api/admin/categories`);
             const categoryData = await categoryRes.json();
             setCategories(categoryData.data.data || []);
         } catch (error) {
@@ -680,9 +702,9 @@ const ProductManagement = () => {
         }
     };
 
-    const fetchProductImages = async () => {
+    const fetchWithTokenProductImages = async () => {
         try {
-            const productImageRes = await fetch(`http://127.0.0.1:8000/api/admin/product-images`);
+            const productImageRes = await fetchWithToken(`http://127.0.0.1:8000/api/admin/product-images`);
             const productImageData = await productImageRes.json();
             setProductImages(productImageData.data || []);
         } catch (error) {
@@ -698,7 +720,7 @@ const ProductManagement = () => {
 
         try {
             setIsLoading(true);
-            const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}`, {
+            const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/products/${productId}`, {
                 method: 'DELETE',
             });
 
@@ -708,13 +730,35 @@ const ProductManagement = () => {
             }
 
             toast.success('Xóa sản phẩm thành công!');
-            fetchProducts();
+            fetchWithTokenProducts();
         } catch (error) {
             console.error('Lỗi khi xóa sản phẩm:', error);
             toast.error('Lỗi khi xóa sản phẩm: ' + error.message);
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // ============= UTILITY FUNCTIONS =============
+    const getProductImage = (productId) => {
+        // Find all images for this product
+        const images = productImages.filter(img => img.product_id === productId);
+        
+        if (images.length === 0) {
+            // If no images found, return default image
+            return 'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-model-unselect-gallery-1-202309?wid=5120&hei=2880&fmt=jpeg&qlt=80&.v=1692837880911';
+        }
+        
+        // Find primary image (is_primary = true)
+        const primaryImage = images.find(img => img.is_primary === true);
+        if (primaryImage) {
+            // Use appropriate URL property (image_url or url)
+            return primaryImage.image_url || primaryImage.url;
+        }
+        
+        // If no primary image, use the last image in the array
+        const lastImage = images[images.length - 1];
+        return lastImage.image_url || lastImage.url;
     };
 
     // ============= SIDE EFFECTS =============
@@ -777,18 +821,18 @@ const ProductManagement = () => {
     };
 
     useEffect(() => {
-        const fetchAllData = async () => {
+        const fetchWithTokenAllData = async () => {
             try {
-                await fetchProducts();
-                await fetchProductVariants();
-                await fetchCategories();
-                await fetchProductImages();
+                await fetchWithTokenProducts();
+                await fetchWithTokenProductVariants();
+                await fetchWithTokenCategories();
+                await fetchWithTokenProductImages();
             } catch (error) {
                 console.error('Lỗi khi lấy dữ liệu:', error.message);
                 toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
             }
         };
-        fetchAllData();
+        fetchWithTokenAllData();
     }, [currentPage, searchTerm, statusFilter, dateStart, dateEnd]);
 
     // ============= RENDER UI COMPONENTS =============
@@ -1260,10 +1304,7 @@ const ProductManagement = () => {
                                     <div className="product-img">
                                         <div className="mask mask-squircle h-12 w-12">
                                             <img
-                                                src={
-                                                    product.small_image_url ||
-                                                    'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-model-unselect-gallery-1-202309?wid=5120&hei=2880&fmt=jpeg&qlt=80&.v=1692837880911'
-                                                }
+                                                src={getProductImage(product.id)}
                                             />
                                         </div>
                                     </div>

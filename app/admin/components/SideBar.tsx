@@ -1,24 +1,21 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faBoxesPacking,
-  faFileCirclePlus,
-  faHouse,
-  faMagnifyingGlass,
-  faRightFromBracket,
-  faPalette,
-  faCartShopping,
-  faTicket,
-  faTruck,
-  faUsers,
-  faUser,
-  faBriefcase,
-  faChartArea,
-  faChevronDown,
-  faChevronRight,
-  faWrench,
+    faBoxesPacking,
+    faCartShopping,
+    faChartArea,
+    faChevronDown,
+    faChevronRight,
+    faFileCirclePlus,
+    faHouse,
+    faRightFromBracket,
+    faTruck,
+    faUser,
+    faUsers,
+    faWrench
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '~/contexts/AuthContext';
 
 const items = [
   {
@@ -94,6 +91,7 @@ const items = [
 
 const Sidebar = () => {
   const [openMenus, setOpenMenus] = useState<{ [key: number]: boolean }>({});
+  const {logout, profile} = useAuth();
 
   const toggleMenu = (id: number) => {
     setOpenMenus((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -151,12 +149,15 @@ const Sidebar = () => {
         </ul>
 
         {/* Đăng xuất */}
-        <button className="flex items-center justify-between border w-full px-4 py-2 text-base bg-white-500 text-gray-500 rounded hover:bg-gray-200 hover:text-black mt-auto">
+        <button onClick={() => {
+            logout();
+            window.location.href = '/auth/login';
+        }} className="flex items-center justify-between border w-full px-4 py-2 text-base bg-white-500 text-gray-500 rounded hover:bg-gray-200 hover:text-black mt-auto">
           <div className="flex items-center gap-3">
             <FontAwesomeIcon icon={faUser} />
             <div className="flex flex-col text-left">
-              <span className="font-semibold">UserName</span>
-              <span className="text-sm">abc@gmail.com</span>
+              <span className="font-semibold">{profile?.fullname}</span>
+              <span className="text-sm">{profile?.email}</span>
             </div>
           </div>
           <FontAwesomeIcon icon={faRightFromBracket} />

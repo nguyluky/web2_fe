@@ -1,12 +1,6 @@
 import { Link, useNavigate } from 'react-router';
-import May_tinh_ban from '~/asset/img/May_tinh_ban.png';
-import Phone from '~/asset/img/Phone.png';
-import ipad from '~/asset/img/May_tinh_ban.png';
-import LapTop from '~/asset/img/May_Tinh.png';
-import Phu_kien from '~/asset/img/icon-am-thanh.png';
-import Man_hinh from '~/asset/img/Man_hinh.png';
-
-
+import homeHeroImg from "~/asset/img/1-top-dien-thoai-ban-chay-tai-dien-may-cho-lon.jpg";
+import { categoryService } from '~/service/category.service';
 import { productsService } from '~/service/products.service';
 import type { Route } from './+types/home';
 
@@ -19,26 +13,31 @@ export function meta({}: Route.MetaArgs) {
 
 export async function clientLoader({}) {
     try {
-        const response = await productsService.getNewProducts();
-        const categories = [
-            { id: 1, name: 'Điện thoại', image: Phone },
-            { id: 3, name: 'Laptop', image: LapTop },
-            { id: 2, name: 'Máy tính bảng', image: ipad },
-            { id: 5, name: 'Máy tính', image: Man_hinh },
-            { id: 4, name: 'Phụ kiện', image: Phu_kien },
-        ];
+        // Fetch new products and categories in parallel
+        const [productsResponse, [categoriesResponse, categoryError]] = await Promise.all([
+            productsService.getNewProducts(),
+            categoryService.getCategories()
+        ]);
+        
+        // Filter categories where parent_id is null and add placeholder images
+        const categoriesWithImages = categoriesResponse?.data
+            .filter(category => category.parent_id === null)
+            .map(category => ({
+                ...category,
+                image: `https://placehold.co/100x100?text=${encodeURIComponent(category.name)}`
+            })) || [];
         
         return {
-            new_product: response[0],
-            categories,
+            new_product: productsResponse[0],
+            categories: categoriesWithImages,
             error: null
         };
     } catch (error) {
-        console.error("Error loading products:", error);
+        console.error("Error loading data:", error);
         return {
             new_product: { data: [] },
             categories: [],
-            error: "Không thể tải sản phẩm mới. Vui lòng thử lại sau."
+            error: "Không thể tải dữ liệu. Vui lòng thử lại sau."
         };
     }
 }
@@ -76,7 +75,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                             </div>
                             <div>
                                 <img
-                                    src="https://placehold.co/600x400"
+                                    src={homeHeroImg}
                                     alt="hero img"
                                     className="object-cover rounded-sm"
                                     style={{ height: '300px', width: '100%' }}
@@ -101,16 +100,16 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 w-full md:grid-cols-4 lg:grid-cols-5">
-                            {categories.map((_, index) => (
+                            {categories.map((category, index) => (
                                 <Link
-                                    to={`/danh-muc/${_.id}`}
+                                    to={`/danh-muc/${category.id}`}
                                     key={index}
                                     className="flex flex-col items-center justify-center rounded-lg p-4 transition-colors hover:bg-base-100 shadow-sm bg-base-300"
                                 >
                                     <div className="rounded-full bg-muted m-2 overflow-hidden">
-                                        <img height={100} width={100} src={_.image} alt={_.name} />
+                                        <img height={100} width={100} src={category.image} alt={category.name} />
                                     </div>
-                                    <span className="text-sm font-bold text-center">{_.name}</span>
+                                    <span className="text-sm font-bold text-center">{category.name}</span>
                                 </Link>
                             ))}
                         </div>

@@ -2,21 +2,56 @@ import React from 'react';
 import LineChartComponent from './LineChartComponent';
 import PieChartComponent from './PieChartComponent';
 import { XAxis } from 'recharts';
+import 'react-toastify/dist/ReactToastify.css';
 const Dashboard = () => {
-  const data = [
-    { name: 'Tháng 1', 'năm này': 4000, 'năm trước': 2400, amt: 2400 },
-    { name: 'Tháng 2', 'năm này': 3000, 'năm trước': 1398, amt: 2210 },
-    { name: 'Tháng 3', 'năm này': 2000, 'năm trước': 9800, amt: 2290 },
-    { name: 'Tháng 4', 'năm này': 2780, 'năm trước': 3908, amt: 2000 },
-    { name: 'Tháng 5', 'năm này': 1890, 'năm trước': 4800, amt: 2181 },
-    { name: 'Tháng 6', 'năm này': 2390, 'năm trước': 3800, amt: 2500 },
-    { name: 'Tháng 7', 'năm này': 3490, 'năm trước': 4300, amt: 2100 },
-    { name: 'Tháng 8', 'năm này': 2000, 'năm trước': 9800, amt: 2290 },
-    { name: 'Tháng 9', 'năm này': 2780, 'năm trước': 3908, amt: 2000 },
-    { name: 'Tháng 10', 'năm này': 1890, 'năm trước': 4800, amt: 2181 },
-    { name: 'Tháng 11', 'năm này': 3000, 'năm trước': 1398, amt: 2210 },
-    { name: 'Tháng 12', 'năm này': 2000, 'năm trước': 9800, amt: 2290 },
-  ];
+  const [stats, setStats] = useState([]);
+  const [statusStats, setStatusStats] = useState([]);
+    const [topProducts, setTopProducts] = useState([]);
+
+  useEffect(() => {
+    const fetchTopProducts = async () => {
+      try {
+        const topProductRes = await fetch('http://127.0.0.1:8000/api/admin/products/top');
+        const topProductData = await topProductRes.json();
+        setTopProducts(topProductData || []);
+        console.log(topProductData);
+      } catch (error) {
+          console.error('Lỗi khi lấy dữ liệu:', error.message);
+          toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
+      };
+    };
+    fetchTopProducts();
+  }, []);
+
+
+  const fetchStats = async () => {
+    try {
+      const statsRes = await fetch('http://127.0.0.1:8000/api/admin/tk_orders/stats');
+      if (!statsRes.ok) throw new Error('Không thể lấy dữ liệu thống kê');
+      const statsData = await statsRes.json();
+      setStats(statsData.data || []);
+    } catch (error) {
+      console.error('Lỗi khi lấy dữ liệu thống kê:', error);
+      toast.error('Lỗi khi lấy dữ liệu thống kê: ' + error.message);
+    }
+  };
+
+  const fetchStatusStats = async () => {
+    try {
+      const statusRes = await fetch('http://127.0.0.1:8000/api/admin/tk_orders/status-stats');
+      if (!statusRes.ok) throw new Error('Không thể lấy dữ liệu trạng thái');
+      const statusData = await statusRes.json();
+      setStatusStats(statusData.data || []);
+    } catch (error) {
+      console.error('Lỗi khi lấy dữ liệu trạng thái:', error);
+      toast.error('Lỗi khi lấy dữ liệu trạng thái: ' + error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+    fetchStatusStats(); // Uncomment when backend endpoint is ready
+  }, []);
 
   const dataKeys = [
     { key: 'năm này', color: '#8884d8' },
@@ -27,6 +62,7 @@ const Dashboard = () => {
 
   return (
     <div className="overflow-x-hidden min-h-screen bg-gray-100">
+      <ToastContainer />
       {/* Header */}
       <header className="">
         <div className="container mx-auto px-4 py-6">
@@ -67,12 +103,12 @@ const Dashboard = () => {
         <div className="grid gap-10 grid-cols-1 lg:grid-cols-2">
           <div className="chart-container w-full rounded-lg bg-white text-gray-600 shadow-md p-4">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Biểu đồ doanh thu</h2>
-            <LineChartComponent data={data} dataKeys={dataKeys} xAxisKey={XAxisKey} />
+            <LineChartComponent data={stats} dataKeys={dataKeys} xAxisKey={xAxisKey} />
           </div>
 
           <div className="chart-container w-full rounded-lg bg-white text-gray-600 shadow-md p-4">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Phương thức thanh toán</h2>
-            <PieChartComponent />
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Trạng thái đơn hàng</h2>
+            <PieChartComponent data={statusStats} />
           </div>
         </div>
 
@@ -135,22 +171,13 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td className="px-4 py-3">Điện thoại XYZ</td>
-                    <td className="px-4 py-3">150</td>
-                  </tr>
-                  <tr>
-                    <td>Laptop ABC</td>
-                    <td>120</td>
-                  </tr>
-                  <tr>
-                    <td>Máy tính bảng DEF</td>
-                    <td>80</td>
-                  </tr>
-                  <tr>
-                    <td>Phụ kiện GHI</td>
-                    <td>200</td>
-                  </tr>
+                  {topProducts.map((topProduct) => (
+                    <tr key={topProduct.id}>
+                      <td>{topProduct.id}</td>
+                      <td>{topProduct.name}</td>
+                      <td className="text-center">{topProduct.total_sold}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

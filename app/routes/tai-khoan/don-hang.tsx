@@ -10,7 +10,7 @@ import { productReviewService, type Review } from "~/service/productReview.servi
 import { formatCurrency } from "~/utils/formatCurrency";
 
 export default function DonHang() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, profile: user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

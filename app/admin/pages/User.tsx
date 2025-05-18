@@ -1,13 +1,13 @@
 //@ts-nocheck
-import React, { useState, useEffect, useRef } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faDeleteLeft,
-  faEdit,
-  faChevronLeft,
-  faChevronRight,
-  faTimes,
+    faChevronLeft,
+    faChevronRight,
+    faDeleteLeft,
+    faEdit,
+    faTimes,
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useRef, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -659,8 +659,8 @@ const UserManagement = () => {
                         <div className="avatar">
                           <div className="mask mask-squircle h-12 w-12">
                             <img
-                              src="https://img.daisyui.com/images/profile/demo/5@94.webp"
-                              alt="Avatar Tailwind CSS Component"
+                              src={user.avatar || "https://img.daisyui.com/images/profile/demo/5@94.webp"}
+                              alt={`Avatar của ${user.fullname}`}
                             />
                           </div>
                         </div>

@@ -1,16 +1,8 @@
+import type { Profile } from '~/models/Profile';
 import { ApiService } from './api.service';
 
 export interface getProfileResponse {
-    data: DataGet;
-}
-
-interface DataGet {
-    id: number;
-    fullname: string;
-    phone_number: string;
-    email: string;
-    avatar?: string;
-    avatar_url?: string;
+    data: Profile;
 }
 
 interface UpdateProfileRequest {
@@ -22,7 +14,7 @@ interface UpdateProfileRequest {
 
 interface UpdateProfileResponse {
     status: string;
-    data: DataGet;
+    data: Profile;
 }
 
 

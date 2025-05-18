@@ -7,7 +7,8 @@ import PieChartComponent from './PieChartComponent';
 const Dashboard = () => {
   const [stats, setStats] = useState([]);
   const [statusStats, setStatusStats] = useState([]);
-    const [topProducts, setTopProducts] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
 
   useEffect(() => {
     const fetchWithTokenTopProducts = async () => {
@@ -17,8 +18,8 @@ const Dashboard = () => {
         setTopProducts(topProductData || []);
         console.log(topProductData);
       } catch (error) {
-          console.error('Lỗi khi lấy dữ liệu:', error.message);
-          toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
+        console.error('Lỗi khi lấy dữ liệu:', error.message);
+        toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
       };
     };
     fetchWithTokenTopProducts();
@@ -48,6 +49,42 @@ const Dashboard = () => {
       toast.error('Lỗi khi lấy dữ liệu trạng thái: ' + error.message);
     }
   };
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await fetchWithToken('http://127.0.0.1:8000/api/admin/orders');
+        if (!response.ok) throw new Error('Failed to fetch orders');
+        const data = await response.json();
+        console.log('Orders API Response:', data);
+        const sortedOrders = Array.isArray(data.data.data) ? data.data.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : [];
+        setOrders(sortedOrders);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        setOrders([]);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/admin/orders');
+        if (!response.ok) throw new Error('Failed to fetch orders');
+        const data = await response.json();
+        console.log('Orders API Response:', data);
+        const sortedOrders = Array.isArray(data.data.data) ? data.data.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : [];
+        setOrders(sortedOrders);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        setOrders([]);
+      }
+    };
+
+    fetchOrders();
+  }, []);
 
   useEffect(() => {
     fetchWithTokenStats();
@@ -128,7 +165,7 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  {/* <tr>
                     <td>#ORD-7352</td>
                     <td>Nguyễn Văn A</td>
                     <td className="text-blue-500">Đang xử lý</td>
@@ -151,7 +188,19 @@ const Dashboard = () => {
                     <td>Phạm Thị D</td>
                     <td className="text-red-500">Đã hủy</td>
                     <td>2,490,000₫</td>
-                  </tr>
+                  </tr> */}
+                  {Array.isArray(orders) && orders.map((order) => (
+                    <tr key={order.id}>
+                      <td>{order.id}</td>
+                      <td>{order.profile?.fullname || 'Unknown'}</td>
+                      <td>
+                        {order.status === 'completed' && <span className="text-green-500">Đã thanh toán</span>}
+                        {order.status === 'processing' && <span className="text-blue-500">Đang xử lý</span>}
+                        {order.status === 'pending' && <span className="text-yellow-500">Đang chờ</span>}
+                        {order.status === 'cancelled' && <span className="text-red-500">Đã hủy</span>}
+                      </td>                      <td>{new Date(order.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
               <button className="flex items-center justify-center border border-gray-300 w-full px-4 py-2 text-base bg-white-500 text-gray-500 rounded hover:bg-gray-200 hover:text-black">

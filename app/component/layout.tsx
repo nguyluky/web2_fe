@@ -1,9 +1,12 @@
 import { Link, Outlet, useNavigation } from 'react-router';
 import { useAuth } from '~/contexts/AuthContext';
+import { useCategories } from '~/contexts/CategoryContext';
 import './loading.css';
 
 export function Header() {
   const { isAuthenticated, user } = useAuth();
+  const { categories, loading } = useCategories();
+  
   return (
     <header className="navbar bg-base-100 shadow-sm sticky top-0 z-50 justify-center flex">
       <div className="navbar-center w-full max-w-[80rem]">
@@ -29,23 +32,15 @@ export function Header() {
               tabIndex={0}
               className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
             >
-              <li>
-                <Link to="/item1">Item 1</Link>
-              </li>
-              <li>
-                <Link to="/parent">Parent</Link>
-                <ul className="p-2">
-                  <li>
-                    <Link to="/parent/submenu1">Submenu 1</Link>
+              {loading ? (
+                <li><span className="loading loading-spinner loading-sm"></span></li>
+              ) : (
+                categories.map((category) => (
+                  <li key={category.id}>
+                    <Link to={`/danh-muc/${category.id}`}>{category.name}</Link>
                   </li>
-                  <li>
-                    <Link to="/parent/submenu2">Submenu 2</Link>
-                  </li>
-                </ul>
-              </li>
-              <li>
-                <Link to="/item3">Item 3</Link>
-              </li>
+                ))
+              )}
             </ul>
           </div>
           <Link to="/" className="btn btn-ghost text-xl font-bold">
@@ -54,22 +49,20 @@ export function Header() {
         </div>
         <div className="navbar-center hidden lg:flex">
           <ul className="menu menu-horizontal">
-            <li>
-              <Link to="/danh-muc/dien-thoai">Điện thoại</Link>
-            </li>
-            <li>
-              <Link to="/danh-muc/laptop">Laptop</Link>
-            </li>
-            <li>
-              <Link to="/danh-muc/may-tinh-bang">Máy tính bảng</Link>
-            </li>
-            <li>
-              <Link to="/danh-muc/man-hinh">Màn hình</Link>
-            </li>
-
-            <li>
-              <Link to="/danh-muc/phu-kien">Phụ kiện</Link>
-            </li>
+            {loading ? (
+              <li><span className="loading loading-spinner loading-sm"></span></li>
+            ) : (
+              categories.slice(0, 5).map((category) => (
+                <li key={category.id}>
+                  <Link to={`/danh-muc/${category.id}`}>{category.name}</Link>
+                </li>
+              ))
+            )}
+            {categories.length > 5 && (
+              <li>
+                <Link to="/danh-muc">Xem thêm</Link>
+              </li>
+            )}
           </ul>
         </div>
         <div className="navbar-end flex gap-5 w-full">

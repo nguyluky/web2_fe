@@ -479,6 +479,9 @@ const ProductManagement = () => {
 
             const response = await fetch(url, {
                 method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify(editProduct.product),
             });
 
@@ -516,11 +519,29 @@ const ProductManagement = () => {
                 const url = isEditing
                     ? `http://127.0.0.1:8000/api/admin/product-images/${image.id}`
                     : 'http://127.0.1:8000/api/admin/product-images';
-                
+
                 const method = image.id ? 'PUT' : 'POST';
 
+
+                const formData = new FormData();
+                formData.append('product_id', productId);
+                formData.append('image', image.file);
+
+
                 console.log(image)
+                return fetch(url, {
+                    method,
+                    body: formData,
+                    headers: {
+                        accept: 'application/json',
+                    }
+                    // Don't set Content-Type header for FormData
+                    // Browser will automatically set it with the correct boundary
+                });
+
             })
+
+            await Promise.all(imagePromises);
 
             toast.success(isEditing ? 'Cập nhật sản phẩm thành công!' : 'Tạo sản phẩm thành công!');
             console.log('Sản phẩm:', data);
@@ -715,6 +736,28 @@ const ProductManagement = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // ============= UTILITY FUNCTIONS =============
+    const getProductImage = (productId) => {
+        // Find all images for this product
+        const images = productImages.filter(img => img.product_id === productId);
+        
+        if (images.length === 0) {
+            // If no images found, return default image
+            return 'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-model-unselect-gallery-1-202309?wid=5120&hei=2880&fmt=jpeg&qlt=80&.v=1692837880911';
+        }
+        
+        // Find primary image (is_primary = true)
+        const primaryImage = images.find(img => img.is_primary === true);
+        if (primaryImage) {
+            // Use appropriate URL property (image_url or url)
+            return primaryImage.image_url || primaryImage.url;
+        }
+        
+        // If no primary image, use the last image in the array
+        const lastImage = images[images.length - 1];
+        return lastImage.image_url || lastImage.url;
     };
 
     // ============= SIDE EFFECTS =============
@@ -1260,10 +1303,7 @@ const ProductManagement = () => {
                                     <div className="product-img">
                                         <div className="mask mask-squircle h-12 w-12">
                                             <img
-                                                src={
-                                                    product.small_image_url ||
-                                                    'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-model-unselect-gallery-1-202309?wid=5120&hei=2880&fmt=jpeg&qlt=80&.v=1692837880911'
-                                                }
+                                                src={getProductImage(product.id)}
                                             />
                                         </div>
                                     </div>

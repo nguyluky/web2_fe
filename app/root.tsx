@@ -11,6 +11,7 @@ import { ToastContainer } from 'react-toastify';
 import type { Route } from './+types/root';
 import './app.css';
 import { AuthProvider } from './contexts/AuthContext';
+import { CategoryProvider } from './contexts/CategoryContext';
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -50,8 +51,10 @@ export function HydrateFallback() {
 export default function App() {
   return (
     <AuthProvider>
-      <Outlet />
-       <ToastContainer />
+      <CategoryProvider>
+        <Outlet />
+        <ToastContainer />
+      </CategoryProvider>
     </AuthProvider>
   );
 }

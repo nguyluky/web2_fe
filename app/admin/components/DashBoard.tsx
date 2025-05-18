@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import LineChartComponent from './LineChartComponent';
 import PieChartComponent from './PieChartComponent';
 import { XAxis } from 'recharts';
@@ -166,8 +166,9 @@ const Dashboard = () => {
               <table className="table text-lg w-full">
                 <thead>
                   <tr className="text-lg">
+                    <th className="px-4 py-2">ID</th>
                     <th className="px-4 py-2">Tên sản phẩm</th>
-                    <th className="px-4 py-2">Số lượng</th>
+                    <th className="px-4 py-2 text-center">Số lượng</th>
                   </tr>
                 </thead>
                 <tbody>

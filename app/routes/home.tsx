@@ -1,6 +1,12 @@
 import { Link, useNavigate } from 'react-router';
 import May_tinh_ban from '~/asset/img/May_tinh_ban.png';
 import Phone from '~/asset/img/Phone.png';
+import ipad from '~/asset/img/May_tinh_ban.png';
+import LapTop from '~/asset/img/May_Tinh.png';
+import Phu_kien from '~/asset/img/icon-am-thanh.png';
+import Man_hinh from '~/asset/img/Man_hinh.png';
+
+
 import { productsService } from '~/service/products.service';
 import type { Route } from './+types/home';
 
@@ -16,10 +22,10 @@ export async function clientLoader({}) {
         const response = await productsService.getNewProducts();
         const categories = [
             { id: 1, name: 'Điện thoại', image: Phone },
-            { id: 5, name: 'Máy tính', image: May_tinh_ban },
-            { id: 2, name: 'Máy tính bảng', image: 'https://placehold.co/100x100' },
-            { id: 3, name: 'Laptop', image: 'https://placehold.co/100x100' },
-            { id: 4, name: 'Phụ kiện', image: 'https://placehold.co/100x100' },
+            { id: 3, name: 'Laptop', image: LapTop },
+            { id: 2, name: 'Máy tính bảng', image: ipad },
+            { id: 5, name: 'Máy tính', image: Man_hinh },
+            { id: 4, name: 'Phụ kiện', image: Phu_kien },
         ];
         
         return {

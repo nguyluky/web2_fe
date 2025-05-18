@@ -7,7 +7,7 @@ import {
     faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import fetchWithToken from '~/utils/fechWithToken';
@@ -19,6 +19,11 @@ const CategoryManagement = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [requiredFields, setRequiredFields] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeImageField, setActiveImageField] = useState(null);
+  const smallImageDropRef = useRef(null);
+  const largeImageDropRef = useRef(null);
+  const updateSmallImageDropRef = useRef(null);
+  const updateLargeImageDropRef = useRef(null);
   const [newCategory, setNewCategory] = useState({
     name: '',
     status: 'active',
@@ -79,6 +84,52 @@ const CategoryManagement = () => {
     setUpdateCategory({ id: null, name: '', status: 'active', parent_id: null, small_image: null, large_image: null, description: '', small_image_preview: null, large_image_preview: null, small_image_url: '', large_image_url: '' });
   };
 
+  // Xử lý paste ảnh từ clipboard
+  const handlePaste = useCallback((e) => {
+    if (!activeImageField) return;
+    
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        e.preventDefault();
+        const file = items[i].getAsFile();
+        const previewUrl = URL.createObjectURL(file);
+        
+        if (updateCategory.id) {
+          setUpdateCategory(prev => ({
+            ...prev,
+            [activeImageField]: file,
+            [`${activeImageField}_preview`]: previewUrl
+          }));
+        } else {
+          setNewCategory(prev => ({
+            ...prev,
+            [activeImageField]: file,
+            [`${activeImageField}_preview`]: previewUrl
+          }));
+        }
+        
+        toast.success('Hình ảnh đã được dán từ clipboard', { autoClose: 2000 });
+        break;
+      }
+    }
+  }, [activeImageField, updateCategory.id]);
+
+  // Xử lý focus vào ô input để biết đang tương tác với trường nào
+  const handleImageFieldFocus = useCallback((fieldName) => {
+    setActiveImageField(fieldName);
+  }, []);
+  
+  // Thêm sự kiện paste vào component
+  useEffect(() => {
+    document.addEventListener('paste', handlePaste);
+    return () => {
+      document.removeEventListener('paste', handlePaste);
+    };
+  }, [handlePaste]);
+
   // Xử lý input
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
@@ -110,6 +161,49 @@ const CategoryManagement = () => {
     } else {
       setUpdateCategory((prev) => ({ ...prev, [name]: value }));
     }
+  };
+
+  // Xử lý kéo thả ảnh
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.add('border-blue-500', 'bg-blue-50');
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('border-blue-500', 'bg-blue-50');
+  };
+
+  const handleDrop = (e, fieldName, isUpdate = false) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('border-blue-500', 'bg-blue-50');
+    
+    const files = e.dataTransfer.files;
+    if (files.length === 0) return;
+    
+    const file = files[0];
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chỉ kéo và thả hình ảnh', { autoClose: 3000 });
+      return;
+    }
+    
+    const previewUrl = URL.createObjectURL(file);
+    
+    if (isUpdate) {
+      setUpdateCategory((prev) => ({ 
+        ...prev, 
+        [fieldName]: file,
+        [`${fieldName}_preview`]: previewUrl 
+      }));
+    } else {
+      setNewCategory((prev) => ({ 
+        ...prev, 
+        [fieldName]: file,
+        [`${fieldName}_preview`]: previewUrl 
+      }));
+    }
+    
+    toast.success('Hình ảnh đã được tải lên thành công', { autoClose: 2000 });
   };
 
   // Thêm danh mục
@@ -419,48 +513,82 @@ const handleCancelImport = async (importId) => {
                 <div className="space-y-4">
                   <div>
                     <label className="block mb-2">Ảnh nhỏ (small_image)</label>
-                    <input
-                      type="file"
-                      name="small_image"
-                      onChange={updateCategory.id ? handleUpdateInputChange : handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      accept="image/*"
-                    />
-                    {/* Hiển thị ảnh preview khi tải lên hoặc khi đang sửa */}
-                    {((updateCategory.id && updateCategory.small_image_url) || updateCategory.small_image_preview || newCategory.small_image_preview) && (
-                      <div className="mt-2">
-                        <img 
-                          src={updateCategory.id 
-                            ? (updateCategory.small_image_preview || updateCategory.small_image_url) 
-                            : newCategory.small_image_preview} 
-                          alt="Xem trước ảnh nhỏ" 
-                          className="h-20 object-contain border rounded-md"
-                        />
+                    <div 
+                      className="border-2 border-dashed border-gray-300 rounded-md p-4 transition-colors duration-200 ease-in-out hover:bg-gray-50 cursor-pointer"
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, 'small_image', updateCategory.id ? true : false)}
+                      ref={updateCategory.id ? updateSmallImageDropRef : smallImageDropRef}
+                      onClick={() => {
+                        const fileInput = document.createElement('input');
+                        fileInput.type = 'file';
+                        fileInput.accept = 'image/*';
+                        fileInput.name = 'small_image';
+                        fileInput.onchange = (e) => {
+                          updateCategory.id ? handleUpdateInputChange(e) : handleInputChange(e);
+                        };
+                        fileInput.click();
+                      }}
+                      onFocus={() => handleImageFieldFocus('small_image')}
+                    >
+                      <div className="text-center">
+                        <p className="mb-1">Kéo và thả ảnh vào đây hoặc bấm để chọn</p>
+                        <p className="text-sm text-gray-500">Hoặc dán ảnh từ clipboard (Ctrl+V)</p>
                       </div>
-                    )}
+                      
+                      {/* Hiển thị ảnh preview khi tải lên hoặc khi đang sửa */}
+                      {((updateCategory.id && updateCategory.small_image_url) || updateCategory.small_image_preview || newCategory.small_image_preview) && (
+                        <div className="mt-2 flex justify-center">
+                          <img 
+                            src={updateCategory.id 
+                              ? (updateCategory.small_image_preview || updateCategory.small_image_url) 
+                              : newCategory.small_image_preview} 
+                            alt="Xem trước ảnh nhỏ" 
+                            className="h-20 object-contain border rounded-md"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div>
                     <label className="block mb-2">Ảnh lớn (large_image)</label>
-                    <input
-                      type="file"
-                      name="large_image"
-                      onChange={updateCategory.id ? handleUpdateInputChange : handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      accept="image/*"
-                    />
-                    {/* Hiển thị ảnh preview khi tải lên hoặc khi đang sửa */}
-                    {((updateCategory.id && updateCategory.large_image_url) || updateCategory.large_image_preview || newCategory.large_image_preview) && (
-                      <div className="mt-2">
-                        <img 
-                          src={updateCategory.id 
-                            ? (updateCategory.large_image_preview || updateCategory.large_image_url) 
-                            : newCategory.large_image_preview} 
-                          alt="Xem trước ảnh lớn" 
-                          className="h-32 object-contain border rounded-md"
-                        />
+                    <div 
+                      className="border-2 border-dashed border-gray-300 rounded-md p-4 transition-colors duration-200 ease-in-out hover:bg-gray-50 cursor-pointer"
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, 'large_image', updateCategory.id ? true : false)}
+                      ref={updateCategory.id ? updateLargeImageDropRef : largeImageDropRef}
+                      onClick={() => {
+                        const fileInput = document.createElement('input');
+                        fileInput.type = 'file';
+                        fileInput.accept = 'image/*';
+                        fileInput.name = 'large_image';
+                        fileInput.onchange = (e) => {
+                          updateCategory.id ? handleUpdateInputChange(e) : handleInputChange(e);
+                        };
+                        fileInput.click();
+                      }}
+                      onFocus={() => handleImageFieldFocus('large_image')}
+                    >
+                      <div className="text-center">
+                        <p className="mb-1">Kéo và thả ảnh vào đây hoặc bấm để chọn</p>
+                        <p className="text-sm text-gray-500">Hoặc dán ảnh từ clipboard (Ctrl+V)</p>
                       </div>
-                    )}
+                      
+                      {/* Hiển thị ảnh preview khi tải lên hoặc khi đang sửa */}
+                      {((updateCategory.id && updateCategory.large_image_url) || updateCategory.large_image_preview || newCategory.large_image_preview) && (
+                        <div className="mt-2 flex justify-center">
+                          <img 
+                            src={updateCategory.id 
+                              ? (updateCategory.large_image_preview || updateCategory.large_image_url) 
+                              : newCategory.large_image_preview} 
+                            alt="Xem trước ảnh lớn" 
+                            className="h-32 object-contain border rounded-md"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div>

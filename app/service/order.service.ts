@@ -1,6 +1,7 @@
 import type { Product } from "~/models/Product";
 import type { ProductVariant } from "~/models/ProductVariant";
 import { ApiService } from "./api.service";
+import type { ProductImage } from "./products.service";
 
 export interface OrderProduct {
   product_variant_id: number;
@@ -41,7 +42,7 @@ export interface OrderResponse {
 export interface OrderDetail {
   id: number;
   order_id: number;
-  product: Product;
+  product: Product & {product_images: ProductImage[]};
   variant: ProductVariant;
   amount: number;
   price: number;

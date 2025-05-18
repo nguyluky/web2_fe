@@ -50,20 +50,9 @@ interface Productvariant {
   original_price: number;
   stock: number;
   status: string;
-  specifications: Specifications2;
+  specifications: {[key: string]: string};
   created_at: string;
   updated_at: string;
-}
-
-interface Specifications2 {
-  Color: string;
-  Connection: string;
-}
-
-interface Specifications {
-  sensor: string;
-  buttons: string;
-  weight: string;
 }
 
 
@@ -81,7 +70,7 @@ export interface ProductVariant {
   status: string
   created_at: string
   updated_at: string
-  specifications: Specifications;
+  specifications: {[key: string]: string};
 }
 
 export interface ProductImage {

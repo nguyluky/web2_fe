@@ -24,7 +24,7 @@ export async function clientLoader({}) {
             .filter(category => category.parent_id === null)
             .map(category => ({
                 ...category,
-                image: `https://placehold.co/100x100?text=${encodeURIComponent(category.name)}`
+                // image: `https://placehold.co/100x100?text=${encodeURIComponent(category.name)}`
             })) || [];
         
         return {
@@ -59,7 +59,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="flex flex-col justify-center space-y-4">
                                 <div className="space-y-2">
-                                    <div className="badge badge-primary">Khuyễn mãi đặp biệt</div>
+                                    <div className="badge badge-primary">Khuyến mãi đặp biệt</div>
                                     <h1 className="text-3xl font-extrabold tracking-tighter">
                                         Công nghệ mới nhất với giá tốt nhất
                                     </h1>
@@ -99,15 +99,15 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 w-full md:grid-cols-4 lg:grid-cols-5">
+                        <div className="grid grid-cols-2 gap-4 w-full md:grid-cols-5 lg:grid-cols-6">
                             {categories.map((category, index) => (
                                 <Link
                                     to={`/danh-muc/${category.id}`}
                                     key={index}
                                     className="flex flex-col items-center justify-center rounded-lg p-4 transition-colors hover:bg-base-100 shadow-sm bg-base-300"
                                 >
-                                    <div className="rounded-full bg-muted m-2 overflow-hidden">
-                                        <img height={100} width={100} src={category.image} alt={category.name} />
+                                    <div className="rounded-2xl bg-muted m-2 overflow-hidden">
+                                        <img height={100} width={100} src={category.small_image || `https://placehold.co/100x100?text=${encodeURIComponent(category.name)}`} alt={category.name} />
                                     </div>
                                     <span className="text-sm font-bold text-center">{category.name}</span>
                                 </Link>

@@ -114,13 +114,28 @@ export default function Cart({loaderData}: Route.ComponentProps) {
     }
   };
 
+  const handleCheckboxChange = (variantId: number) => {
+    setCartItems(prevItems =>
+      prevItems.map(item => 
+        item.product_variant_id === variantId 
+          ? { ...item, checked: !item.checked } 
+          : item
+      )
+    );
+  };
+
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
-      return total + (item.product_variant.price * item.amount);
+      return item.checked ? total + (item.product_variant.price * item.amount) : total;
     }, 0);
   };
 
   const handleCheckout = () => {
+    const selectedItems = cartItems.filter(item => item.checked);
+    if (selectedItems.length === 0) {
+      alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán.');
+      return;
+    }
     navigate('/thanh-toan');
   };
 
@@ -163,7 +178,7 @@ export default function Cart({loaderData}: Route.ComponentProps) {
                         cartItems.map((item) => (
                           <tr key={item.product_variant_id}>
                             <td>
-                              <input type="checkbox" className="checkbox" />
+                              <input type="checkbox" className="checkbox" checked={item.checked} onChange={() => handleCheckboxChange(item.product_variant_id)}/>
                             </td>
                             <td>
                               <div className="avatar">

@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import LineChartComponent from './LineChartComponent';
-import PieChartComponent from './PieChartComponent';
-import { XAxis } from 'recharts';
+import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import fetchWithToken from '~/utils/fechWithToken';
+import LineChartComponent from './LineChartComponent';
+import PieChartComponent from './PieChartComponent';
 const Dashboard = () => {
   const [stats, setStats] = useState([]);
   const [statusStats, setStatusStats] = useState([]);
     const [topProducts, setTopProducts] = useState([]);
 
   useEffect(() => {
-    const fetchTopProducts = async () => {
+    const fetchWithTokenTopProducts = async () => {
       try {
-        const topProductRes = await fetch('http://127.0.0.1:8000/api/admin/products/top');
+        const topProductRes = await fetchWithToken('http://127.0.0.1:8000/api/admin/products/top');
         const topProductData = await topProductRes.json();
         setTopProducts(topProductData || []);
         console.log(topProductData);
@@ -21,13 +21,13 @@ const Dashboard = () => {
           toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
       };
     };
-    fetchTopProducts();
+    fetchWithTokenTopProducts();
   }, []);
 
 
-  const fetchStats = async () => {
+  const fetchWithTokenStats = async () => {
     try {
-      const statsRes = await fetch('http://127.0.0.1:8000/api/admin/tk_orders/stats');
+      const statsRes = await fetchWithToken('http://127.0.0.1:8000/api/admin/tk_orders/stats');
       if (!statsRes.ok) throw new Error('Không thể lấy dữ liệu thống kê');
       const statsData = await statsRes.json();
       setStats(statsData.data || []);
@@ -37,9 +37,9 @@ const Dashboard = () => {
     }
   };
 
-  const fetchStatusStats = async () => {
+  const fetchWithTokenStatusStats = async () => {
     try {
-      const statusRes = await fetch('http://127.0.0.1:8000/api/admin/tk_orders/status-stats');
+      const statusRes = await fetchWithToken('http://127.0.0.1:8000/api/admin/tk_orders/status-stats');
       if (!statusRes.ok) throw new Error('Không thể lấy dữ liệu trạng thái');
       const statusData = await statusRes.json();
       setStatusStats(statusData.data || []);
@@ -50,8 +50,8 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchStats();
-    fetchStatusStats(); // Uncomment when backend endpoint is ready
+    fetchWithTokenStats();
+    fetchWithTokenStatusStats(); // Uncomment when backend endpoint is ready
   }, []);
 
   const dataKeys = [

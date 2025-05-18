@@ -1,15 +1,16 @@
 //@ts-nocheck
-import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faDeleteLeft,
-  faEdit,
-  faChevronLeft,
-  faChevronRight,
-  faTimes,
+    faChevronLeft,
+    faChevronRight,
+    faDeleteLeft,
+    faEdit,
+    faTimes,
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import fetchWithToken from '~/utils/fechWithToken';
 
 const SuppplierManagement = () => {
   const [suppliers, setSuppliers] = useState([]);
@@ -38,7 +39,7 @@ const SuppplierManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchWithTokenData = async () => {
       try {
         // Gọi API tìm kiếm thay vì lấy toàn bộ danh sách
         const params = new URLSearchParams({
@@ -48,7 +49,7 @@ const SuppplierManagement = () => {
           per_page: 10,
         });
   
-        const suppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/search?${params.toString()}`);
+        const suppliersResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/suppliers/search?${params.toString()}`);
         if (!suppliersResponse.ok) throw new Error('Không thể lấy danh sách nhà cung cấp');
         const suppliersData = await suppliersResponse.json();
         setSuppliers(suppliersData.data.data || []);
@@ -58,7 +59,7 @@ const SuppplierManagement = () => {
         toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
       }
     };
-    fetchData();
+    fetchWithTokenData();
   }, [currentPage, searchTerm, statusFilter]);
 
   const openModal = () => setIsModalOpen(true);
@@ -107,7 +108,7 @@ const SuppplierManagement = () => {
       }
 
       // Kiểm tra số điện thoại tồn tại
-      let checkResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/check/${newSupplier.phone_number}`);
+      let checkResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/suppliers/check/${newSupplier.phone_number}`);
 
       if (!checkResponse.ok) {
         throw new Error('Không thể kiểm tra số điện thoại');
@@ -118,7 +119,7 @@ const SuppplierManagement = () => {
       }
 
       // Kiểm tra email tồn tại
-      checkResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/check/${newSupplier.email}`);
+      checkResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/suppliers/check/${newSupplier.email}`);
       if (!checkResponse.ok) {
         throw new Error('Không thể kiểm tra email');
       }
@@ -128,7 +129,7 @@ const SuppplierManagement = () => {
       }
 
       // Tạo nhà cung cấp
-      const supplierResponse = await fetch('http://127.0.0.1:8000/api/admin/suppliers', {
+      const supplierResponse = await fetchWithToken('http://127.0.0.1:8000/api/admin/suppliers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -154,7 +155,7 @@ const SuppplierManagement = () => {
       }
 
       // Làm mới danh sách
-      const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/search?page=${currentPage}&status=${statusFilter}`);
+      const updatedSuppliersResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/suppliers/search?page=${currentPage}&status=${statusFilter}`);
       const updatedSuppliersData = await updatedSuppliersResponse.json();
       setSuppliers(updatedSuppliersData.data.data || []);
       setTotalPages(updatedSuppliersData.data.last_page || 1);
@@ -192,7 +193,7 @@ const SuppplierManagement = () => {
         status: updateSupplier.status,
       };
       console.log(updateSupplier.id);
-      const supplierResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/${updateSupplier.id}`, {
+      const supplierResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/suppliers/${updateSupplier.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(supplierUpdateData),
@@ -206,7 +207,7 @@ const SuppplierManagement = () => {
       }
   
       // Làm mới danh sách
-      const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/search?page=${currentPage}&status=${statusFilter}`);
+      const updatedSuppliersResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/suppliers/search?page=${currentPage}&status=${statusFilter}`);
       const updatedSuppliersData = await updatedSuppliersResponse.json();
       setSuppliers(updatedSuppliersData.data.data || []);
       setTotalPages(updatedSuppliersData.data.last_page || 1);
@@ -227,7 +228,7 @@ const SuppplierManagement = () => {
     }
 
     try {
-      const supplierResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/${supplierId}`, {
+      const supplierResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/suppliers/${supplierId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -249,7 +250,7 @@ const SuppplierManagement = () => {
         setTotalPages(supplierData.data.last_page || 1);
 
         // Làm mới danh sách
-        const updatedSuppliersResponse = await fetch(`http://127.0.0.1:8000/api/admin/suppliers/search?page=${currentPage}&status=${statusFilter}`);
+        const updatedSuppliersResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/suppliers/search?page=${currentPage}&status=${statusFilter}`);
         const updatedSuppliersData = await updatedSuppliersResponse.json();
         setSuppliers(updatedSuppliersData.data.data || []);
 

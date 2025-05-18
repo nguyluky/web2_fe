@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import fetchWithToken from '~/utils/fechWithToken';
 
 const CategoryManagement = () => {
   const [categories, setCategories] = useState([]);
@@ -47,7 +48,7 @@ const CategoryManagement = () => {
 
   // Lấy danh sách danh mục
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchWithTokenData = async () => {
       try {
         const params = new URLSearchParams({
           name: searchTerm,
@@ -56,7 +57,7 @@ const CategoryManagement = () => {
           per_page: 10,
         });
 
-        const response = await fetch(`http://127.0.0.1:8000/api/admin/categories/search?${params.toString()}`);
+        const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/categories/search?${params.toString()}`);
         if (!response.ok) throw new Error('Không thể lấy danh sách danh mục');
         const data = await response.json();
         setCategories(data.data.data || []);
@@ -67,7 +68,7 @@ const CategoryManagement = () => {
         toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
       }
     };
-    fetchData();
+    fetchWithTokenData();
   }, [currentPage, searchTerm, statusFilter]);
 
   // Mở/đóng modal
@@ -139,7 +140,7 @@ const CategoryManagement = () => {
           formData.append('description', newCategory.description);
         }
 
-        const response = await fetch('http://127.0.0.1:8000/api/admin/categories', {
+        const response = await fetchWithToken('http://127.0.0.1:8000/api/admin/categories', {
             method: 'POST',
             body: formData,
         });
@@ -162,7 +163,7 @@ const CategoryManagement = () => {
             throw new Error(errorData.message || 'Không thể tạo danh mục');
         }
 
-        await fetchCategories(currentPage);
+        await fetchWithTokenCategories(currentPage);
 
         toast.error('Thêm danh mục thất bại: ' + error.message, { autoClose: 3000 });
     } catch (error) {
@@ -206,7 +207,7 @@ const CategoryManagement = () => {
       // Thêm _method=PUT để Laravel hiểu đây là request PUT
       formData.append('_method', 'PUT');
 
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/categories/${updateCategory.id}`, {
+      const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/categories/${updateCategory.id}`, {
         method: 'POST', // Sử dụng POST nhưng với _method=PUT
         body: formData,
       });
@@ -221,7 +222,7 @@ const CategoryManagement = () => {
         }
       }
 
-      const updatedResponse = await fetch(`http://127.0.0.1:8000/api/admin/categories?page=${currentPage}`);
+      const updatedResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/categories?page=${currentPage}`);
       const updatedData = await updatedResponse.json();
       setCategories(updatedData.data.data || []);
       setFilteredCategories(updatedData.data.data || []);
@@ -243,7 +244,7 @@ const handleCancelImport = async (importId) => {
 
   setIsLoading(true);
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/admin/imports/${importId}`, {
+    const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/imports/${importId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -279,7 +280,7 @@ const handleCancelImport = async (importId) => {
         per_page: 10,
       });
 
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/categories/search?${params.toString()}`);
+      const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/categories/search?${params.toString()}`);
       if (!response.ok) throw new Error('Không thể tìm kiếm danh mục');
 
       const searchData = await response.json();

@@ -1,15 +1,16 @@
 //@ts-nocheck
-import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faEdit,
-  faDeleteLeft,
-  faChevronLeft,
-  faChevronRight,
-  faTimes,
+    faChevronLeft,
+    faChevronRight,
+    faDeleteLeft,
+    faEdit,
+    faTimes,
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import fetchWithToken from '~/utils/fechWithToken';
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
@@ -26,7 +27,7 @@ const OrderManagement = () => {
   const [editStatus, setEditStatus] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchWithTokenData = async () => {
       try {
         const params = new URLSearchParams({
           search: searchTerm,
@@ -37,13 +38,13 @@ const OrderManagement = () => {
           page: currentPage,
         });
 
-        const ordersResponse = await fetch(`http://127.0.0.1:8000/api/admin/orders?${params.toString()}`);
+        const ordersResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/orders?${params.toString()}`);
         if (!ordersResponse.ok) throw new Error('Không thể lấy danh sách đơn hàng');
         const ordersData = await ordersResponse.json();
         setOrders(ordersData.data.data || []);
         setTotalPages(ordersData.data.last_page || 1);
 
-        const usersResponse = await fetch('http://127.0.0.1:8000/api/admin/users');
+        const usersResponse = await fetchWithToken('http://127.0.0.1:8000/api/admin/users');
         if (!usersResponse.ok) throw new Error('Không thể lấy danh sách người dùng');
         const usersData = await usersResponse.json();
         setUsers(usersData.data.data || []);
@@ -52,7 +53,7 @@ const OrderManagement = () => {
         toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
       }
     };
-    fetchData();
+    fetchWithTokenData();
   }, [currentPage, searchTerm, statusFilter, dateStart, dateEnd]);
 
   const openEditModal = (order) => {
@@ -72,7 +73,7 @@ const OrderManagement = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/orders/${orderId}/cancel`, {
+      const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/orders/${orderId}/cancel`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -82,7 +83,7 @@ const OrderManagement = () => {
         throw new Error(errorData.message || 'Không thể hủy đơn hàng');
       }
 
-      const updatedOrdersResponse = await fetch(`http://127.0.0.1:8000/api/admin/orders?page=${currentPage}&limit=10`);
+      const updatedOrdersResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/orders?page=${currentPage}&limit=10`);
       const updatedOrdersData = await updatedOrdersResponse.json();
       setOrders(updatedOrdersData.data.data || []);
       setTotalPages(updatedOrdersData.data.last_page || 1);
@@ -106,7 +107,7 @@ const OrderManagement = () => {
   
     setIsLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/orders/${selectedOrder.id}`, {
+      const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/orders/${selectedOrder.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +134,7 @@ const OrderManagement = () => {
       }
   
       // Rest of the function remains the same
-      const updatedOrdersResponse = await fetch(
+      const updatedOrdersResponse = await fetchWithToken(
         `http://127.0.0.1:8000/api/admin/orders?page=${currentPage}&limit=10`
       );
       if (!updatedOrdersResponse.ok) {

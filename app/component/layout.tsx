@@ -114,16 +114,20 @@ export function Header() {
                         </Link>
                     </div>
                     <div className="flex gap-2">
-                        {isAuthenticated && account?.rule == 1 && (
-                            <Link to="/admin/dashboard" className="btn btn-outline">
-                                GOTO ADMIN
-                            </Link>
-                        )}
-
                         {isAuthenticated ? (
-                            <Link to="/tai-khoan" className="btn btn-outline btn-primary hidden sm:flex">
-                                {user?.fullname || 'undefind'}
-                            </Link>
+                            <>
+                                {account?.rule == 1 && (
+                                    <Link to="/admin/dashboard" className="btn btn-outline">
+                                        GOTO ADMIN
+                                    </Link>
+                                )}
+                                <Link
+                                    to="/tai-khoan"
+                                    className="btn btn-outline btn-primary hidden sm:flex"
+                                >
+                                    {user?.fullname || 'undefind'}
+                                </Link>
+                            </>
                         ) : (
                             <Link to="/auth/login" className="btn btn-primary hidden sm:flex">
                                 Đăng nhập

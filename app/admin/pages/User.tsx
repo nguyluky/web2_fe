@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useRef, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import fetchWithToken from '~/utils/fechWithToken';
 
 
 const UserManagement = () => {
@@ -48,7 +49,7 @@ const UserManagement = () => {
   const passwordRef = useRef();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchWithTokenData = async () => {
       try {
         // Gọi API tìm kiếm thay vì lấy toàn bộ danh sách
         const params = new URLSearchParams({
@@ -58,21 +59,21 @@ const UserManagement = () => {
           per_page: 10,
         });
   
-        const usersResponse = await fetch(`http://127.0.0.1:8000/api/admin/users/search?${params.toString()}`);
+        const usersResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/users/search?${params.toString()}`);
         if (!usersResponse.ok) throw new Error('Không thể lấy danh sách người dùng');
         const usersData = await usersResponse.json();
         setUsers(usersData.data.data || []);
         setFilteredUsers(usersData.data.data || []);
         setTotalPages(usersData.data.last_page || 1);
   
-        // Fetch accounts
-        const accountsResponse = await fetch(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
+        // fetchWithToken accounts
+        const accountsResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
         if (!accountsResponse.ok) throw new Error('Không thể lấy danh sách tài khoản');
         const accountsData = await accountsResponse.json();
         setAccount(accountsData.data.data || []);
   
-        // Fetch rules
-        const rulesResponse = await fetch('http://127.0.0.1:8000/api/admin/rules');
+        // fetchWithToken rules
+        const rulesResponse = await fetchWithToken('http://127.0.0.1:8000/api/admin/rules');
         if (!rulesResponse.ok) throw new Error('Không thể lấy danh sách vai trò');
         const rulesData = await rulesResponse.json();
         setRules(rulesData.data.data || []);
@@ -81,7 +82,7 @@ const UserManagement = () => {
         toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
       }
     };
-    fetchData();
+    fetchWithTokenData();
   }, [currentPage, searchTerm, statusFilter]); // Thêm searchTerm và statusFilter vào dependencies
 
   const openModal = () => setIsModalOpen(true);
@@ -142,7 +143,7 @@ const UserManagement = () => {
       }
 
       // Kiểm tra username tồn tại
-      const checkResponse = await fetch(`http://127.0.0.1:8000/api/admin/check-username/${newUser.username}`);
+      const checkResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/check-username/${newUser.username}`);
       if (!checkResponse.ok) {
         throw new Error('Không thể kiểm tra tên đăng nhập');
       }
@@ -151,7 +152,7 @@ const UserManagement = () => {
         throw new Error('Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.');
       }
       // Kiểm tra email tồn tại
-      const checkEmailResponse = await fetch(`http://127.0.0.1:8000/api/admin/check-email/${newUser.email}`);
+      const checkEmailResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/check-email/${newUser.email}`);
       if (!checkEmailResponse.ok) {
         throw new Error('Không thể kiểm tra email');
       }
@@ -162,7 +163,7 @@ const UserManagement = () => {
 
 
       // Tạo tài khoản 
-      const accountResponse = await fetch('http://127.0.0.1:8000/api/admin/accounts', {
+      const accountResponse = await fetchWithToken('http://127.0.0.1:8000/api/admin/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -189,7 +190,7 @@ const UserManagement = () => {
       const accountId = accountData.data.id;
 
       // Tạo hồ sơ người dùng
-      const profileResponse = await fetch('http://127.0.0.1:8000/api/admin/users', {
+      const profileResponse = await fetchWithToken('http://127.0.0.1:8000/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -215,13 +216,13 @@ const UserManagement = () => {
       const profileData = await profileResponse.json();
 
       // Làm mới danh sách
-      const updatedUsersResponse = await fetch(`http://127.0.0.1:8000/api/admin/users?page=${currentPage}`);
+      const updatedUsersResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/users?page=${currentPage}`);
       const updatedUsersData = await updatedUsersResponse.json();
       setUsers(updatedUsersData.data.data || []);
       setFilteredUsers(updatedUsersData.data.data || []);
       setTotalPages(updatedUsersData.data.last_page || 1);
 
-      const updatedAccountsResponse = await fetch(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
+      const updatedAccountsResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
       const updatedAccountData = await updatedAccountsResponse.json();
       setAccount(updatedAccountData.data.data || []);
 
@@ -242,7 +243,7 @@ const UserManagement = () => {
     }
 
     try {
-      const accountResponse = await fetch(`http://127.0.0.1:8000/api/admin/accounts/${userId}`, {
+      const accountResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/accounts/${userId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -264,7 +265,7 @@ const UserManagement = () => {
         setTotalPages(accountData.data.last_page || 1);
 
         // Làm mới danh sách người dùng
-        const updatedUsersResponse = await fetch(`http://127.0.0.1:8000/api/admin/users?page=${currentPage}`);
+        const updatedUsersResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/users?page=${currentPage}`);
         const updatedUsersData = await updatedUsersResponse.json();
         setUsers(updatedUsersData.data.data || []);
         setFilteredUsers(updatedUsersData.data.data || []);
@@ -275,18 +276,18 @@ const UserManagement = () => {
         }
       } else {
         // Dự phòng: lấy lại dữ liệu nếu API không trả về danh sách cập nhật
-        const fetchData = async () => {
-          const usersResponse = await fetch(`http://127.0.0.1:8000/api/admin/users?page=${currentPage}`);
+        const fetchWithTokenData = async () => {
+          const usersResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/users?page=${currentPage}`);
           const usersData = await usersResponse.json();
           setUsers(usersData.data.data || []);
           setFilteredUsers(usersData.data.data || []);
           setTotalPages(usersData.data.last_page || 1);
 
-          const accountsResponse = await fetch(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
+          const accountsResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
           const accountsData = await accountsResponse.json();
           setAccount(accountsData.data.data || []);
         };
-        fetchData();
+        fetchWithTokenData();
       }
 
       toast.success('Xóa người dùng thành công!');
@@ -306,7 +307,7 @@ const UserManagement = () => {
         per_page: 10, // Số bản ghi mỗi trang
       });
   
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/users/search?${params.toString()}`);
+      const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/users/search?${params.toString()}`);
       if (!response.ok) {
         throw new Error('Không thể tìm kiếm người dùng');
       }
@@ -319,7 +320,7 @@ const UserManagement = () => {
       setTotalPages(usersData.last_page || 1);
   
       // Lấy lại danh sách tài khoản để hiển thị thông tin bổ sung (rule, status)
-      const updatedAccountsResponse = await fetch(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
+      const updatedAccountsResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
       const updatedAccountData = await updatedAccountsResponse.json();
       setAccount(updatedAccountData.data.data || []);
     } catch (error) {
@@ -389,7 +390,7 @@ const UserManagement = () => {
         accountUpdateData.password = updateUser.password; // Chỉ gửi mật khẩu nếu người dùng nhập mật khẩu mới
       }
   
-      const accountResponse = await fetch(`http://127.0.0.1:8000/api/admin/accounts/${updateUser.id}`, {
+      const accountResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/accounts/${updateUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(accountUpdateData),
@@ -404,7 +405,7 @@ const UserManagement = () => {
       }
   
       // Cập nhật hồ sơ người dùng
-      const profileResponse = await fetch(`http://127.0.0.1:8000/api/admin/users/${updateUser.id}`, {
+      const profileResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/users/${updateUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -423,13 +424,13 @@ const UserManagement = () => {
       }
   
       // Làm mới danh sách
-      const updatedUsersResponse = await fetch(`http://127.0.0.1:8000/api/admin/users?page=${currentPage}`);
+      const updatedUsersResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/users?page=${currentPage}`);
       const updatedUsersData = await updatedUsersResponse.json();
       setUsers(updatedUsersData.data.data || []);
       setFilteredUsers(updatedUsersData.data.data || []);
       setTotalPages(updatedUsersData.data.last_page || 1);
   
-      const updatedAccountsResponse = await fetch(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
+      const updatedAccountsResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
       const updatedAccountData = await updatedAccountsResponse.json();
       setAccount(updatedAccountData.data.data || []);
   

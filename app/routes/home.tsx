@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router';
+import homeHeroImg from "~/asset/img/1-top-dien-thoai-ban-chay-tai-dien-may-cho-lon.jpg";
 import { categoryService } from '~/service/category.service';
 import { productsService } from '~/service/products.service';
 import type { Route } from './+types/home';
@@ -18,11 +19,13 @@ export async function clientLoader({}) {
             categoryService.getCategories()
         ]);
         
-        // Add placeholder images to categories
-        const categoriesWithImages = categoriesResponse?.data.map(category => ({
-            ...category,
-            image: `https://placehold.co/100x100?text=${encodeURIComponent(category.name)}`
-        })) || [];
+        // Filter categories where parent_id is null and add placeholder images
+        const categoriesWithImages = categoriesResponse?.data
+            .filter(category => category.parent_id === null)
+            .map(category => ({
+                ...category,
+                image: `https://placehold.co/100x100?text=${encodeURIComponent(category.name)}`
+            })) || [];
         
         return {
             new_product: productsResponse[0],
@@ -72,7 +75,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                             </div>
                             <div>
                                 <img
-                                    src="https://placehold.co/600x400"
+                                    src={homeHeroImg}
                                     alt="hero img"
                                     className="object-cover rounded-sm"
                                     style={{ height: '300px', width: '100%' }}

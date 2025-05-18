@@ -1,15 +1,16 @@
 //@ts-nocheck
-import React, { use, useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faDeleteLeft,
-  faEdit,
-  faChevronLeft,
-  faChevronRight,
-  faTimes
+    faChevronLeft,
+    faChevronRight,
+    faDeleteLeft,
+    faEdit,
+    faTimes
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import fetchWithToken from '~/utils/fechWithToken';
 
 const WarrantyManagement = () => {
   const [warranties, setWarranties] = useState([]);
@@ -42,7 +43,7 @@ const WarrantyManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchWithTokenData = async () => {
       try {
         // Gọi API tìm kiếm thay vì lấy toàn bộ danh sách
         const params = new URLSearchParams({
@@ -54,16 +55,16 @@ const WarrantyManagement = () => {
           per_page: 10,
         });
 
-        const warrantyRes = await fetch(`http://127.0.0.1:8000/api/admin/warrantys/search?${params.toString()}`); // Replace with your API endpoint
+        const warrantyRes = await fetchWithToken(`http://127.0.0.1:8000/api/admin/warrantys/search?${params.toString()}`); // Replace with your API endpoint
         const warrantyData = await warrantyRes.json();
         setWarranties(warrantyData.data.data || []);
 
-        const orderRes = await fetch('http://127.0.0.1:8000/api/admin/order/detail'); // Replace with your API endpoint
+        const orderRes = await fetchWithToken('http://127.0.0.1:8000/api/admin/order/detail'); // Replace with your API endpoint
         const orderData = await orderRes.json();
         setOrders(orderData.data.data || []);
         
 
-        const productRes = await fetch('http://127.0.0.1:8000/api/admin/products'); // Replace with your API endpoint
+        const productRes = await fetchWithToken('http://127.0.0.1:8000/api/admin/products'); // Replace with your API endpoint
         const productData = await productRes.json();
         setProducts(productData.data.data || []);
         setTotalPages(warrantyData.data.last_page || 1);
@@ -72,7 +73,7 @@ const WarrantyManagement = () => {
         toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
       }
     };
-    fetchData();
+    fetchWithTokenData();
   }, [currentPage, searchTerm, statusFilter, dateStart, dateEnd]);
 
   const openModal = () => setIsModalOpen(true);
@@ -111,7 +112,7 @@ const WarrantyManagement = () => {
         note: updateWarranty.note,
       };
       console.log(updateWarranty.id);
-      const warrantyResponse = await fetch(`http://127.0.0.1:8000/api/admin/warrantys/${updateWarranty.id}`, {
+      const warrantyResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/warrantys/${updateWarranty.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(warrantyUpdateData),
@@ -125,7 +126,7 @@ const WarrantyManagement = () => {
       }
   
       // Làm mới danh sách
-      const updatedWarrantyResponse = await fetch(`http://127.0.0.1:8000/api/admin/warrantys/search?page=${currentPage}&status=${statusFilter}`);
+      const updatedWarrantyResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/warrantys/search?page=${currentPage}&status=${statusFilter}`);
       const updatedWarrantyData = await updatedWarrantyResponse.json();
       setWarranties(updatedWarrantyData.data.data || []);
       setTotalPages(updatedWarrantyData.data.last_page || 1);
@@ -146,7 +147,7 @@ const WarrantyManagement = () => {
     }
 
     try {
-      const warrantyResponse = await fetch(`http://127.0.0.1:8000/api/admin/warrantys/${warrantyId}`, {
+      const warrantyResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/warrantys/${warrantyId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -168,7 +169,7 @@ const WarrantyManagement = () => {
         setTotalPages(warrantyData.data.last_page || 1);
 
         // Làm mới danh sách
-        const updatedWarrantyResponse = await fetch(`http://127.0.0.1:8000/api/admin/warrantys/search?page=${currentPage}&status=${statusFilter}`);
+        const updatedWarrantyResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/warrantys/search?page=${currentPage}&status=${statusFilter}`);
         const updatedWarrantyData = await updatedWarrantyResponse.json();
         setOrders(updatedWarrantyData.data.data || []);
 

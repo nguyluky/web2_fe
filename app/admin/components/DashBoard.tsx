@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import LineChartComponent from './LineChartComponent';
 import PieChartComponent from './PieChartComponent';
 import { XAxis } from 'recharts';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 const Dashboard = () => {
   const [stats, setStats] = useState([]);
@@ -58,7 +59,7 @@ const Dashboard = () => {
     { key: 'năm trước', color: '#82ca9d' },
   ];
 
-  const XAxisKey = 'name';
+  const xAxisKey = 'name';
 
   return (
     <div className="overflow-x-hidden min-h-screen bg-gray-100">

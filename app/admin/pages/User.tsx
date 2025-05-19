@@ -65,18 +65,22 @@ const UserManagement = () => {
         setUsers(usersData.data.data || []);
         setFilteredUsers(usersData.data.data || []);
         setTotalPages(usersData.data.last_page || 1);
+        console.log("users", usersData.data.data);
   
         // fetchWithToken accounts
         const accountsResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/accounts?page=${currentPage}`);
         if (!accountsResponse.ok) throw new Error('Không thể lấy danh sách tài khoản');
         const accountsData = await accountsResponse.json();
         setAccount(accountsData.data.data || []);
+          console.log("accountsData", accountsData.data.data);
+
   
         // fetchWithToken rules
         const rulesResponse = await fetchWithToken('http://127.0.0.1:8000/api/admin/rules');
         if (!rulesResponse.ok) throw new Error('Không thể lấy danh sách vai trò');
         const rulesData = await rulesResponse.json();
         setRules(rulesData.data.data || []);
+        console.log("rulesData", rulesData.data.data);
       } catch (error) {
         console.error('Lỗi khi lấy dữ liệu:', error.message);
         toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });

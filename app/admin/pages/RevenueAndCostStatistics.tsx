@@ -209,7 +209,7 @@ const TopCustomersStatisticsPage = () => {
                                     <td className="border p-2">{detail.price.toLocaleString('vi-VN')} VND</td>
                                     <td className="border p-2">
                                         {(() => {
-                                          let attrs = detail.attributes;
+                                          let attrs = detail.specifications;
 
                                           try {
                                             // Nếu là mảng ký tự hoặc string JSON

@@ -34,9 +34,12 @@ const OrderManagement = () => {
   const [editStatus, setEditStatus] = useState('');
   const [newImport, setNewImport] = useState({
     employee_id: '',
-    supplier_id: '',
+    suppiler_id: '',
     import_details: [{ product_variant_id: '', amount: '' }], // Sử dụng product_variant_id thay vì product_id
   });
+  const calculateTotalPerImport = (details = []) => {
+  return details.reduce((sum, item) => sum + (item.import_price || 0) * item.amount, 0);
+};
 
   useEffect(() => {
     const fetchWithTokenData = async () => {
@@ -66,6 +69,7 @@ const OrderManagement = () => {
         if (!importDetailsResponse.ok) throw new Error('Không thể lấy chi tiết phiếu nhập');
         const importDetailsData = await importDetailsResponse.json();
         setImportDetails(importDetailsData.data || []);
+        console.log("importDetailsData:",importDetailsData.data);
 
         const suppliersResponse = await fetchWithToken('http://127.0.0.1:8000/api/admin/suppliers');
         if (!suppliersResponse.ok) throw new Error('Không thể lấy danh sách nhà cung cấp');
@@ -91,9 +95,9 @@ const OrderManagement = () => {
     fetchWithTokenData();
   }, [currentPage, searchTerm, statusFilter, dateStart, dateEnd]);
 
-  const calculateTotalPerImport = (details = []) => {
-    return details.reduce((sum, item) => sum + (item.import_price || 0) * item.amount, 0);
-  };
+  // const calculateTotalPerImport = (details = []) => {
+  //   return details.reduce((sum, item) => sum + (item.import_price || 0) * item.amount, 0);
+  // };
 
   const getStatusText = (status) => {
     switch (status) {
@@ -145,7 +149,7 @@ const OrderManagement = () => {
     setIsAddModalOpen(false);
     setNewImport({
       employee_id: '',
-      supplier_id: '',
+      suppiler_id: '',
       import_details: [{ product_variant_id: '', amount: '' }],
     });
   };
@@ -183,7 +187,7 @@ const OrderManagement = () => {
     setIsLoading(true);
 
     try {
-      if (!newImport.employee_id || !newImport.supplier_id) {
+      if (!newImport.employee_id || !newImport.suppiler_id) {
         throw new Error('Vui lòng chọn nhân viên và nhà cung cấp');
       }
       if (newImport.import_details.some((detail) => !detail.product_variant_id || !detail.amount || detail.amount <= 0)) {
@@ -203,7 +207,7 @@ const OrderManagement = () => {
         },
         body: JSON.stringify({
           employee_id: parseInt(newImport.employee_id),
-          supplier_id: parseInt(newImport.supplier_id),
+          suppiler_id: parseInt(newImport.suppiler_id),
           import_details: newImport.import_details.map((detail) => ({
             product_variant_id: parseInt(detail.product_variant_id),
             amount: parseInt(detail.amount),
@@ -403,8 +407,8 @@ const OrderManagement = () => {
                 <div>
                   <label className="block mb-2 text-lg font-medium">Nhà cung cấp</label>
                   <select
-                    name="supplier_id"
-                    value={newImport.supplier_id}
+                    name="suppiler_id"
+                    value={newImport.suppiler_id}
                     onChange={handleNewImportChange}
                     className="w-full p-2 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-gray-500"
                     required
@@ -432,7 +436,7 @@ const OrderManagement = () => {
                           <option value="">Chọn biến thể sản phẩm</option>
                           {productVars.map((variant) => {
                             const product = products.find((p) => p.id === variant.product_id);
-                            let variantAttrs = variant.attributes;
+                            let variantAttrs = variant.specifications;
 
                             try {
                               if (typeof variantAttrs === 'string') {
@@ -655,15 +659,15 @@ const OrderManagement = () => {
                     'Không tìm thấy'}
                 </td>
                 <td>
-                  {suppliers.find((supplier) => supplier.id === importItem.supplier_id)?.name ||
+                  {suppliers.find((supplier) => supplier.id === importItem.suppiler_id)?.name ||
                     'Không tìm thấy'}
                 </td>
                 <td>
-                  {suppliers.find((supplier) => supplier.id === importItem.supplier_id)?.email ||
+                  {suppliers.find((supplier) => supplier.id === importItem.suppiler_id)?.email ||
                     'Không tìm thấy'}
                 </td>
                 <td>{new Date(importItem.created_at).toLocaleDateString()}</td>
-                <td>
+<td>
                   {calculateTotalPerImport(
                     importDetails.filter((detail) => detail.import_id === importItem.id)
                   ).toLocaleString('vi-VN', {

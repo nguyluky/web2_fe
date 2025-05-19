@@ -171,7 +171,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                                 <h2 className="text-2xl font-bold">Sản phẩm mới</h2>
                             </div>
                             <div className="min-w-max">
-                                <Link to="" className="link">
+                                <Link to="/san-pham-moi" className="link">
                                     Xem tất cả{'>'}
                                 </Link>
                             </div>

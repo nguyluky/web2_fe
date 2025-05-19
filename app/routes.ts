@@ -5,6 +5,7 @@ const userRoutes = [
         route('/tim-kiem', './routes/tim-kiem.tsx'),
         index('./routes/home.tsx'),
         route('/san-pham/:id', './routes/san-pham.tsx'),
+        route('/san-pham-moi', './routes/newProduct.tsx'),
         ...prefix('danh-muc', [
             index('./routes/category/index.tsx'),
             route('/:id', './routes/category/category.tsx'),

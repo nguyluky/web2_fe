@@ -28,8 +28,48 @@ export async function clientAction({ request }: Route.ActionArgs) {
 
 export default function Category({ loaderData }: Route.ComponentProps) {
     const [products, setProducts] = useState<SearchProductsPagination>(
-        loaderData.products || ({} as SearchProductsPagination)
+        loaderData.products || {
+            data: [],
+            links: [],
+            current_page: 1,
+            total: 0,
+            per_page: 10,
+            last_page: 1
+        } as SearchProductsPagination
     );
+    
+    // Price range state
+    const [priceRange, setPriceRange] = useState({
+        min: 0,
+        max: 10000000, // 10 million VND default max
+        currentMin: 0,
+        currentMax: 10000000
+    });
+
+    // Handle price range change
+    const handlePriceRangeChange = (type: 'min' | 'max', value: string) => {
+        const numValue = value === '' ? (type === 'min' ? 0 : priceRange.max) : parseInt(value);
+        
+        if (type === 'min') {
+            setPriceRange(prev => ({
+                ...prev,
+                currentMin: Math.min(numValue, prev.currentMax)
+            }));
+        } else {
+            setPriceRange(prev => ({
+                ...prev,
+                currentMax: Math.max(numValue, prev.currentMin)
+            }));
+        }
+    };
+
+    // Format price to display in VND
+    const formatPrice = (price: number) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(price);
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -41,6 +81,11 @@ export default function Category({ loaderData }: Route.ComponentProps) {
 
         // Duyệt qua từng cặp key-value trong formData
         formData.forEach((value, key) => {
+            // Skip empty values for price ranges
+            if ((key === 'min_price' || key === 'max_price') && value === '') {
+                return;
+            }
+            
             // Kiểm tra xem key có phải là dạng mảng không (kết thúc bằng [])
             if (key.endsWith('[]')) {
                 const actualKey = key.slice(0, -2); // Loại bỏ [] ở cuối
@@ -59,27 +104,77 @@ export default function Category({ loaderData }: Route.ComponentProps) {
 
         console.log('Form values:', formValues);
 
+        // Add category id to the form values
+        if (loaderData.categorie?.data?.id) {
+            formValues['category'] = loaderData.categorie.data.id.toString();
+        }
+
         // chuyển dữ liệu formValues thành query string
         const queryString = new URLSearchParams(formValues as Record<string, string>);
 
-        // Gửi dữ liệu đến server
-        const [data, error] = await productsService.searchProducts(queryString);
-        if (data) {
-            setProducts(data);
-            return 
+        try {
+            // Gửi dữ liệu đến server
+            const [data, error] = await productsService.searchProducts(queryString);
+            if (error) {
+                console.error("Error fetching products:", error);
+                // Set empty products to trigger the "no products found" notification
+                setProducts({
+                    ...products,
+                    data: []
+                });
+                return;
+            }
+            
+            if (data) {
+                setProducts(data);
+                // Scroll to top of product section after filter apply
+                window.scrollTo({ 
+                    top: document.querySelector('.drawer-content')?.getBoundingClientRect().top || 0,
+                    behavior: 'smooth'
+                });
+            }
+        } catch (err) {
+            console.error("Exception while fetching products:", err);
+            // Set empty products to trigger the "no products found" notification
+            setProducts({
+                ...products,
+                data: []
+            });
         }
     }
 
     const handleGoToPage = async (url: string) => {
         // url to URLSearchParams
-        // URLSearchParams
         const urlParams = new URL(url);
         const params = urlParams.searchParams;
 
-        const [data, error] = await productsService.searchProducts(params);
-        if (data) {
-            setProducts(data);
-            return
+        try {
+            const [data, error] = await productsService.searchProducts(params);
+            if (error) {
+                console.error("Error fetching products:", error);
+                // Set empty products to trigger the "no products found" notification
+                setProducts({
+                    ...products,
+                    data: []
+                });
+                return;
+            }
+            
+            if (data) {
+                setProducts(data);
+                // Scroll to top of the products section after page change
+                window.scrollTo({ 
+                    top: document.querySelector('.drawer-content')?.getBoundingClientRect().top || 0,
+                    behavior: 'smooth'
+                });
+            }
+        } catch (err) {
+            console.error("Exception while fetching products:", err);
+            // Set empty products to trigger the "no products found" notification
+            setProducts({
+                ...products, 
+                data: []
+            });
         }
     }
 
@@ -152,6 +247,7 @@ export default function Category({ loaderData }: Route.ComponentProps) {
                                             Bộ lọc
                                         </label>
                                     </div>
+                                    {products.data && products.data.length > 0 ? (
                                     <div className="grid grid-cols-2 gap-2 xs:gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
                                         {products.data.map((e) => (
                                             <div
@@ -229,24 +325,49 @@ export default function Category({ loaderData }: Route.ComponentProps) {
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="flex justify-center mt-5">
-                                        <div className="join">
-                                            {
-                                                products.links.map((e, index) => (
-                                                    <button 
-                                                        key={index}
-                                                        onClick={() => {
-                                                            if (e.url) {
-                                                                handleGoToPage(e.url);
-                                                            }
-                                                        }} 
-                                                        className={"join-item btn btn-sm md:btn-md" + (e.url ? "" : " btn-disabled") + (e.active ? " btn-active": "")} 
-                                                        dangerouslySetInnerHTML={{__html: e.label}}
-                                                    ></button>
-                                                ))
-                                            }
-                                        </div>
+                                    ) : (
+                                    <div className="alert flex flex-col items-center py-8">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-base-content/60 mb-4">
+                                            <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
+                                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                            <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
+                                        </svg>
+                                        <h3 className="text-lg font-bold">Không tìm thấy sản phẩm nào</h3>
+                                        <p className="text-base-content/70 text-center mt-2">
+                                            Không có sản phẩm nào phù hợp với tiêu chí tìm kiếm. <br />
+                                            Vui lòng thử lại với các bộ lọc khác hoặc xem các danh mục khác.
+                                        </p>
+                                        <button 
+                                            className="btn btn-primary mt-4"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                window.location.reload();
+                                            }}
+                                        >
+                                            Đặt lại bộ lọc
+                                        </button>
                                     </div>
+                                    )}
+                                    {products.last_page > 1 && (
+                                        <div className="flex justify-center mt-5">
+                                            <div className="join">
+                                                {
+                                                    products.links.map((e, index) => (
+                                                        <button 
+                                                            key={index}
+                                                            onClick={() => {
+                                                                if (e.url) {
+                                                                    handleGoToPage(e.url);
+                                                                }
+                                                            }} 
+                                                            className={"join-item btn btn-sm md:btn-md" + (e.url ? "" : " btn-disabled") + (e.active ? " btn-active": "")} 
+                                                            dangerouslySetInnerHTML={{__html: e.label}}
+                                                        ></button>
+                                                    ))
+                                                }
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -313,6 +434,72 @@ export default function Category({ loaderData }: Route.ComponentProps) {
                                     </div>
                                 )
                             )}
+                            
+                            {/* Price Range Filter */}
+                            <div className="collapse collapse-arrow mt-2">
+                                <input type="checkbox" className="peer p-0 m-0" defaultChecked />
+                                <div className="collapse-title">Khoảng giá</div>
+                                <div className="collapse-content">
+                                    <div className="mb-3 px-2">
+                                        <div className="text-xs flex justify-between mb-2">
+                                            <span>{formatPrice(priceRange.currentMin)}</span>
+                                            <span>{formatPrice(priceRange.currentMax)}</span>
+                                        </div>
+                                        <div className="relative pt-1">
+                                            <input
+                                                type="range"
+                                                min={priceRange.min}
+                                                max={priceRange.max}
+                                                step="100000"
+                                                value={priceRange.currentMin}
+                                                onChange={(e) => handlePriceRangeChange('min', e.target.value)}
+                                                className="range range-xs range-primary"
+                                            />
+                                            <input
+                                                type="range"
+                                                min={priceRange.min}
+                                                max={priceRange.max}
+                                                step="100000"
+                                                value={priceRange.currentMax}
+                                                onChange={(e) => handlePriceRangeChange('max', e.target.value)}
+                                                className="range range-xs range-primary mt-2"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label className="label">
+                                                <span className="label-text text-xs">Từ</span>
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                name="min_price" 
+                                                className="input input-bordered input-sm w-full" 
+                                                placeholder="0₫"
+                                                min={priceRange.min}
+                                                max={priceRange.currentMax}
+                                                value={priceRange.currentMin}
+                                                onChange={(e) => handlePriceRangeChange('min', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="label">
+                                                <span className="label-text text-xs">Đến</span>
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                name="max_price" 
+                                                className="input input-bordered input-sm w-full" 
+                                                placeholder="10.000.000₫"
+                                                min={priceRange.currentMin}
+                                                max={priceRange.max}
+                                                value={priceRange.currentMax}
+                                                onChange={(e) => handlePriceRangeChange('max', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             
                             <button type="submit" className="btn btn-primary btn-sm w-full mt-4">Áp dụng</button>
                         </form>

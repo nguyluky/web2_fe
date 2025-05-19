@@ -29,7 +29,7 @@ export default function Address() {
         city: ""
     });
 
-    // Lấy danh sách địa chỉ khi component mount
+    // Lấy danh sách Địa trỉ khi component mount
     useEffect(() => {
         if (!isAuthenticated) {
             setLoading(false);
@@ -39,14 +39,14 @@ export default function Address() {
         fetchAddresses();
     }, [isAuthenticated]);
 
-    // Lấy danh sách địa chỉ từ API
+    // Lấy danh sách Địa trỉ từ API
     const fetchAddresses = async () => {
         try {
             setLoading(true);
             const [response, error] = await addressService.getUserAddress();
             
             if (error) {
-                setError("Không thể tải danh sách địa chỉ");
+                setError("Không thể tải danh sách Địa trỉ");
                 return;
             }
             
@@ -54,7 +54,7 @@ export default function Address() {
             setError(null);
         } catch (err) {
             console.error("Error fetching addresses:", err);
-            setError("Đã xảy ra lỗi khi tải danh sách địa chỉ");
+            setError("Đã xảy ra lỗi khi tải danh sách Địa trỉ");
         } finally {
             setLoading(false);
         }
@@ -66,7 +66,7 @@ export default function Address() {
         setFormData({ ...formData, [name]: value });
     };
 
-    // Xử lý thêm địa chỉ mới
+    // Xử lý thêm Địa trỉ mới
     const handleAddAddress = async (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -77,11 +77,11 @@ export default function Address() {
             const [response, error] = await addressService.addNewAddress(formData);
             
             if (error) {
-                toast.error("Không thể thêm địa chỉ mới");
+                toast.error("Không thể thêm Địa trỉ mới");
                 return;
             }
             
-            toast.success("Thêm địa chỉ mới thành công");
+            toast.success("Thêm Địa trỉ mới thành công");
             setShowAddForm(false);
             // Reset form
             setFormData({
@@ -94,17 +94,17 @@ export default function Address() {
                 city: ""
             });
             
-            // Làm mới danh sách địa chỉ
+            // Làm mới danh sách Địa trỉ
             fetchAddresses();
         } catch (err) {
             console.error("Error adding address:", err);
-            toast.error("Đã xảy ra lỗi khi thêm địa chỉ mới");
+            toast.error("Đã xảy ra lỗi khi thêm Địa trỉ mới");
         } finally {
             setLoading(false);
         }
     };
 
-    // Mở form sửa địa chỉ
+    // Mở form sửa Địa trỉ
     const handleEditClick = (address: UserAddress) => {
         setCurrentAddress(address);
         setFormData({
@@ -119,7 +119,7 @@ export default function Address() {
         setShowEditForm(true);
     };
 
-    // Xử lý cập nhật địa chỉ
+    // Xử lý cập nhật Địa trỉ
     const handleUpdateAddress = async (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -134,11 +134,11 @@ export default function Address() {
             );
             
             if (error) {
-                toast.error("Không thể cập nhật địa chỉ");
+                toast.error("Không thể cập nhật Địa trỉ");
                 return;
             }
             
-            toast.success("Cập nhật địa chỉ thành công");
+            toast.success("Cập nhật Địa trỉ thành công");
             setShowEditForm(false);
             // Reset form
             setFormData({
@@ -152,19 +152,19 @@ export default function Address() {
             });
             setCurrentAddress(null);
             
-            // Làm mới danh sách địa chỉ
+            // Làm mới danh sách Địa trỉ
             fetchAddresses();
         } catch (err) {
             console.error("Error updating address:", err);
-            toast.error("Đã xảy ra lỗi khi cập nhật địa chỉ");
+            toast.error("Đã xảy ra lỗi khi cập nhật Địa trỉ");
         } finally {
             setLoading(false);
         }
     };
 
-    // Xử lý xóa địa chỉ
+    // Xử lý xóa Địa trỉ
     const handleDeleteAddress = async (id: number) => {
-        if (!confirm("Bạn có chắc chắn muốn xóa địa chỉ này không?")) {
+        if (!confirm("Bạn có chắc chắn muốn xóa Địa trỉ này không?")) {
             return;
         }
         
@@ -174,17 +174,17 @@ export default function Address() {
             const [response, error] = await addressService.deleteAddress(id);
             
             if (error) {
-                toast.error("Không thể xóa địa chỉ");
+                toast.error("Không thể xóa Địa trỉ");
                 return;
             }
             
-            toast.success("Xóa địa chỉ thành công");
+            toast.success("Xóa Địa trỉ thành công");
             
-            // Làm mới danh sách địa chỉ
+            // Làm mới danh sách Địa trỉ
             fetchAddresses();
         } catch (err) {
             console.error("Error deleting address:", err);
-            toast.error("Đã xảy ra lỗi khi xóa địa chỉ");
+            toast.error("Đã xảy ra lỗi khi xóa Địa trỉ");
         } finally {
             setLoading(false);
         }
@@ -206,7 +206,7 @@ export default function Address() {
         setCurrentAddress(null);
     };
 
-    // Format địa chỉ đầy đủ
+    // Format Địa trỉ đầy đủ
     const formatFullAddress = (address: UserAddress) => {
         return `${address.street}, ${address.ward}, ${address.district}, ${address.city}`;
     };
@@ -215,14 +215,14 @@ export default function Address() {
         <div className="card border-1 border-base-300">
             <div className="card-body flex-col gap-5">
                 <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-bold">Địa chỉ giao hàng</h3>
+                    <h3 className="text-xl font-bold">Địa trỉ giao hàng</h3>
                     {!showAddForm && !showEditForm && (
                         <button 
                             className="btn btn-primary" 
                             onClick={() => setShowAddForm(true)}
                         >
                             <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                            Thêm địa chỉ mới
+                            Thêm Địa trỉ mới
                         </button>
                     )}
                 </div>
@@ -237,11 +237,11 @@ export default function Address() {
                     </div>
                 ) : (
                     <>
-                        {/* Form thêm địa chỉ mới */}
+                        {/* Form thêm Địa trỉ mới */}
                         {showAddForm && (
                             <div className="card bg-base-100 shadow-sm">
                                 <div className="card-body">
-                                    <h2 className="card-title">Thêm địa chỉ mới</h2>
+                                    <h2 className="card-title">Thêm Địa trỉ mới</h2>
                                     <form onSubmit={handleAddAddress}>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                             <div className="form-control w-full">
@@ -330,7 +330,7 @@ export default function Address() {
                                             
                                             <div className="form-control w-full md:col-span-2">
                                                 <label className="label">
-                                                    <span className="label-text">Địa chỉ cụ thể</span>
+                                                    <span className="label-text">Địa trỉ cụ thể</span>
                                                 </label>
                                                 <input 
                                                     type="text" 
@@ -362,7 +362,7 @@ export default function Address() {
                                                 ) : (
                                                     <FontAwesomeIcon icon={faCheck} className="mr-2" />
                                                 )}
-                                                Lưu địa chỉ
+                                                Lưu Địa trỉ
                                             </button>
                                         </div>
                                     </form>
@@ -370,11 +370,11 @@ export default function Address() {
                             </div>
                         )}
                         
-                        {/* Form sửa địa chỉ */}
+                        {/* Form sửa Địa trỉ */}
                         {showEditForm && currentAddress && (
                             <div className="card bg-base-100 shadow-sm">
                                 <div className="card-body">
-                                    <h2 className="card-title">Cập nhật địa chỉ</h2>
+                                    <h2 className="card-title">Cập nhật Địa trỉ</h2>
                                     <form onSubmit={handleUpdateAddress}>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                             <div className="form-control w-full">
@@ -463,7 +463,7 @@ export default function Address() {
                                             
                                             <div className="form-control w-full md:col-span-2">
                                                 <label className="label">
-                                                    <span className="label-text">Địa chỉ cụ thể</span>
+                                                    <span className="label-text">Địa trỉ cụ thể</span>
                                                 </label>
                                                 <input 
                                                     type="text" 
@@ -503,14 +503,14 @@ export default function Address() {
                             </div>
                         )}
                         
-                        {/* Danh sách địa chỉ */}
+                        {/* Danh sách Địa trỉ */}
                         {!showAddForm && !showEditForm && (
                             <>
                                 {addresses.length === 0 ? (
                                     <div className="alert alert-info">
                                         <div>
                                             <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2" />
-                                            <span>Bạn chưa có địa chỉ giao hàng nào. Vui lòng thêm địa chỉ mới.</span>
+                                            <span>Bạn chưa có Địa trỉ giao hàng nào. Vui lòng thêm Địa trỉ mới.</span>
                                         </div>
                                     </div>
                                 ) : (
@@ -521,7 +521,7 @@ export default function Address() {
                                                     <div className="flex justify-between items-start">
                                                         <div className="flex gap-2 items-center">
                                                             <FontAwesomeIcon icon={faMapMarkerAlt} className="text-primary" />
-                                                            <h3 className="font-semibold">Địa chỉ #{address.id}</h3>
+                                                            <h3 className="font-semibold">Địa trỉ #{address.id}</h3>
                                                         </div>
                                                         <div className="flex gap-2">
                                                             <button 
@@ -542,7 +542,7 @@ export default function Address() {
                                                     <p><strong>Số điện thoại:</strong> {address.phone_number}</p>
                                                     <p><strong>Email:</strong> {address.email}</p>
                                                     <p><strong>Tên:</strong> {address.name}</p>
-                                                    <p><strong>Địa chỉ:</strong> {formatFullAddress(address)}</p>
+                                                    <p><strong>Địa trỉ:</strong> {formatFullAddress(address)}</p>
                                                 </div>
                                             </div>
                                         ))}

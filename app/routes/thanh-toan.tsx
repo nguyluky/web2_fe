@@ -306,7 +306,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
                                                     <span>{addressSele.phone_number}</span>
                                                 </div>
                                                 <div className="flex justify-between">
-                                                    <span>Địa chỉ:</span>
+                                                    <span>Địa trỉ:</span>
                                                     <span>
                                                         {`${addressSele.street}, ${addressSele.ward}, ${addressSele.district}, ${addressSele.city}`}
                                                     </span>
@@ -406,14 +406,14 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
                 <div className="modal-box">
 
 
-                    <h2 className="card-title">Chọn địa chỉ giao hàng</h2>
+                    <h2 className="card-title">Chọn Địa trỉ giao hàng</h2>
                     <div className="overflow-x-auto">
                         <table className="table table-xs">
                             <thead>
                                 <tr>
                                     <th>Họ tên</th>
                                     <th>Số điện thoại</th>
-                                    <th>Địa chỉ</th>
+                                    <th>Địa trỉ</th>
                                     <th></th>
                                 </tr>
                             </thead>

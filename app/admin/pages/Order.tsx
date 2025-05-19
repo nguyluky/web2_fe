@@ -2,8 +2,8 @@
 import {
     faChevronLeft,
     faChevronRight,
-    faEye,
     faEdit,
+    faEye,
     faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -278,7 +278,7 @@ const OrderManagement = () => {
         <p><strong>Người nhận:</strong> {selectedOrder.address.name}</p>
         <p><strong>Email:</strong> {selectedOrder.address.email}</p>
         <p><strong>Số điện thoại:</strong> {selectedOrder.address.phone_number}</p>
-        <p><strong>Địa chỉ:</strong> 
+        <p><strong>Địa trỉ:</strong> 
           {[
             selectedOrder.address.street,
             selectedOrder.address.ward,

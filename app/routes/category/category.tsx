@@ -1,17 +1,16 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { categoryService } from '~/service/category.service';
-import type { SearchProductsPagination } from '~/service/products.service';
 import { productsService } from '~/service/products.service';
 import type { Route } from './+types/category';
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
+    const searchParams = new URL(window.location.href).searchParams;
+    searchParams.set('category', params.id);
     const [filter, error] = await categoryService.getFilterCategory(Number(params.id));
     const [categorie, error2] = await categoryService.getCategory(Number(params.id));
     const [products, error3] = await productsService.searchProducts(
-        new URLSearchParams({
-            category: params.id,
-        })
+        searchParams
     );
     return {
         filter,
@@ -27,16 +26,8 @@ export async function clientAction({ request }: Route.ActionArgs) {
 }
 
 export default function Category({ loaderData }: Route.ComponentProps) {
-    const [products, setProducts] = useState<SearchProductsPagination>(
-        loaderData.products || {
-            data: [],
-            links: [],
-            current_page: 1,
-            total: 0,
-            per_page: 10,
-            last_page: 1
-        } as SearchProductsPagination
-    );
+    const [searchParams, setSearchParams] = useSearchParams();
+    const products = loaderData.products;
     
     // Sorting state
     const [sortBy, setSortBy] = useState<string>('');
@@ -119,36 +110,38 @@ export default function Category({ loaderData }: Route.ComponentProps) {
 
         // chuyển dữ liệu formValues thành query string
         const queryString = new URLSearchParams(formValues as Record<string, string>);
+        setSearchParams(queryString)
 
-        try {
-            // Gửi dữ liệu đến server
-            const [data, error] = await productsService.searchProducts(queryString);
-            if (error) {
-                console.error("Error fetching products:", error);
-                // Set empty products to trigger the "no products found" notification
-                setProducts({
-                    ...products,
-                    data: []
-                });
-                return;
-            }
+
+        // try {
+        //     // Gửi dữ liệu đến server
+        //     const [data, error] = await productsService.searchProducts(queryString);
+        //     if (error) {
+        //         console.error("Error fetching products:", error);
+        //         // Set empty products to trigger the "no products found" notification
+        //         setProducts({
+        //             ...products,
+        //             data: []
+        //         });
+        //         return;
+        //     }
             
-            if (data) {
-                setProducts(data);
-                // Scroll to top of product section after filter apply
-                window.scrollTo({ 
-                    top: document.querySelector('.drawer-content')?.getBoundingClientRect().top || 0,
-                    behavior: 'smooth'
-                });
-            }
-        } catch (err) {
-            console.error("Exception while fetching products:", err);
-            // Set empty products to trigger the "no products found" notification
-            setProducts({
-                ...products,
-                data: []
-            });
-        }
+        //     if (data) {
+        //         setProducts(data);
+        //         // Scroll to top of product section after filter apply
+        //         window.scrollTo({ 
+        //             top: document.querySelector('.drawer-content')?.getBoundingClientRect().top || 0,
+        //             behavior: 'smooth'
+        //         });
+        //     }
+        // } catch (err) {
+        //     console.error("Exception while fetching products:", err);
+        //     // Set empty products to trigger the "no products found" notification
+        //     setProducts({
+        //         ...products,
+        //         data: []
+        //     });
+        // }
     }
 
     const handleGoToPage = async (url: string) => {
@@ -161,37 +154,10 @@ export default function Category({ loaderData }: Route.ComponentProps) {
             params.set('sort', sortBy);
         }
 
-        try {
-            const [data, error] = await productsService.searchProducts(params);
-            if (error) {
-                console.error("Error fetching products:", error);
-                // Set empty products to trigger the "no products found" notification
-                setProducts({
-                    ...products,
-                    data: []
-                });
-                return;
-            }
-            
-            if (data) {
-                setProducts(data);
-                // Scroll to top of the products section after page change
-                window.scrollTo({ 
-                    top: document.querySelector('.drawer-content')?.getBoundingClientRect().top || 0,
-                    behavior: 'smooth'
-                });
-            }
-        } catch (err) {
-            console.error("Exception while fetching products:", err);
-            // Set empty products to trigger the "no products found" notification
-            setProducts({
-                ...products, 
-                data: []
-            });
-        }
+        setSearchParams(params);
     }
 
-    if (loaderData.error) {
+    if (loaderData.error || !products) {
         return (
             <div className="hero">
                 <div className="hero-content w-full">
@@ -279,18 +245,7 @@ export default function Category({ loaderData }: Route.ComponentProps) {
                                                             params.append('sort', e.target.value);
                                                             
                                                             (async () => {
-                                                                try {
-                                                                    const [data, error] = await productsService.searchProducts(params);
-                                                                    if (data) {
-                                                                        setProducts(data);
-                                                                        window.scrollTo({ 
-                                                                            top: document.querySelector('.drawer-content')?.getBoundingClientRect().top || 0,
-                                                                            behavior: 'smooth'
-                                                                        });
-                                                                    }
-                                                                } catch (err) {
-                                                                    console.error("Error sorting products:", err);
-                                                                }
+                                                                setSearchParams(params);
                                                             })();
                                                         }
                                                     }}

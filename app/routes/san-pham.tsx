@@ -130,6 +130,58 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
         );
     };
 
+    // Hàm để tạo tiêu đề đầy đủ cho tooltip khi hover lên variant
+    const formatVariantTitle = (variant: any, differentKeys: string[] = []) => {
+        if (differentKeys.length > 0) {
+            return differentKeys.map(key => 
+                `${key}: ${String(variant.specifications[key] || 'N/A')}`
+            ).join(' | ');
+        } else {
+            return Object.entries(variant.specifications)
+                .map(([key, value]) => `${key}: ${String(value)}`)
+                .join(' | ');
+        }
+    };
+
+    // Hàm để tạo nhãn ngắn gọn cho phiên bản
+    const formatShortVariantLabel = (variant: any, differentKeys: string[] = []) => {
+        let label = '';
+        if (differentKeys.length > 0) {
+            // Giới hạn hiển thị tối đa 2 thông số khác nhau
+            const limitedKeys = differentKeys.slice(0, 2);
+            label = limitedKeys.map(key => {
+                const value = String(variant.specifications[key] || 'N/A');
+                // Giới hạn độ dài của mỗi giá trị
+                const shortValue = value.length > 8 ? value.substring(0, 6) + '...' : value;
+                return `${key}: ${shortValue}`;
+            }).join(' | ');
+            
+            // Hiển thị dấu ... nếu có nhiều hơn 2 thông số
+            if (differentKeys.length > 2) {
+                label += ' ...';
+            }
+        } else if (Object.keys(variant.specifications).length > 0) {
+            // Nếu không có thông số khác biệt, hiển thị tối đa 2 thông số đầu tiên
+            const entries = Object.entries(variant.specifications);
+            const limitedEntries = entries.slice(0, 2);
+            
+            label = limitedEntries.map(([key, value]) => {
+                const shortKey = key.length > 5 ? key.substring(0, 4) + '...' : key;
+                const shortValue = String(value).length > 8 ? String(value).substring(0, 6) + '...' : String(value);
+                return `${shortKey}: ${shortValue}`;
+            }).join(' | ');
+            
+            // Hiển thị dấu ... nếu có nhiều hơn 2 thông số
+            if (entries.length > 2) {
+                label += ' ...';
+            }
+        } else {
+            label = "Mặc định";
+        }
+        
+        return label;
+    };
+
     const handleReviewChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setReviewFormData(prev => ({
@@ -326,41 +378,40 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                     {product.product_variants && product.product_variants.length > 0 && (
                         <div className="space-y-2">
                             <h3 className="font-medium">Phiên bản</h3>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
                                 {product.product_variants.map((variant) => (
                                     <button
                                         key={variant.id}
-                                        className={`btn ${
+                                        className={`btn btn-sm md:btn-md ${
                                             selectedVariant === variant.id
                                                 ? 'btn-primary'
                                                 : 'btn-outline'
-                                        }`}
+                                        } ${variant.stock <= 0 ? 'opacity-70' : ''}`}
                                         onClick={() => setSelectedVariant(variant.id)}
+                                        title={formatVariantTitle(variant, differentSpecKeys)}
+                                        disabled={variant.stock <= 0}
                                     >
                                         {differentSpecKeys.length > 0 ? (
-                                            // Chỉ hiển thị các thông số khác nhau
-                                            differentSpecKeys.map((key, index) => (
-                                                <>
-                                                    {index > 0 && ' | '}
-                                                <span key={key} className="text-sm mx-1">
-                                                    {key}: {String(variant.specifications[key] || 'N/A')}
+                                            // Chỉ hiển thị các thông số khác nhau với giới hạn độ dài
+                                            <span className="text-xs md:text-sm">
+                                                {formatShortVariantLabel(variant, differentSpecKeys)}
+                                                <span className="ml-1 badge badge-sm badge-outline">
+                                                    {variant.stock > 0
+                                                        ? variant.stock
+                                                        : 'Hết'}
                                                 </span>
-                                                </>
-                                            ))
+                                            </span>
                                         ) : (
-                                            // Nếu không có thông số khác nhau, hiển thị tất cả
-                                            Object.entries(variant.specifications).map(
-                                                ([key, value], index, arr) => (
-                                                    <span key={key} className="text-sm mx-1">
-                                                        {index > 0 && ' | '}
-                                                        {key}: {String(value)}
-                                                    </span>
-                                                )
-                                            )
+                                            // Nếu không có thông số khác nhau, hiển thị giới hạn
+                                            <span className="text-xs md:text-sm">
+                                                {formatShortVariantLabel(variant)}
+                                                <span className="ml-1 badge badge-sm badge-outline">
+                                                    {variant.stock > 0
+                                                        ? variant.stock
+                                                        : 'Hết'}
+                                                </span>
+                                            </span>
                                         )}
-                                        {variant.stock > 0
-                                            ? ` (${variant.stock} còn lại)`
-                                            : ' (Hết hàng)'}
                                     </button>
                                 ))}
                             </div>

@@ -11,6 +11,7 @@ import { ToastContainer } from 'react-toastify';
 import type { Route } from './+types/root';
 import './app.css';
 import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
 import { CategoryProvider } from './contexts/CategoryContext';
 
 export const links: Route.LinksFunction = () => [
@@ -51,10 +52,12 @@ export function HydrateFallback() {
 export default function App() {
   return (
     <AuthProvider>
-      <CategoryProvider>
-        <Outlet />
-        <ToastContainer />
-      </CategoryProvider>
+      <CartProvider>
+        <CategoryProvider>
+          <Outlet />
+          <ToastContainer />
+        </CategoryProvider>
+      </CartProvider>
     </AuthProvider>
   );
 }

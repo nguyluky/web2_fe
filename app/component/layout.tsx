@@ -1,5 +1,6 @@
 import { Link, Outlet, useNavigate, useNavigation, useSearchParams } from 'react-router';
 import { useAuth } from '~/contexts/AuthContext';
+import { useCart } from '~/contexts/CartContext';
 import { useCategories } from '~/contexts/CategoryContext';
 import './loading.css';
 
@@ -7,6 +8,7 @@ export function Header() {
     const { isAuthenticated, profile: user, account } = useAuth();
     const { categories, loading } = useCategories();
     const [searchParams, setSearchParams] = useSearchParams();
+    const {cartItems} = useCart();
     const navigate = useNavigate();
     const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
         console.log('handleSearch', e.key);
@@ -106,7 +108,7 @@ export function Header() {
                         <kbd className="kbd kbd-sm">/</kbd>
                     </label>
                     <div className="indicator mr-3 sm:mr-0">
-                        <span className="indicator-item badge badge-secondary">0</span>
+                        <span className="indicator-item badge badge-secondary">{cartItems.length}</span>
 
                         <Link className="btn p-2.5 " to={'/cart'}>
                             <svg

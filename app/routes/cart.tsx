@@ -1,35 +1,42 @@
+// filepath: /home/luky/code/web2-fromend/app/routes/cart.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { cartService } from '~/service/cart.service';
+import { useCart } from '~/contexts/CartContext';
+import type { CartItemWithProduct } from '~/service/cart.service';
 import type { Route } from './+types/cart';
-
 
 import { formatCurrency } from '~/utils/formatCurrency';
 
 export async function clientLoader() {
+  // With CartContext, we don't need an actual loader since CartContext will handle fetching
   try {
-    const response = await cartService.getCart();
-    if (response && response[0]) {
-      return { cartItems: response[0].carts, error: null };
-    }
-    return { cartItems: [], error: null };
+    return { error: null };
   } catch (error) {
     console.error('Error loading cart:', error);
-    return { cartItems: [], error: 'Không thể tải giỏ hàng. Vui lòng thử lại sau.' };
+    return { error: 'Không thể tải giỏ hàng. Vui lòng thử lại sau.' };
   }
 }
 
 export default function Cart({loaderData}: Route.ComponentProps) {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState(loaderData.cartItems);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(loaderData.error);
+  const { cartItems, isLoading, error: cartError, updateCartItem, removeFromCart} = useCart();
+  const [error, setError] = useState<string | null>(loaderData.error || cartError);
   const [differentSpecsByProduct, setDifferentSpecsByProduct] = useState<Record<number, string[]>>({});
+  const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
+
+  // Initialize checked state for all cart items
+  useEffect(() => {
+    const initialCheckedState: Record<number, boolean> = {};
+    cartItems.forEach(item => {
+      initialCheckedState[item.product_variant_id] = true;
+    });
+    setCheckedItems(initialCheckedState);
+  }, [cartItems]);
 
   // Hàm để xác định các thông số khác nhau giữa các biến thể của một sản phẩm
-  const findDifferentSpecifications = (productId: number, cartItems: any[]) => {
+  const findDifferentSpecifications = (productId: number, items: CartItemWithProduct[]) => {
     // Lọc ra các biến thể của sản phẩm hiện tại
-    const productVariants = cartItems
+    const productVariants = items
       .filter(item => item.product_variant.product.id === productId)
       .map(item => item.product_variant);
     
@@ -78,60 +85,39 @@ export default function Cart({loaderData}: Route.ComponentProps) {
 
   const handleUpdateQuantity = async (variantId: number, amount: number) => {
     try {
-      setLoading(true);
-      await cartService.updateCartItem(variantId, { amount });
-      
-      // Update local state to reflect changes
-      setCartItems(prevItems => 
-        prevItems.map(item => 
-          item.product_variant_id === variantId 
-            ? { ...item, amount } 
-            : item
-        )
-      );
+      await updateCartItem(variantId, amount);
     } catch (err) {
       console.error('Error updating cart:', err);
       setError('Không thể cập nhật giỏ hàng. Vui lòng thử lại sau.');
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleRemoveItem = async (variantId: number) => {
     try {
-      setLoading(true);
-      await cartService.removeFromCart(variantId);
-      
-      // Remove item from local state
-      setCartItems(prevItems => 
-        prevItems.filter(item => item.product_variant_id !== variantId)
-      );
+      await removeFromCart(variantId);
     } catch (err) {
       console.error('Error removing item from cart:', err);
       setError('Không thể xóa sản phẩm. Vui lòng thử lại sau.');
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleCheckboxChange = (variantId: number) => {
-    setCartItems(prevItems =>
-      prevItems.map(item => 
-        item.product_variant_id === variantId 
-          ? { ...item, checked: !item.checked } 
-          : item
-      )
-    );
+    setCheckedItems(prev => ({
+      ...prev, 
+      [variantId]: !prev[variantId]
+    }));
   };
 
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
-      return item.checked ? total + (item.product_variant.price * item.amount) : total;
+      return checkedItems[item.product_variant_id] 
+        ? total + (item.product_variant.price * item.amount) 
+        : total;
     }, 0);
   };
 
   const handleCheckout = () => {
-    const selectedItems = cartItems.filter(item => item.checked);
+    const selectedItems = cartItems.filter(item => checkedItems[item.product_variant_id]);
     if (selectedItems.length === 0) {
       alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán.');
       return;
@@ -178,7 +164,12 @@ export default function Cart({loaderData}: Route.ComponentProps) {
                         cartItems.map((item) => (
                           <tr key={item.product_variant_id}>
                             <td>
-                              <input type="checkbox" className="checkbox" checked={item.checked} onChange={() => handleCheckboxChange(item.product_variant_id)}/>
+                              <input 
+                                type="checkbox" 
+                                className="checkbox" 
+                                checked={checkedItems[item.product_variant_id] || false} 
+                                onChange={() => handleCheckboxChange(item.product_variant_id)}
+                              />
                             </td>
                             <td>
                               <div className="avatar">
@@ -200,25 +191,11 @@ export default function Cart({loaderData}: Route.ComponentProps) {
                             <td>
                               {item.product_variant.product.name}
                               <br />
-                              {/* <span className="badge badge-ghost badge-sm">
+                              <span className="badge badge-ghost badge-sm">
                                 {'('}
-                                {differentSpecsByProduct[item.product_variant.product.id] ? (
-                                  differentSpecsByProduct[item.product_variant.product.id].map((key, index) => (
-                                    <span key={key}>
-                                      {key}: {String(item.product_variant.specifications[key] || 'N/A')}
-                                      {differentSpecsByProduct[item.product_variant.product.id].length - 1 > index ? ', ' : ''}
-                                    </span>
-                                  ))
-                                ) : (
-                                  Object.entries(item.product_variant.specifications).map(([key, value], index) => (
-                                    <span key={key}>
-                                      {key}: {String(value)}
-                                      {Object.keys(item.product_variant.specifications).length - 1 > index ? ', ' : ''}
-                                    </span>
-                                  ))
-                                )}
+                                {item.product_variant.sku}
                                 {')'}
-                              </span> */}
+                              </span>
                             </td>
                             <td>{formatCurrency(item.product_variant.price)}</td>
                             <td>
@@ -228,7 +205,7 @@ export default function Cart({loaderData}: Route.ComponentProps) {
                                   type="number"
                                   value={item.amount}
                                   min={1}
-                                  disabled={loading}
+                                  disabled={isLoading}
                                   onChange={(e) => handleUpdateQuantity(item.product_variant_id, parseInt(e.target.value))}
                                 />
                               </div>
@@ -238,7 +215,7 @@ export default function Cart({loaderData}: Route.ComponentProps) {
                               <button 
                                 className="btn btn-ghost btn-xs"
                                 onClick={() => handleRemoveItem(item.product_variant_id)}
-                                disabled={loading}
+                                disabled={isLoading}
                               >
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
@@ -300,7 +277,7 @@ export default function Cart({loaderData}: Route.ComponentProps) {
                 <button 
                   className="btn btn-primary"
                   onClick={handleCheckout}
-                  disabled={cartItems.length === 0 || loading}
+                  disabled={cartItems.length === 0 || isLoading}
                 >
                   Thanh toán
                 </button>

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '~/contexts/AuthContext';
-import { cartService } from '~/service/cart.service';
+import { useCart } from '~/contexts/CartContext';
 import { orderService } from '~/service/order.service';
 import { productReviewService } from '~/service/productReview.service';
 import { productsService } from '~/service/products.service';
@@ -25,6 +25,8 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
     const navigate = useNavigate();
     const { product } = loaderData;
     const { isAuthenticated, profile: user } = useAuth();
+    const { addToCart, isLoading: cartLoading } = useCart();
+    
     const [selectedVariant, setSelectedVariant] = useState<number | null>(
         product?.product_variants?.[0]?.id || null
     );
@@ -87,7 +89,7 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
 
         try {
             setAddingToCart(true);
-            await cartService.addToCart({
+            await addToCart({
                 product_variant_id: selectedVariant,
                 amount: quantity,
             });
@@ -109,7 +111,7 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
 
         try {
             setBuyNow(true);
-            await cartService.addToCart({
+            await addToCart({
                 product_variant_id: selectedVariant,
                 amount: quantity,
             });

@@ -118,8 +118,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     };
 
-    const register = async () => {
-        console.log('hello');
+    const register = async (userData: RegisterRequest) => {
+        
     };
 
     const contextValue: AuthContextState = {

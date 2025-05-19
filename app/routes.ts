@@ -9,9 +9,6 @@ const userRoutes = [
             index('./routes/category/index.tsx'),
             route('/:id', './routes/category/category.tsx'),
         ]),
-        // ...prefix("tai-khoan", [
-        //     index("./routes/tai-khoan/index.tsx")
-        // ])
 
         route('tai-khoan', './component/tai-khoan-layout.tsx', [
             index('./routes/tai-khoan/index.tsx'),

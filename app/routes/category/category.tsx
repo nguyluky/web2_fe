@@ -98,252 +98,227 @@ export default function Category({ loaderData }: Route.ComponentProps) {
 
     return (
         <>
-            <section>
-                <div className="hero">
-                    <div className="hero-content w-full">
-                        <div className="breadcrumbs text-sm w-full">
-                            <ul>
-                                <li>
-                                    <a>Home</a>
-                                </li>
-                                <li>
-                                    <a>Danh mục</a>
-                                </li>
-                                <li>{loaderData.categorie?.data.name.replaceAll('-', ' ')}</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <section>
-                <div className="hero">
-                    <div className="hero-content w-full">
-                        <div className="relative w-full rounded-lg overflow-hidden">
-                            <img 
-                                src={loaderData.categorie?.data.large_image || `https://placehold.co/1000x400?text=${loaderData.categorie?.data.name}`} 
-                                alt="" 
-                                className="w-full h-[400px] object-cover" 
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent p-6 flex flex-col justify-center">
-                                <h1 className="text-2xl font-bold text-base-100 md:text-3xl lg:text-4xl">
-                                    {loaderData.categorie?.data.name}
-                                </h1>
-                                <p className="text-base-100/70 text-sm md:text-base lg:text-lg max-w-1/2">
-                                {loaderData.categorie?.data.description}
-                                </p>
+            <div className="drawer lg:drawer-open">
+                <input id="filter-drawer" type="checkbox" className="drawer-toggle" />
+                <div className="drawer-content">
+                    <section>
+                        <div className="hero">
+                            <div className="hero-content w-full">
+                                <div className="breadcrumbs text-sm w-full">
+                                    <ul>
+                                        <li>
+                                            <a>Home</a>
+                                        </li>
+                                        <li>
+                                            <a>Danh mục</a>
+                                        </li>
+                                        <li>{loaderData.categorie?.data.name.replaceAll('-', ' ')}</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </section>
-            <section>
-                <div className="hero">
-                    <div className="hero-content w-full">
-                        <div className="grid grid-cols-[300px_1fr] gap-4 w-full">
-                            <form onSubmit={handleSubmit}>
-                                <h2 className="text-2xl font-bold">Bộ lọc</h2>
-                                <div className="divider m-0"></div>
-
-                                {/* Thêm ô tìm kiếm */}
-                                <div className="mb-4">
-                                    <div className="form-control">
-                                        <div className="join w-full">
-                                            <input
-                                                name="query"
-                                                type="text"
-                                                placeholder="Tìm kiếm..."
-                                                className="input input-bordered input-sm w-full"
-                                            />
-                                            <button className="btn btn-square btn-sm btn-primary">
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    width="16"
-                                                    height="16"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    className="lucide lucide-search"
-                                                >
-                                                    <circle cx="11" cy="11" r="8" />
-                                                    <path d="m21 21-4.3-4.3" />
-                                                </svg>
-                                            </button>
-                                        </div>
+                    </section>
+                    <section>
+                        <div className="hero">
+                            <div className="hero-content w-full">
+                                <div className="relative w-full rounded-lg overflow-hidden">
+                                    <img 
+                                        src={loaderData.categorie?.data.large_image || `https://placehold.co/1000x400?text=${loaderData.categorie?.data.name}`} 
+                                        alt="" 
+                                        className="w-full h-[200px] md:h-[300px] lg:h-[400px] object-cover" 
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent p-3 md:p-6 flex flex-col justify-center">
+                                        <h1 className="text-xl font-bold text-base-100 md:text-3xl lg:text-4xl">
+                                            {loaderData.categorie?.data.name}
+                                        </h1>
+                                        <p className="text-base-100/70 text-xs md:text-base lg:text-lg max-w-1/2">
+                                        {loaderData.categorie?.data.description}
+                                        </p>
                                     </div>
                                 </div>
-
-                                {Object.entries(loaderData.filter?.data || {}).map(
-                                    ([key, value]) => (
-                                        <div key={key} className="collapse collapse-arrow">
-                                            <input type="checkbox" className="peer p-0 m-0" />
-                                            <div className="collapse-title">{key}</div>
-                                            <div className="collapse-content">
-                                                {Object.values(value).map((e) => (
-                                                    <label key={e} className="flex gap-5 my-3">
-                                                        <input
-                                                            type="checkbox"
-                                                            name={`${key}[]`}
-                                                            value={e}
-                                                            className="checkbox"
+                            </div>
+                        </div>
+                    </section>
+                    <section>
+                        <div className="hero">
+                            <div className="hero-content w-full px-2 md:px-4">
+                                <div className="w-full">
+                                    <div className="flex justify-between items-center mb-4 lg:hidden">
+                                        <h2 className="text-xl font-bold">Sản phẩm</h2>
+                                        <label htmlFor="filter-drawer" className="btn btn-sm drawer-button">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+                                            </svg>
+                                            Bộ lọc
+                                        </label>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 xs:gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+                                        {products.data.map((e) => (
+                                            <div
+                                                key={e.id}
+                                                className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden"
+                                                data-v0-t="card"
+                                            >
+                                                <Link to={"/san-pham/" + e.slug} className="block">
+                                                    <div className="relative aspect-square">
+                                                        <img
+                                                            alt={e.name}
+                                                            loading="lazy"
+                                                            decoding="async"
+                                                            data-nimg="fill"
+                                                            className="object-cover transition-transform hover:scale-105 w-full h-full"
+                                                            src={e.product_images && e.product_images[0] ? e.product_images[0].image_url : "https://placehold.co/300"}
                                                         />
-                                                        <span>{e}</span>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )
-                                )}
-                            </form>
-                            <div className="w-full">
-                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                                    {products.data.map((e) => (
-                                        <div
-                                            className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden"
-                                            data-v0-t="card"
-                                        >
-                                            <Link to={"/san-pham/" + e.slug} className="block">
-                                                <div className="relative aspect-square">
-                                                    <img
-                                                        alt="iPhone 15 Pro Max 256GB"
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                        data-nimg="fill"
-                                                        className="object-cover transition-transform hover:scale-105"
-                                                        src="https://placehold.co/300"
-                                                    />
-                                                    <div
-                                                        className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent text-primary-foreground hover:bg-primary/80 absolute right-2 top-2 bg-red-500"
-                                                        data-v0-t="badge"
-                                                    >
-                                                        {(
-                                                            ((e.base_original_price -
-                                                                e.base_price) /
-                                                                e.base_original_price) *
-                                                            100
-                                                        ).toFixed(2)}
-                                                        %
-                                                    </div>
-                                                </div>
-                                                <div className="p-3">
-                                                    <div className="space-y-1">
-                                                        <h3 className="line-clamp-2 text-sm font-medium">
-                                                            {e.name}
-                                                        </h3>
-                                                        <div className="flex items-center gap-1">
-                                                            <div className="flex">
-                                                                <svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="24"
-                                                                    height="24"
-                                                                    viewBox="0 0 24 24"
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    stroke-width="2"
-                                                                    stroke-linecap="round"
-                                                                    stroke-linejoin="round"
-                                                                    className="lucide lucide-star h-3 w-3 fill-primary text-primary"
-                                                                >
-                                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                                                </svg>
-                                                                <svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="24"
-                                                                    height="24"
-                                                                    viewBox="0 0 24 24"
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    stroke-width="2"
-                                                                    stroke-linecap="round"
-                                                                    stroke-linejoin="round"
-                                                                    className="lucide lucide-star h-3 w-3 fill-primary text-primary"
-                                                                >
-                                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                                                </svg>
-                                                                <svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="24"
-                                                                    height="24"
-                                                                    viewBox="0 0 24 24"
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    stroke-width="2"
-                                                                    stroke-linecap="round"
-                                                                    stroke-linejoin="round"
-                                                                    className="lucide lucide-star h-3 w-3 fill-primary text-primary"
-                                                                >
-                                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                                                </svg>
-                                                                <svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="24"
-                                                                    height="24"
-                                                                    viewBox="0 0 24 24"
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    stroke-width="2"
-                                                                    stroke-linecap="round"
-                                                                    stroke-linejoin="round"
-                                                                    className="lucide lucide-star h-3 w-3 fill-primary text-primary"
-                                                                >
-                                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                                                </svg>
-                                                                <svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="24"
-                                                                    height="24"
-                                                                    viewBox="0 0 24 24"
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    stroke-width="2"
-                                                                    stroke-linecap="round"
-                                                                    stroke-linejoin="round"
-                                                                    className="lucide lucide-star h-3 w-3 fill-primary text-primary"
-                                                                >
-                                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                                                </svg>
+                                                        {e.base_original_price > e.base_price && (
+                                                            <div
+                                                                className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent text-primary-foreground hover:bg-primary/80 absolute right-2 top-2 bg-red-500"
+                                                                data-v0-t="badge"
+                                                            >
+                                                                {(
+                                                                    ((e.base_original_price -
+                                                                        e.base_price) /
+                                                                        e.base_original_price) *
+                                                                    100
+                                                                ).toFixed(0)}
+                                                                %
                                                             </div>
-                                                            <span className="text-xs text-muted-foreground">
-                                                                (120)
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-bold text-primary">
-                                                                32.990.000&nbsp;₫
-                                                            </span>
-                                                            <span className="text-xs text-muted-foreground line-through">
-                                                                34.990.000&nbsp;₫
-                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="p-2 md:p-3">
+                                                        <div className="space-y-1">
+                                                            <h3 className="line-clamp-2 text-xs sm:text-sm font-medium">
+                                                                {e.name}
+                                                            </h3>
+                                                            <div className="flex items-center gap-1">
+                                                                <div className="flex">
+                                                                    {Array(5).fill(0).map((_, index) => (
+                                                                        <svg
+                                                                            key={index}
+                                                                            xmlns="http://www.w3.org/2000/svg"
+                                                                            width="24"
+                                                                            height="24"
+                                                                            viewBox="0 0 24 24"
+                                                                            fill="none"
+                                                                            stroke="currentColor"
+                                                                            strokeWidth="2"
+                                                                            strokeLinecap="round"
+                                                                            strokeLinejoin="round"
+                                                                            className="lucide lucide-star h-3 w-3 fill-primary text-primary"
+                                                                        >
+                                                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                                                        </svg>
+                                                                    ))}
+                                                                </div>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    ({e.product_reviews?.length || 0})
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1 flex-wrap">
+                                                                <span className="font-bold text-primary text-sm sm:text-base">
+                                                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(e.base_price)}
+                                                                </span>
+                                                                {e.base_original_price > e.base_price && (
+                                                                    <span className="text-xs text-muted-foreground line-through">
+                                                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(e.base_original_price)}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </Link>
+                                                </Link>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex justify-center mt-5">
+                                        <div className="join">
+                                            {
+                                                products.links.map((e, index) => (
+                                                    <button 
+                                                        key={index}
+                                                        onClick={() => {
+                                                            if (e.url) {
+                                                                handleGoToPage(e.url);
+                                                            }
+                                                        }} 
+                                                        className={"join-item btn btn-sm md:btn-md" + (e.url ? "" : " btn-disabled") + (e.active ? " btn-active": "")} 
+                                                        dangerouslySetInnerHTML={{__html: e.label}}
+                                                    ></button>
+                                                ))
+                                            }
                                         </div>
-                                    ))}
-                                </div>
-                                <div className="flex justify-center mt-5">
-                                    <div className="join">
-                                        {
-                                            products.links.map((e) => {
-                                                return <button onClick={() => {
-                                                    if (e.url) {
-                                                        handleGoToPage(e.url);
-                                                    }
-                                                }} className={"join-item btn" + (e.url ? "" : " btn-soft") + (e.active ? " btn-active": "")} dangerouslySetInnerHTML={{__html: e.label}}></button>
-                                            })
-                                        }
-                                        {/* <button className={"join-item btn"}>«</button>
-                                        <button className="join-item btn">{products.current_page}</button>
-                                        <button className="join-item btn">»</button> */}
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </section>
+                </div>
+                <div className="drawer-side z-10">
+                    <label htmlFor="filter-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
+                    <div className="p-4 w-80 min-h-full bg-base-200">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold">Bộ lọc</h2>
+                            <label htmlFor="filter-drawer" className="btn btn-sm btn-circle">✕</label>
+                        </div>
+                        <div className="divider m-0"></div>
+                        <form onSubmit={handleSubmit}>
+                            {/* Thêm ô tìm kiếm */}
+                            <div className="mb-4">
+                                <div className="form-control">
+                                    <div className="join w-full">
+                                        <input
+                                            name="query"
+                                            type="text"
+                                            placeholder="Tìm kiếm..."
+                                            className="input input-bordered input-sm w-full"
+                                        />
+                                        <button className="btn btn-square btn-sm btn-primary">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width="16"
+                                                height="16"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                className="lucide lucide-search"
+                                            >
+                                                <circle cx="11" cy="11" r="8" />
+                                                <path d="m21 21-4.3-4.3" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {Object.entries(loaderData.filter?.data || {}).map(
+                                ([key, value]) => (
+                                    <div key={key} className="collapse collapse-arrow">
+                                        <input type="checkbox" className="peer p-0 m-0" />
+                                        <div className="collapse-title">{key}</div>
+                                        <div className="collapse-content">
+                                            {Object.values(value).map((e) => (
+                                                <label key={e} className="flex gap-5 my-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        name={`${key}[]`}
+                                                        value={e}
+                                                        className="checkbox checkbox-sm"
+                                                    />
+                                                    <span className="text-sm">{e}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )
+                            )}
+                            
+                            <button type="submit" className="btn btn-primary btn-sm w-full mt-4">Áp dụng</button>
+                        </form>
                     </div>
                 </div>
-            </section>
+            </div>
         </>
     );
 }

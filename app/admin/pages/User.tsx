@@ -625,14 +625,14 @@ const UserManagement = () => {
               </select>
             </div>
           </div>
-          <div className="flex items-end mt-2 mb-4 md:mb-0">
+          {/* <div className="flex items-end mt-2 mb-4 md:mb-0">
             <button
               className="px-4 py-2 rounded-md bg-gray-500 text-white text-xl hover:bg-gray-700 shadow"
               onClick={handleSearchButtonClick}
             >
               Tìm kiếm
             </button>
-          </div>
+          </div> */}
         </div>
 
         <div className="grid grid-cols-1 overflow-x-auto border border-gray-300 rounded-lg shadow-md">

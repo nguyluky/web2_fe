@@ -10,6 +10,42 @@ const Dashboard = () => {
   const [topProducts, setTopProducts] = useState([]);
   const [orders, setOrders] = useState([]);
 
+  const [users, setUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateStart, setDateStart] = useState('');
+  const [dateEnd, setDateEnd] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [editStatus, setEditStatus] = useState('');
+
+  useEffect(() => {
+    const fetchWithTokenData = async () => {
+      try {
+        const params = new URLSearchParams({
+          search: searchTerm,
+          status: statusFilter === 'all' ? '' : statusFilter,
+          date_start: dateStart,
+          date_end: dateEnd,
+          limit: 10,
+          page: currentPage,
+        });
+
+        const usersResponse = await fetchWithToken('http://127.0.0.1:8000/api/admin/users');
+        if (!usersResponse.ok) throw new Error('Không thể lấy danh sách người dùng');
+        const usersData = await usersResponse.json();
+        setUsers(usersData.data.data || []);
+      } catch (error) {
+        console.error('Lỗi khi lấy dữ liệu:', error.message);
+        toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
+      }
+    };
+    fetchWithTokenData();
+  }, [currentPage, searchTerm, statusFilter, dateStart, dateEnd]);
+
   useEffect(() => {
     const fetchWithTokenTopProducts = async () => {
       try {
@@ -82,6 +118,7 @@ const Dashboard = () => {
         setOrders([]);
       }
     };
+    
 
     fetchOrders();
   }, []);
@@ -161,7 +198,7 @@ const Dashboard = () => {
                     <th>Mã đơn #</th>
                     <th>Tên khách hàng</th>
                     <th>Trạng thái</th>
-                    <th>Tổng tiền</th>
+                    <th>Ngày tạo</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -192,7 +229,7 @@ const Dashboard = () => {
                   {Array.isArray(orders) && orders.map((order) => (
                     <tr key={order.id}>
                       <td>{order.id}</td>
-                      <td>{order.profile?.fullname || 'Unknown'}</td>
+                       {users.find((user) => user.id === order.account_id)?.fullname || 'Không tìm thấy'}
                       <td>
                         {order.status === 'completed' && <span className="text-green-500">Đã thanh toán</span>}
                         {order.status === 'processing' && <span className="text-blue-500">Đang xử lý</span>}

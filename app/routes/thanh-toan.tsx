@@ -225,7 +225,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
                                                     <td>
                                                         {item.product_variant.product.name}
                                                         <br />
-                                                        <span className="badge badge-ghost badge-sm">
+                                                        {/* <span className="badge badge-ghost badge-sm">
                                                             {'('}
                                                             {differentSpecsByProduct[item.product_variant.product.id] ? (
                                                                 differentSpecsByProduct[item.product_variant.product.id].map((key, index) => (
@@ -247,7 +247,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
                                                                 ))
                                                             )}
                                                             {')'}
-                                                        </span>
+                                                        </span> */}
                                                     </td>
                                                     <td>
                                                         {formatCurrency(item.product_variant.price)}

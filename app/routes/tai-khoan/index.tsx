@@ -20,7 +20,7 @@ function ThongTin({profile}: {profile: getProfileResponse['data']}) {
     const [date, setDate] = useState<Date>(new Date());
     const [cloneData, setCloneData] = useState(profile);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [previewImage, setPreviewImage] = useState<string | null>(profileData.avatar_url || null);
+    const [previewImage, setPreviewImage] = useState<string | null>(profileData.avatar || null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
@@ -99,7 +99,7 @@ function ThongTin({profile}: {profile: getProfileResponse['data']}) {
                 <div className="flex gap-5 items-center">
                     <div className="avatar cursor-pointer relative group" onClick={() => setIsModalOpen(true)}>
                         <div className="w-24 rounded-full overflow-hidden">
-                            <img src={profileData.avatar_url} alt="Avatar" />
+                            <img src={"http://127.0.0.1:8000/storage/" + profileData.avatar} alt="Avatar" />
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                 <span className="text-white text-xs font-medium">Thay đổi</span>
                             </div>

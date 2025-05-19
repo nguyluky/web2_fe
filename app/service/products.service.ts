@@ -1,162 +1,164 @@
 import { ApiService } from './api.service';
 
 export interface Product {
-  id: number;
-  sku: string;
-  name: string;
-  slug: string;
-  description: string;
-  category_id: number;
-  base_price: number;
-  base_original_price: number;
-  status: string;
-  specifications: Specifications;
-  features: string[];
-  meta_data: null;
-  created_at: string;
-  updated_at: string;
-  product_variants: Productvariant[];
-  product_images: Productimage[];
-  category: Category;
-  product_reviews: ProductReview[];
+    id: number;
+    sku: string;
+    name: string;
+    slug: string;
+    description: string;
+    category_id: number;
+    base_price: number;
+    base_original_price: number;
+    status: string;
+    specifications: { [key: string]: string };
+    features: string[];
+    meta_data: null;
+    created_at: string;
+    updated_at: string;
+    product_variants: Productvariant[];
+    product_images: Productimage[];
+    category: Category;
+    product_reviews: ProductReview[];
 }
 
 interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  status: string;
-  parent_id: null;
-  require_fields: null;
-  created_at: string;
-  updated_at: string;
+    id: number;
+    name: string;
+    slug: string;
+    status: string;
+    parent_id: null;
+    require_fields: null;
+    created_at: string;
+    updated_at: string;
 }
 
 interface Productimage {
-  id: number;
-  product_id: number;
-  variant_id: null;
-  image_url: string;
-  is_primary: boolean;
-  sort_order: number;
-  created_at: string;
+    id: number;
+    product_id: number;
+    variant_id: null;
+    image_url: string;
+    is_primary: boolean;
+    sort_order: number;
+    created_at: string;
 }
 
 interface Productvariant {
-  id: number;
-  product_id: number;
-  sku: string;
-  price: number;
-  original_price: number;
-  stock: number;
-  status: string;
-  specifications: {[key: string]: string};
-  created_at: string;
-  updated_at: string;
+    id: number;
+    product_id: number;
+    sku: string;
+    price: number;
+    original_price: number;
+    stock: number;
+    status: string;
+    specifications: { [key: string]: string };
+    created_at: string;
+    updated_at: string;
 }
 
 
 export interface ProductDetailResponse {
-  product: Product
+    product: Product
 }
 
 export interface ProductVariant {
-  id: number
-  product_id: number
-  sku: string
-  price: number
-  original_price: number
-  stock: number
-  status: string
-  created_at: string
-  updated_at: string
-  specifications: {[key: string]: string};
+    id: number
+    product_id: number
+    sku: string
+    price: number
+    original_price: number
+    stock: number
+    status: string
+    created_at: string
+    updated_at: string
+    specifications: { [key: string]: string };
 }
 
 export interface ProductImage {
-  id: number
-  product_id: number
-  variant_id: any
-  image_url: string
-  is_primary: boolean
-  sort_order: number
-  created_at: string
+    id: number
+    product_id: number
+    variant_id: any
+    image_url: string
+    is_primary: boolean
+    sort_order: number
+    created_at: string
 }
 
 
 interface ProductReview {
-  id: number;
-  product_id: number;
-  user_id: number;
-  rating: number;
-  comment: string;
-  status: string;
-  meta_data: null;
-  created_at: string;
-  updated_at: string;
-  account: Account;
+    id: number;
+    product_id: number;
+    user_id: number;
+    rating: number;
+    comment: string;
+    status: string;
+    meta_data: null;
+    created_at: string;
+    updated_at: string;
+    account: Account;
 }
 
 interface Account {
-  id: number;
-  username: string;
-  rule: number;
-  status: string;
-  created: string;
-  updated: string;
-  deleted_at: null;
-  profile: Profile;
+    id: number;
+    username: string;
+    rule: number;
+    status: string;
+    created: string;
+    updated: string;
+    deleted_at: null;
+    profile: Profile;
 }
 
 interface Profile {
-  id: number;
-  fullname: string;
-  phone_number: string;
-  email: string;
-  avatar: null;
+    id: number;
+    fullname: string;
+    phone_number: string;
+    email: string;
+    avatar: null;
 }
 
 export interface NewProductsResponse {
-  message: string
-  data: Datum[]
+    message: string
+    data: Datum[]
 }
 
 interface Datum {
-  id: number;
-  sku: string;
-  name: string;
-  slug: string;
-  description: string;
-  category_id: number;
-  base_price: number;
-  base_original_price: number;
-  status: string;
-  specifications: string;
-  features: string;
-  meta_data: null;
-  created_at: string;
-  updated_at: string;
-  product_images: Productimage[];
+    id: number;
+    sku: string;
+    name: string;
+    slug: string;
+    description: string;
+    category_id: number;
+    base_price: number;
+    base_original_price: number;
+    status: string;
+    specifications: string;
+    features: string;
+    meta_data: null;
+    created_at: string;
+    updated_at: string;
+    product_images: Productimage[];
+        product_reviews_avg_rating: number;
+    product_reviews_count: number;
 }
 
 export interface CategoryProductsResponse {
-  product: Product[]
+    product: Product[]
 }
 
 export interface SearchProductsPagination {
-  data: Product[];
-  current_page: number;
-  total: number;
-  per_page: number;
-  last_page: number;
-  
-  links: Link[];
+    data: Product[];
+    current_page: number;
+    total: number;
+    per_page: number;
+    last_page: number;
+
+    links: Link[];
 }
 
 interface Link {
-  url: null | string;
-  label: string;
-  active: boolean;
+    url: null | string;
+    label: string;
+    active: boolean;
 }
 
 export class ProductsService extends ApiService {
@@ -200,10 +202,10 @@ export class ProductsService extends ApiService {
      * @returns Paginated search results
      */
     searchProducts(queryParams: URLSearchParams | null = null) {
-        
+
         const queryString = queryParams?.toString() || '';
         const url = `/products/search${queryString ? `?${queryString}` : ''}`;
-        
+
         return this.get<SearchProductsPagination, any>(url);
     }
 }

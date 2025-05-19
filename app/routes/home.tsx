@@ -1,14 +1,45 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import homeHeroImg from "~/asset/img/1-top-dien-thoai-ban-chay-tai-dien-may-cho-lon.jpg";
+import homeHeroImg from '~/asset/img/1-top-dien-thoai-ban-chay-tai-dien-may-cho-lon.jpg';
 import { categoryService } from '~/service/category.service';
 import { productsService } from '~/service/products.service';
 import type { Route } from './+types/home';
 
 export function meta({}: Route.MetaArgs) {
-    return [
-        { title: 'Codelỏ Shope' },
-        { name: 'description', content: 'Welcome to React Router!' },
-    ];
+    return [{ title: 'TechStore' }, { name: 'description', content: 'Welcome to React Router!' }];
+}
+
+function Rating({
+    rating,
+    disable,
+    onChange,
+}: {
+    rating: number;
+    disable?: boolean;
+    onChange?: (value: number) => void;
+}) {
+    const [ratingValue, setRatingValue] = useState(Math.round(rating));
+
+    return (
+        <div className="rating rating-xs">
+            {[1, 2, 3, 4, 5].map((value) => (
+                <input
+                    key={value}
+                    type="radio"
+                    name="rating-3"
+                    className="mask mask-star-2"
+                    disabled={disable}
+                    defaultChecked={value === ratingValue}
+                    onChange={() => {
+                        if (onChange) {
+                            onChange(value);
+                        }
+                        setRatingValue(value);
+                    }}
+                />
+            ))}
+        </div>
+    );
 }
 
 export async function clientLoader({}) {
@@ -16,28 +47,29 @@ export async function clientLoader({}) {
         // Fetch new products and categories in parallel
         const [productsResponse, [categoriesResponse, categoryError]] = await Promise.all([
             productsService.getNewProducts(),
-            categoryService.getCategories()
+            categoryService.getCategories(),
         ]);
-        
+
         // Filter categories where parent_id is null and add placeholder images
-        const categoriesWithImages = categoriesResponse?.data
-            .filter(category => category.parent_id === null)
-            .map(category => ({
-                ...category,
-                // image: `https://placehold.co/100x100?text=${encodeURIComponent(category.name)}`
-            })) || [];
-        
+        const categoriesWithImages =
+            categoriesResponse?.data
+                .filter((category) => category.parent_id === null)
+                .map((category) => ({
+                    ...category,
+                    // image: `https://placehold.co/100x100?text=${encodeURIComponent(category.name)}`
+                })) || [];
+
         return {
             new_product: productsResponse[0],
             categories: categoriesWithImages,
-            error: null
+            error: null,
         };
     } catch (error) {
-        console.error("Error loading data:", error);
+        console.error('Error loading data:', error);
         return {
             new_product: { data: [] },
             categories: [],
-            error: "Không thể tải dữ liệu. Vui lòng thử lại sau."
+            error: 'Không thể tải dữ liệu. Vui lòng thử lại sau.',
         };
     }
 }
@@ -45,11 +77,14 @@ export async function clientLoader({}) {
 export default function Home({ loaderData }: Route.ComponentProps) {
     const { new_product, categories, error } = loaderData;
     const nav = useNavigate();
-    
+
     // Format currency function
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+            amount
+        );
     };
+
 
     return (
         <>
@@ -107,9 +142,21 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                                     className="flex flex-col items-center justify-center rounded-lg p-4 transition-colors hover:bg-base-100 shadow-sm bg-base-300"
                                 >
                                     <div className="rounded-2xl bg-muted m-2 overflow-hidden">
-                                        <img height={100} width={100} src={category.small_image || `https://placehold.co/100x100?text=${encodeURIComponent(category.name)}`} alt={category.name} />
+                                        <img
+                                            height={100}
+                                            width={100}
+                                            src={
+                                                category.small_image ||
+                                                `https://placehold.co/100x100?text=${encodeURIComponent(
+                                                    category.name
+                                                )}`
+                                            }
+                                            alt={category.name}
+                                        />
                                     </div>
-                                    <span className="text-sm font-bold text-center">{category.name}</span>
+                                    <span className="text-sm font-bold text-center">
+                                        {category.name}
+                                    </span>
                                 </Link>
                             ))}
                         </div>
@@ -121,7 +168,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                     <div className="hero-content w-full flex-col">
                         <div className="navbar">
                             <div className="w-full">
-                                <h2 className="text-2xl font-bold">Sản phẩm moi</h2>
+                                <h2 className="text-2xl font-bold">Sản phẩm mới</h2>
                             </div>
                             <div className="min-w-max">
                                 <Link to="" className="link">
@@ -139,35 +186,25 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                                         onClick={() => nav('san-pham/' + value.id)}
                                     >
                                         <figure>
-                                            <img src={value.product_images.find(e => e.is_primary)?.image_url || "https://placehold.co/600x400"} height={400} width={600} alt="Shoes" />
+                                            <img
+                                                src={
+                                                    value.product_images.find((e) => e.is_primary)
+                                                        ?.image_url ||
+                                                    'https://placehold.co/600x400'
+                                                }
+                                                height={400}
+                                                width={600}
+                                                alt="Shoes"
+                                            />
                                         </figure>
                                         <div className="card-body p-4">
                                             <h2 className="card-title">{value.name}</h2>
                                             <div className="flex">
-                                                <div className="rating rating-xs">
-                                                    <div
-                                                        className="mask mask-star"
-                                                        aria-label="1 star"
-                                                    ></div>
-                                                    <div
-                                                        className="mask mask-star"
-                                                        aria-label="2 star"
-                                                    ></div>
-                                                    <div
-                                                        className="mask mask-star"
-                                                        aria-label="3 star"
-                                                        aria-current="true"
-                                                    ></div>
-                                                    <div
-                                                        className="mask mask-star"
-                                                        aria-label="4 star"
-                                                    ></div>
-                                                    <div
-                                                        className="mask mask-star"
-                                                        aria-label="5 star"
-                                                    ></div>
-                                                </div>
-                                                <p>{'(20)'}</p>
+                                                <Rating
+                                                    rating={value.product_reviews_avg_rating}
+                                                    disable={true}
+                                                />
+                                                <p>{'(' + value.product_reviews_count + ')'}</p>
                                             </div>
                                             <div className="flex gap-2 flex-col xl:flex-row">
                                                 <p className="text-lg font-bold">
@@ -177,10 +214,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                                                     {formatCurrency(value.base_original_price)}
                                                 </p>
                                             </div>
-
-                                            <button className="btn btn-primary mt-auto">
-                                                Buy Now
-                                            </button>
                                         </div>
                                     </div>
                                 );

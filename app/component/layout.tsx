@@ -60,7 +60,7 @@ export function Header() {
                         </ul>
                     </div>
                     <Link to="/" className="btn btn-ghost text-xl font-bold">
-                        Codelỏ
+                        TechStore
                     </Link>
                 </div>
                 <div className="navbar-center hidden lg:flex">

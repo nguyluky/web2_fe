@@ -336,17 +336,18 @@ const OrderManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
-              <tr key={order.id} className="border-b border-gray-300">
+            {orders.map((order) => {
+                console.log(users, order)
+                return <tr key={order.id} className="border-b border-gray-300">
                 <td>{order.id}</td>
                 <td>
-                  {users.find((user) => user.id === order.account_id)?.fullname || 'Không tìm thấy'}
+                  {users.find((user) => user.id == order.account_id)?.profile?.fullname || 'Không tìm thấy'}
                 </td>
                 <td>
-                  {users.find((user) => user.id === order.account_id)?.phone_number || 'Không tìm thấy'}
+                  {users.find((user) => user.id == order.account_id)?.profile?.phone_number || 'Không tìm thấy'}
                 </td>
                 <td>
-                  {users.find((user) => user.id === order.account_id)?.email || 'Không tìm thấy'}
+                  {users.find((user) => user.id == order.account_id)?.profile?.email || 'Không tìm thấy'}
                 </td>
                 <td>{new Date(order.created_at).toLocaleDateString()}</td>
                 <td>{order.payment_method || 'N/A'}</td>
@@ -376,7 +377,7 @@ const OrderManagement = () => {
                   </div>
                 </td>
               </tr>
-            ))}
+})}
           </tbody>
         </table>
       </div>

@@ -198,7 +198,7 @@ const Dashboard = () => {
                         {order.status === 'processing' && <span className="text-blue-500">Đang xử lý</span>}
                         {order.status === 'pending' && <span className="text-yellow-500">Đang chờ</span>}
                         {order.status === 'cancelled' && <span className="text-red-500">Đã hủy</span>}
-                      </td>                      <td>{new Date(order.created_at).toLocaleDateString()}</td>
+                      </td>                      <td>{order.created_at}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -283,7 +283,7 @@ export default function TimKiem() {
                     -{getDiscountPercentage(product)}%
                   </div>
                 )}
-                <Link to={`/san-pham/${product.id}`}>
+                <Link to={`/san-pham/${product.id}`} className="w-full">
                   {product.product_images && product.product_images.length > 0 ? (
                     <img
                       src={product.product_images[0].image_url}

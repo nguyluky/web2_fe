@@ -31,6 +31,7 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
     const [quantity, setQuantity] = useState<number>(1);
     const [error, setError] = useState<string | null>(loaderData.error);
     const [addingToCart, setAddingToCart] = useState<boolean>(false);
+    const [buyNow, setBuyNow] = useState<boolean>(false);
     const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
     const [hasPurchased, setHasPurchased] = useState<boolean>(false);
     const [showReviewForm, setShowReviewForm] = useState<boolean>(false);
@@ -107,7 +108,7 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
         }
 
         try {
-            setAddingToCart(true);
+            setBuyNow(true);
             await cartService.addToCart({
                 product_variant_id: selectedVariant,
                 amount: quantity,
@@ -117,7 +118,7 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
         } catch (err) {
             toast.error('Vui lòng chọn phiên bản sản phẩm');
         } finally {
-            setAddingToCart(false);
+            setBuyNow(false);
         }
     };
 
@@ -404,9 +405,9 @@ export default function ProductDetail({ loaderData }: Route.ComponentProps) {
                         <button
                             className="btn btn-primary flex-1"
                             onClick={handleBuyNow}
-                            disabled={addingToCart || !selectedVariant}
+                            disabled={buyNow || !selectedVariant}
                         >
-                            {addingToCart ? (
+                            {buyNow ? (
                                 <span className="loading loading-spinner"></span>
                             ) : (
                                 'Mua ngay'

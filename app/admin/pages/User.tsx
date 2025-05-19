@@ -660,7 +660,7 @@ const UserManagement = () => {
                         <div className="avatar">
                           <div className="mask mask-squircle h-12 w-12">
                             <img
-                              src={user.avatar || "https://img.daisyui.com/images/profile/demo/5@94.webp"}
+                              src={user.avatar ? "http://127.0.0.1:8000/storage/" + user.avatar : "https://img.daisyui.com/images/profile/demo/5@94.webp"}
                               alt={`Avatar của ${user.fullname}`}
                             />
                           </div>

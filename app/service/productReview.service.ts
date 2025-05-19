@@ -34,7 +34,7 @@ export class ProductReviewService extends ApiService {
    * @param data Review data (rating, comment)
    * @returns The created review
    */
-  async createReview(productId: number, data: Review) {
+  async createReview(productId: number, data: Omit<Review, "id" | "product_id">) {
     return this.post<Review, any>(`/products/${productId}/reviews`, data);
   }
 

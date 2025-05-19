@@ -14,7 +14,6 @@ import fetchWithToken from '~/utils/fechWithToken';
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
-  const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateStart, setDateStart] = useState('');
@@ -43,11 +42,6 @@ const OrderManagement = () => {
         const ordersData = await ordersResponse.json();
         setOrders(ordersData.data.data || []);
         setTotalPages(ordersData.data.last_page || 1);
-
-        const usersResponse = await fetchWithToken('http://127.0.0.1:8000/api/admin/users');
-        if (!usersResponse.ok) throw new Error('Không thể lấy danh sách người dùng');
-        const usersData = await usersResponse.json();
-        setUsers(usersData.data.data || []);
       } catch (error) {
         console.error('Lỗi khi lấy dữ liệu:', error.message);
         toast.error('Lỗi khi lấy dữ liệu: ' + error.message, { autoClose: 3000 });
@@ -337,17 +331,16 @@ const OrderManagement = () => {
           </thead>
           <tbody>
             {orders.map((order) => {
-                console.log(users, order)
                 return <tr key={order.id} className="border-b border-gray-300">
                 <td>{order.id}</td>
                 <td>
-                  {users.find((user) => user.id == order.account_id)?.profile?.fullname || 'Không tìm thấy'}
+                    {order.profile.fullname || 'N/A'}
                 </td>
                 <td>
-                  {users.find((user) => user.id == order.account_id)?.profile?.phone_number || 'Không tìm thấy'}
+                    {order.profile.phone_number || 'N/A'}
                 </td>
                 <td>
-                  {users.find((user) => user.id == order.account_id)?.profile?.email || 'Không tìm thấy'}
+                                        {order.profile.email || 'N/A'}
                 </td>
                 <td>{new Date(order.created_at).toLocaleDateString()}</td>
                 <td>{order.payment_method || 'N/A'}</td>

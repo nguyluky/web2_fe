@@ -106,11 +106,11 @@ export default function Login() {
                   </button>
                 </div>
                 {errors.password && <p className="label text-error">{errors.password.message}</p>}
-                <div className="flex justify-end mt-1">
+                {/* <div className="flex justify-end mt-1">
                   <Link to="/auth/forgot-password" className="text-sm link link-hover text-primary">
                     Quên mật khẩu?
                   </Link>
-                </div>
+                </div> */}
               </div>
 
               <div className="form-control">

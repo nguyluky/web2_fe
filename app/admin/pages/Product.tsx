@@ -1285,10 +1285,9 @@ const ProductManagement = () => {
             <table className="table text-lg w-full">
                 <thead className="text-lg">
                     <tr>
-                        <th>ID</th>
+                        <th>Mã sản phẩm</th>
                         <th>Tên sản phẩm</th>
                         <th>Danh mục</th>
-                        <th>Giá bán</th>
                         <th>Tồn kho</th>
                         <th>Ngày tạo</th>
                         <th>Trạng thái</th>
@@ -1298,7 +1297,7 @@ const ProductManagement = () => {
                 <tbody className="divide-y divide-gray-300">
                     {products.map((product) => (
                         <tr key={product.id} className="">
-                            <td>{product.id}</td>
+                            <td>{product.sku}</td>
                             <td>
                                 <div className="flex items-center gap-3">
                                     <div className="product-img">
@@ -1317,7 +1316,6 @@ const ProductManagement = () => {
                                 {categories.find((category) => category.id === product.category_id)
                                     ?.name || 'Not Found'}
                             </td>
-                            <td>{product.base_original_price}</td>
                             <td>
                                 {productVars
                                     .filter((productVar) => productVar.product_id === product.id)

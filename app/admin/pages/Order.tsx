@@ -2,7 +2,7 @@
 import {
     faChevronLeft,
     faChevronRight,
-    faDeleteLeft,
+    faEye,
     faEdit,
     faTimes,
 } from '@fortawesome/free-solid-svg-icons';
@@ -22,6 +22,7 @@ const OrderManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [editStatus, setEditStatus] = useState('');
 
@@ -62,37 +63,14 @@ const OrderManagement = () => {
     setEditStatus('');
   };
 
-  const handleCancelOrder = async (orderId) => {
-    if (!window.confirm('Bạn có chắc muốn hủy đơn hàng này không?')) return;
+  const openDetailModal = (order) => {
+    setSelectedOrder(order);
+    setIsDetailModalOpen(true);
+  };
 
-    setIsLoading(true);
-    try {
-      const response = await fetchWithToken(`http://127.0.0.1:8000/api/admin/orders/${orderId}/cancel`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Không thể hủy đơn hàng');
-      }
-
-      const updatedOrdersResponse = await fetchWithToken(`http://127.0.0.1:8000/api/admin/orders?page=${currentPage}&limit=10`);
-      const updatedOrdersData = await updatedOrdersResponse.json();
-      setOrders(updatedOrdersData.data.data || []);
-      setTotalPages(updatedOrdersData.data.last_page || 1);
-
-      if (updatedOrdersData.data.data.length === 0 && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
-      }
-
-      toast.success('Hủy đơn hàng thành công!', { autoClose: 3000 });
-    } catch (error) {
-      console.error('Lỗi khi hủy đơn hàng:', error.message);
-      toast.error('Hủy đơn hàng thất bại: ' + error.message, { autoClose: 3000 });
-    } finally {
-      setIsLoading(false);
-    }
+  const closeDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedOrder(null);
   };
 
   const handleUpdateStatus = async (e) => {
@@ -173,11 +151,26 @@ const OrderManagement = () => {
       case 'pending':
         return 'Đang xử lý';
       case 'completed':
-        return 'Đã giao hàng';
+        return 'Hoàn thành';
       case 'cancelled':
         return 'Đã hủy';
       case 'processing':
         return 'Đã thanh toán';
+      default:
+        return 'Database Error';
+    }
+  };
+
+   const getPaymentText = (payment) => {
+    switch (payment) {
+      case '0':
+        return "Ngân hàng";
+      case '1':
+        return "Ví điện tử";
+      case '2':
+        return "Thẻ tín dụng";
+      case '3':
+        return "COD";
       default:
         return 'Database Error';
     }
@@ -226,18 +219,27 @@ const OrderManagement = () => {
                     className="w-full p-2 border border-gray-300 rounded-md"
                     required
                   >
-                    {['pending', 'processing', 'completed', 'cancelled']
-                      .slice(['pending', 'processing', 'completed', 'cancelled'].indexOf(editStatus))
-                      .map((status) => (
-                        <option key={status} value={status}>
-                          {{
-                            pending: 'Đang xử lý',
-                            processing: 'Đã thanh toán',
-                            completed: 'Đã giao hàng',
-                            cancelled: 'Đã hủy',
-                          }[status]}
-                        </option>
-                      ))}
+                    {['completed', 'cancelled'].includes(editStatus) ? (
+                      <option value={editStatus}>
+                        {{
+                          completed: 'Hoàn thành',
+                          cancelled: 'Đã hủy',
+                        }[editStatus]}
+                      </option>
+                    ) : (
+                      ['pending', 'processing', 'completed', 'cancelled']
+                        .slice(['pending', 'processing', 'completed', 'cancelled'].indexOf(editStatus))
+                        .map((status) => (
+                          <option key={status} value={status}>
+                            {{
+                              pending: 'Đang xử lý',
+                              processing: 'Đã thanh toán',
+                              completed: 'Hoàn thành',
+                              cancelled: 'Đã hủy',
+                            }[status]}
+                          </option>
+                        ))
+                    )}
                   </select>
                 </div>
               </div>
@@ -262,6 +264,74 @@ const OrderManagement = () => {
           </div>
         </div>
       )}
+
+{isDetailModalOpen && (
+  <div className="fixed inset-0 flex justify-center items-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-[60em] max-h-[90vh] overflow-y-auto backdrop-blur-lg border-4 border-gray-300">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">Chi tiết đơn hàng #{selectedOrder.id}</h2>
+        <button onClick={closeDetailModal}>
+          <FontAwesomeIcon icon={faTimes} className="text-xl" />
+        </button>
+      </div>
+      <div className="mb-4 text-base text-gray-700">
+        <p><strong>Người nhận:</strong> {selectedOrder.address.name}</p>
+        <p><strong>Email:</strong> {selectedOrder.address.email}</p>
+        <p><strong>Số điện thoại:</strong> {selectedOrder.address.phone_number}</p>
+        <p><strong>Địa chỉ:</strong> 
+          {[
+            selectedOrder.address.street,
+            selectedOrder.address.ward,
+            selectedOrder.address.district,
+            selectedOrder.address.city
+          ].filter(Boolean).join(', ')}
+        </p>
+      </div>
+      <table className="w-full table-auto border-collapse">
+        <thead>
+          <tr className="border-b border-gray-300">
+            <th className="text-left p-3">Mã sản phẩm</th>
+            <th className="text-left p-3">Tên sản phẩm</th>
+            <th className="text-left p-3">Số lượng</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(() => {
+            // Gom nhóm và tính tổng số lượng
+            const grouped = selectedOrder.order_details.reduce((acc, detail) => {
+              const id = detail.product_variant_id;
+              if (!acc[id]) {
+                acc[id] = { ...detail, quantity: detail.quantity || 1 };
+              } else {
+                acc[id].quantity += detail.quantity || 1;
+              }
+              return acc;
+            }, {} as Record<number, typeof selectedOrder.order_details[0]>);
+          
+            const groupedArray = Object.values(grouped);
+          
+            return (
+              <>
+                {groupedArray.map(detail => (
+                  <tr key={detail.id} className="border-b border-gray-200">
+                    <td className="p-3">{detail.product_variant?.sku}</td>
+                    <td className="p-3">{detail.product_variant?.product?.name}</td>
+                    <td className="p-3">{detail.quantity}</td>
+                  </tr>
+                ))}
+      
+                <tr className="font-semibold text-right">
+                  <td colSpan={2} className="p-3 text-right">Tổng sản phẩm:</td>
+                  <td className="p-3 text-left">{groupedArray.reduce((sum, d) => sum + d.quantity, 0)}</td>
+                </tr>
+              </>
+            );
+          })()}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
 
       <div className="flex flex-wrap justify-between mb-6">
         <div className="flex flex-wrap gap-4">
@@ -308,7 +378,7 @@ const OrderManagement = () => {
               <option value="all">Tất cả trạng thái</option>
               <option value="pending">Đang xử lý</option>
               <option value="processing">Đã thanh toán</option>
-              <option value="completed">Đã giao hàng</option>
+              <option value="completed">Hoàn thành</option>
               <option value="cancelled">Đã hủy</option>
             </select>
           </div>
@@ -319,7 +389,7 @@ const OrderManagement = () => {
         <table className="table text-lg w-full">
           <thead className="text-lg">
             <tr>
-              <th>ID</th>
+              <th>Mã đơn</th>
               <th>Tên khách hàng</th>
               <th>Số điện thoại</th>
               <th>Email</th>
@@ -340,10 +410,10 @@ const OrderManagement = () => {
                     {order.profile.phone_number || 'N/A'}
                 </td>
                 <td>
-                                        {order.profile.email || 'N/A'}
+                    {order.profile.email || 'N/A'}
                 </td>
                 <td>{new Date(order.created_at).toLocaleDateString()}</td>
-                <td>{order.payment_method || 'N/A'}</td>
+                <td>{getPaymentText(order.payment_method) || 'N/A'}</td>
                 <td>
                   <span
                     className={`border border-gray-300 rounded-lg px-2 py-1 ${getStatusColor(order.status)}`}
@@ -362,10 +432,10 @@ const OrderManagement = () => {
                     </button>
                     <button
                       className="flex w-12 h-12 px-4 py-2 text-base bg-white text-gray-500 hover:text-red-500"
-                      onClick={() => handleCancelOrder(order.id)}
+                      onClick={() => openDetailModal(order)}
                       disabled={isLoading || order.status === 'cancelled'}
                     >
-                      <FontAwesomeIcon icon={faDeleteLeft} className="text-xl" />
+                      <FontAwesomeIcon icon={faEye} className="text-xl" />
                     </button>
                   </div>
                 </td>

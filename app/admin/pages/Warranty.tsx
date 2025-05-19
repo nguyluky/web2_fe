@@ -14,9 +14,6 @@ import fetchWithToken from '~/utils/fechWithToken';
 
 const WarrantyManagement = () => {
   const [warranties, setWarranties] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [orderDetail, setOrders] = useState([]);
-  const [products, setProducts] = useState([]);
   const [filteredWarranties, setFilteredWarranties] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -58,15 +55,6 @@ const WarrantyManagement = () => {
         const warrantyRes = await fetchWithToken(`http://127.0.0.1:8000/api/admin/warrantys/search?${params.toString()}`); // Replace with your API endpoint
         const warrantyData = await warrantyRes.json();
         setWarranties(warrantyData.data.data || []);
-
-        const orderRes = await fetchWithToken('http://127.0.0.1:8000/api/admin/order/detail'); // Replace with your API endpoint
-        const orderData = await orderRes.json();
-        setOrders(orderData.data.data || []);
-        
-
-        const productRes = await fetchWithToken('http://127.0.0.1:8000/api/admin/products'); // Replace with your API endpoint
-        const productData = await productRes.json();
-        setProducts(productData.data.data || []);
         setTotalPages(warrantyData.data.last_page || 1);
       } catch (error) {
         console.error('Lỗi khi lấy dữ liệu:', error.message);
@@ -206,10 +194,10 @@ const WarrantyManagement = () => {
   
     setUpdateWarranty({
       id: warranty.id,
-      issue_date: warranty.issue_date,
-      expiration_date: warranty.expiration_date,
+      issue_date: warrantyData.issue_date,
+      expiration_date: warrantyData.expiration_date,
       status: warrantyData.status,
-      note: warranty.note
+      note: warrantyData.note
     });
     setIsModalOpen(true);
   };
@@ -284,7 +272,6 @@ const WarrantyManagement = () => {
             {' '}
             <thead className="text-lg">
               <tr>
-                <th>ID</th>
                 <th>Serial</th>
                 <th>Tên sản phẩm</th>
                 <th>Ngày bảo hành</th>
@@ -297,14 +284,11 @@ const WarrantyManagement = () => {
             <tbody>
               {warranties.map((warranty) => (
                 <tr key={warranty.id} className="border-b border-gray-300">
-                  <td>{warranty.id}</td>
                   <td>
-                    {orderDetail.find((orderDetail) => orderDetail.id === warranty.product_id)?.serial ||
-                      'Không tìm thấy'}
+                    {warranty.order_detail?.serial}
                   </td>
                   <td>
-                    {products.find((product) => product.id === warranty.product_id)?.name ||
-                      'Không tìm thấy'}
+                    {warranty.order_detail?.product_variant?.product?.name}
                   </td>
                   <td>{warranty.issue_date}</td>
                   <td>{warranty.expiration_date}</td>

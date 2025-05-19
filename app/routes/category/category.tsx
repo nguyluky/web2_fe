@@ -38,6 +38,9 @@ export default function Category({ loaderData }: Route.ComponentProps) {
         } as SearchProductsPagination
     );
     
+    // Sorting state
+    const [sortBy, setSortBy] = useState<string>('');
+    
     // Price range state
     const [priceRange, setPriceRange] = useState({
         min: 0,
@@ -108,6 +111,11 @@ export default function Category({ loaderData }: Route.ComponentProps) {
         if (loaderData.categorie?.data?.id) {
             formValues['category'] = loaderData.categorie.data.id.toString();
         }
+        
+        // Add sorting if selected
+        if (sortBy) {
+            formValues['sort'] = sortBy;
+        }
 
         // chuyển dữ liệu formValues thành query string
         const queryString = new URLSearchParams(formValues as Record<string, string>);
@@ -147,6 +155,11 @@ export default function Category({ loaderData }: Route.ComponentProps) {
         // url to URLSearchParams
         const urlParams = new URL(url);
         const params = urlParams.searchParams;
+        
+        // Add sort parameter if it's not already in the URL and we have a sortBy value
+        if (sortBy && !params.has('sort')) {
+            params.set('sort', sortBy);
+        }
 
         try {
             const [data, error] = await productsService.searchProducts(params);
@@ -238,14 +251,57 @@ export default function Category({ loaderData }: Route.ComponentProps) {
                         <div className="hero">
                             <div className="hero-content w-full px-2 md:px-4">
                                 <div className="w-full">
-                                    <div className="flex justify-between items-center mb-4 lg:hidden">
-                                        <h2 className="text-xl font-bold">Sản phẩm</h2>
-                                        <label htmlFor="filter-drawer" className="btn btn-sm drawer-button">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
-                                            </svg>
-                                            Bộ lọc
-                                        </label>
+                                    <div className="flex flex-wrap justify-between items-center mb-4">
+                                        <div className="flex items-center">
+                                            <h2 className="text-xl font-bold mr-2">Sản phẩm</h2>
+                                            <span className="text-sm text-base-content/70">({products.total} kết quả)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex lg:hidden">
+                                                <label htmlFor="filter-drawer" className="btn btn-sm drawer-button">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+                                                    </svg>
+                                                    Bộ lọc
+                                                </label>
+                                            </div>
+                                            <div className="form-control">
+                                                <select 
+                                                    className="select select-bordered select-sm"
+                                                    value={sortBy}
+                                                    onChange={(e) => {
+                                                        setSortBy(e.target.value);
+                                                        if (e.target.value) {
+                                                            const params = new URLSearchParams();
+                                                            if (loaderData.categorie?.data?.id) {
+                                                                params.append('category', loaderData.categorie.data.id.toString());
+                                                            }
+                                                            params.append('sort', e.target.value);
+                                                            
+                                                            (async () => {
+                                                                try {
+                                                                    const [data, error] = await productsService.searchProducts(params);
+                                                                    if (data) {
+                                                                        setProducts(data);
+                                                                        window.scrollTo({ 
+                                                                            top: document.querySelector('.drawer-content')?.getBoundingClientRect().top || 0,
+                                                                            behavior: 'smooth'
+                                                                        });
+                                                                    }
+                                                                } catch (err) {
+                                                                    console.error("Error sorting products:", err);
+                                                                }
+                                                            })();
+                                                        }
+                                                    }}
+                                                >
+                                                    <option value="">Sắp xếp theo</option>
+                                                    <option value="price_asc">Giá tăng dần</option>
+                                                    <option value="price_desc">Giá giảm dần</option>
+                                                    <option value="created_at_desc">Mới nhất</option>
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
                                     {products.data && products.data.length > 0 ? (
                                     <div className="grid grid-cols-2 gap-2 xs:gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">

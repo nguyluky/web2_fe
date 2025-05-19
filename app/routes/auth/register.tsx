@@ -7,9 +7,10 @@ import {
     faUser,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '~/contexts/AuthContext';
 
 type FormValues = {
   email: string;
@@ -28,19 +29,33 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string>();
   const navigate = useNavigate();
+  const {register: register_, isAuthenticated, error: error1} = useAuth();
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     try {
       // TODO: Implement API call to login endpoint
       console.log('Đăng nhập với:', data);
-
-      // Simulate successful login
-      // After successful login, redirect to home page
-      navigate('/');
+        const response = await register_({
+            email: data.email,
+            password: data.password,
+            username: data.username,
+            fullname: data.fullname,
+            phone_number: data.phone_number,
+        });
+        // if (response) {
+        //     navigate('/');
+        // }
     } catch (err) {
       setError('Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập');
     }
   };
+
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-base-200 px-4">
@@ -48,9 +63,9 @@ export default function Login() {
         <div className="card-body">
           <h2 className="text-center text-2xl font-bold mb-6">Đăng nhập</h2>
 
-          {error && (
+          {error || error1 && (
             <div className="alert alert-error ">
-              <span>{error}</span>
+              <span>{error || error1}</span>
             </div>
           )}
           <div className="flex gap-10">

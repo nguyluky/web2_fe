@@ -119,7 +119,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     const register = async (userData: RegisterRequest) => {
-        
+        const [data, error] = await authService.register(userData);
+        if (error) {
+            setError(error.message);
+            return;
+        }
+        localStorage.setItem('token', data?.access_token || '');
+        const [data1, error1] = await profileService.getProfile();
+        if (error1) {
+            setError(String(error1));
+        }
+        setUser(data1?.data ?? null);
+        setIsAuthenticated(true);
     };
 
     const contextValue: AuthContextState = {

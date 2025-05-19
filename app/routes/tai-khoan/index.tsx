@@ -27,9 +27,9 @@ function ThongTin({profile}: {profile: getProfileResponse['data']}) {
 
     const handleSave = async () => {
         const [data, error] = await profileService.updateProfile({
-            fullname: profileData.fullname,
-            email: profileData.email,
-            phone_number: profileData.phone_number,
+            fullname: cloneData.fullname || '',
+            email: cloneData.email || '',
+            phone_number: cloneData.phone_number,
         });
 
         if (error) {
@@ -99,7 +99,11 @@ function ThongTin({profile}: {profile: getProfileResponse['data']}) {
                 <div className="flex gap-5 items-center">
                     <div className="avatar cursor-pointer relative group" onClick={() => setIsModalOpen(true)}>
                         <div className="w-24 rounded-full overflow-hidden">
-                            <img src={"http://127.0.0.1:8000/storage/" + profileData.avatar} alt="Avatar" />
+                            <img 
+                                src={profileData.avatar ? ("http://127.0.0.1:8000/storage/" + profileData.avatar) : "https://placehold.co/400"} 
+                                alt="Avatar" 
+                                className="w-full h-full object-cover"
+                            />
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                 <span className="text-white text-xs font-medium">Thay đổi</span>
                             </div>
@@ -174,11 +178,11 @@ function ThongTin({profile}: {profile: getProfileResponse['data']}) {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     <label className="w-full">
                         <span>Họ và tên</span>
-                        <input type="text" className="input w-full" defaultValue={cloneData.fullname} name='fullname' onChange={handleChange}/>
+                        <input type="text" className="input w-full" defaultValue={cloneData.fullname || ''} name='fullname' onChange={handleChange}/>
                     </label>
                     <label className="w-full">
                         <span>Email</span>
-                        <input type="text" className="input w-full" defaultValue={cloneData.email} name='email' onChange={handleChange}/>
+                        <input type="text" className="input w-full" defaultValue={cloneData.email || ''} name='email' onChange={handleChange}/>
                     </label>
                     <label className="w-full">
                         <span>Số điện thoại</span>

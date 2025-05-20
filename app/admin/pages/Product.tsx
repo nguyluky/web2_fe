@@ -695,7 +695,7 @@ const ProductManagement = () => {
         try {
             const categoryRes = await fetchWithToken(`http://127.0.0.1:8000/api/admin/categories`);
             const categoryData = await categoryRes.json();
-            setCategories(categoryData.data.data || []);
+            setCategories(categoryData.data || []);
         } catch (error) {
             console.error('Lỗi khi lấy dữ liệu danh mục:', error);
             toast.error('Lỗi khi lấy dữ liệu danh mục: ' + error.message);
@@ -1313,8 +1313,7 @@ const ProductManagement = () => {
                                 </div>
                             </td>
                             <td>
-                                {categories.find((category) => category.id === product.category_id)
-                                    ?.name || 'Not Found'}
+                                {product.category?.name}
                             </td>
                             <td>
                                 {productVars

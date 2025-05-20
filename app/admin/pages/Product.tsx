@@ -693,7 +693,7 @@ const ProductManagement = () => {
 
     const fetchWithTokenCategories = async () => {
         try {
-            const categoryRes = await fetchWithToken(`http://127.0.0.1:8000/api/admin/categories`);
+            const categoryRes = await fetchWithToken(`http://127.0.0.1:8000/api/admin/categories?limit=10000000`);
             const categoryData = await categoryRes.json();
             setCategories(categoryData.data.data || []);
         } catch (error) {

@@ -1,3 +1,5 @@
+import { faDatabase } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link, Outlet, useNavigate, useNavigation, useSearchParams } from 'react-router';
 import { useAuth } from '~/contexts/AuthContext';
 import { useCart } from '~/contexts/CartContext';
@@ -134,7 +136,7 @@ export function Header() {
                             <>
                                 {account?.rule == 1 && (
                                     <Link to="/admin/dashboard" className="btn btn-outline">
-                                        GOTO ADMIN
+                                        <FontAwesomeIcon icon={faDatabase} />
                                     </Link>
                                 )}
                                 <Link

@@ -321,6 +321,45 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
                                 </div>
                             </div>
 
+                            {/* Payment Method Selection */}
+                            <div className="card bg-base-100 shadow-sm">
+                                <div className="card-body">
+                                    <h2 className="card-title">Phương thức thanh toán</h2>
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input 
+                                                type="radio" 
+                                                name="payment-method" 
+                                                className="radio radio-primary" 
+                                                checked={paymentMethod === 0}
+                                                onChange={() => setPaymentMethod(0)}
+                                            />
+                                            <span>Thanh toán khi nhận hàng (COD)</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input 
+                                                type="radio" 
+                                                name="payment-method" 
+                                                className="radio radio-primary" 
+                                                checked={paymentMethod === 1}
+                                                onChange={() => setPaymentMethod(1)}
+                                            />
+                                            <span>Chuyển khoản ngân hàng</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input 
+                                                type="radio" 
+                                                name="payment-method" 
+                                                className="radio radio-primary" 
+                                                checked={paymentMethod === 2}
+                                                onChange={() => setPaymentMethod(2)}
+                                            />
+                                            <span>Trực tiếp</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="card bg-base-100 shadow-sm">
                                 <div className="card-body">
                                     <h2 className="card-title">Đơn hàng của bạn</h2>

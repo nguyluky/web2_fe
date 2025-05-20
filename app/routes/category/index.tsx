@@ -73,7 +73,7 @@ export default function CategoryIndex({ loaderData }: { loaderData: { categories
                     {getCategoryChildren(category.id).map(child => (
                       <Link 
                         key={child.id}
-                        to={`/category/${child.id}`}
+                        to={`/danh-muc/${child.id}`}
                         className="badge badge-outline badge-primary badge-lg"
                       >
                         {child.name}
@@ -85,7 +85,7 @@ export default function CategoryIndex({ loaderData }: { loaderData: { categories
               
               <div className="card-actions justify-end mt-4">
                 <Link 
-                  to={`/category/${category.id}`} 
+                  to={`/danh-muc/${category.id}`} 
                   className="btn btn-primary"
                 >
                   Xem sản phẩm

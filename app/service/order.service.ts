@@ -40,6 +40,7 @@ export interface OrderResponse {
 }
 
 export interface OrderDetail {
+  originalItems: any[];
   id: number;
   order_id: number;
   product: Product & {product_images: ProductImage[]};

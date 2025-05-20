@@ -1,4 +1,4 @@
-import { faChevronLeft, faChevronRight, faSearch, faStar, faTags } from "@fortawesome/free-solid-svg-icons";
+import { faChevronLeft, faChevronRight, faSearch, faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -317,7 +317,7 @@ export default function TimKiem() {
                     </span>
                   )}
                 </div>
-                <div className="flex justify-between items-center mt-3">
+                {/* <div className="flex justify-between items-center mt-3">
                   {product.category && (
                     <div className="flex items-center text-xs text-gray-500">
                       <FontAwesomeIcon icon={faTags} className="mr-1" />
@@ -331,7 +331,7 @@ export default function TimKiem() {
                   >
                     {addingToCartId !== product.id && "Thêm vào giỏ"}
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
           ))}
